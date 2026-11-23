@@ -15,7 +15,7 @@ with sync_playwright() as p:
         logs = []
         pg.on("console", lambda m: logs.append(f"[{m.type}] {m.text}") if m.type in ("error", "warning") else None)
         pg.on("pageerror", lambda e: logs.append(f"[pageerror] {e}"))
-        pg.goto(url, wait_until="networkidle")
+        pg.goto(url, wait_until="load", timeout=120000)
         pg.wait_for_timeout(7000)
         stage = pg.locator(".arch").first
         for d in designs:

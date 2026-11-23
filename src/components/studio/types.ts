@@ -11,7 +11,7 @@ export interface StudioDesign {
   base_price_paise: number;
   status: "active" | "draft" | "unavailable";
   featured: boolean;
-  assets: { palm?: string; back?: string; feet?: string };
+  assets: { palm?: string; back?: string; feet?: string; palm_photo?: string; back_photo?: string };
 }
 
 export interface StudioCategory {

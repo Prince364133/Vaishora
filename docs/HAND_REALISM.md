@@ -158,3 +158,57 @@ Screenshots: `scripts/out/hand/beauty/` (`before-*`, `after-*`, `compare-1366.jp
 - Feet remain an illustration (no CC0 photoreal foot built yet; MakeHuman has feet, so the same pipeline could do it).
 - Uploaded artwork must be aligned to the new templates (`/hand/palm.webp`, `/hand/back.webp`); artwork aligned to the
   *old* stylised silhouettes will sit slightly differently on the new hand.
+
+## 7. Photo palm transfer — real skin and real henna on the sculpted hand (Nov 2026)
+
+Owner request: the "Photo 3D" viewer's mehndi looks far more real (it *is* a photograph); bring the same skin and henna
+onto the sculpted 3D model, and keep it clean when zoomed.
+
+**How** (`scripts/hand-real/photo_transfer.py`, Python + OpenCV/SciPy, no new tools):
+1. Source: `mehndi-3d-tryon/generated-images/` — `bare-hands.jpg`, `<design>-paste.jpg`, `<design>-stain.jpg` (two
+   palm-up hands, fingers towards the camera). The image-**left** hand is the person's **right** hand; turned 180° it
+   is exactly our right-palm view, so no mirroring is needed. Landmarks: `data/stage2/hand.json` (1536×1920 canvas;
+   note `forearmL/forearmR` are stored as `[y, x]`), scaled by *photo width / 1536* → resolution-independent.
+2. ~70 correspondences: fingertips, finger axes (web → tip, sampled along the length), finger and thumb sides
+   (landmark radii ↔ our measured widths), palm centre, wrist and forearm edges, ulnar palm edge (scanned on our
+   silhouette). Thin-plate-spline warp (target → source), evaluated on a 65² grid, bicubic-upsampled, then
+   `cv2.remap` with **Lanczos4**; mild unsharp mask.
+3. Per-photo hand mask (colour vs the pink silk inside the dilated reference mask), intersected across all photos,
+   eroded and feathered → alpha. Large-scale shading of the bare photo is divided out (the 3D lights re-shade it) and
+   the skin is colour-matched to the sculpted palm tone `#E3AF92`, so palm photo and sculpted back read as one person.
+4. Output in the shared **`palm_photo` contract** (same as admin photo uploads): square RGBA WebP in the palm
+   projection frame of `src/lib/mehndi/hand-landmarks.json` (1000-unit square, any pixel size), sRGB colour,
+   alpha = feathered hand coverage → `public/designs/photo/<id>-palm.webp` (paste) and `<id>-palm-stain.webp`
+   (stain), manifest `src/lib/mehndi/photo-palm.json`.
+
+**In the viewer:** `mehndiMaterial.ts` uses a `palm_photo` / `back_photo` texture as albedo on that side (blended by
+its alpha and by the surface normal, so finger sides fade into our skin), switches off the procedural stain and
+flattens our crease normals there (the photo has real creases). Textures load premultiplied with mipmaps and maximum
+anisotropy; only the current design's photo is loaded (LRU of 3, evicted textures disposed). Catalogue designs with an
+*exact* `PHOTO_MATCH` entry get the built-in photo (Stain/Paste toggle); uploads pass `palmPhoto`/`backPhoto`.
+
+**Effective resolution (honest):** the current source photos are 1121×1403; the palm frame receives
+**≈ 1.12 source px per artwork unit ≈ 1,120 px across the 1000-unit frame** (the palm itself ≈ 260 px wide in the
+source). Output is 2048² (≈ 1.8× oversampled; Lanczos + unsharp keeps edges clean, but it is not 4K detail).
+The script picks the output size from the source density: 2–4K photos produce 4096² desktop files (mobile 2048²)
+automatically.
+
+**Rebuild after new photos (one command):** drop the new images into `mehndi-3d-tryon/mehndi-3d-tryon/generated-images/`
+with the **same file names**, then run
+
+```
+python scripts/hand-real/photo_transfer.py
+```
+
+(~2 min). Then reload the site.
+
+**Required framing for regenerated photos** (the landmarks in `hand.json` are reused, only scaled):
+- same composition and pose as the current photos: two palm-up hands, forearms from the top edge, fingers towards
+  the bottom, thumbs pointing outwards, hands in the same place in the frame;
+- same aspect ratio **4:5** (e.g. 2048×2560, 3072×3840, 4096×5120); any size works, landmarks scale with width;
+- plain light background (the pink silk works: the mask separates skin by colour), even soft light, no hard shadows;
+- each design photo must be an edit of the bare-hands photo (same hand outline), like the current set.
+If the pose changes, `hand.json` must be re-traced (Photo 3D pipeline stage 1–2) before running the script.
+
+**Gaps:** the back of the hand has no photo (bare sculpted skin or the procedural back design); the photos are AI
+edits of one reference photo, so all designs share one hand shape; finger sides beyond ~65° from the palm use our skin.

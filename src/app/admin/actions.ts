@@ -543,3 +543,52 @@ export async function addExternalReviewAction(_: ActionState, form: FormData): P
     return fail(e);
   }
 }
+
+// ------------------------------------------------------------------ design from photo
+/**
+ * Creates a design from an uploaded mehndi photo. The browser (PhotoDesignImporter) has already
+ * detected the hand, warped the photo onto our 3D hand frame and extracted the henna; this stores
+ * the henna mask ('palm'/'back') and the fitted photo ('palm_photo'/'back_photo').
+ */
+export async function createDesignFromPhotoAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin"]);
+  let id = "";
+  try {
+    if (form.get("rights") !== "on") return { error: "Confirm you own the photo or have permission to use it." };
+    const region = z.enum(["palm", "back"]).parse(s(form.get("region")));
+    const d = designSchema.parse({
+      slug: s(form.get("slug")),
+      name: s(form.get("name")),
+      category_slug: s(form.get("category_slug")),
+      description: s(form.get("description")),
+      region,
+      complexity: s(form.get("complexity")),
+      duration_minutes: s(form.get("duration_minutes")),
+      base_price_paise: rupees(form.get("price")),
+      artist_eligibility: "standard",
+      status: s(form.get("status")) === "active" ? "active" : "draft",
+      featured: false,
+      sort: "0",
+    });
+    const mask = form.get(`art_${region}`);
+    const photo = form.get(`photo_${region}`);
+    if (!(mask instanceof File) || !mask.size || !(photo instanceof File) || !photo.size) return { error: "Process a photo first." };
+    const db = await getDb();
+    await db.tx(async (q) => {
+      const r = await q.query<{ id: string }>(
+        `INSERT INTO designs(slug, name, category_slug, description, region, complexity, duration_minutes, base_price_paise, artist_eligibility, status, featured, sort)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,false,0) RETURNING id`,
+        [d.slug, d.name, d.category_slug, d.description, d.region, d.complexity, d.duration_minutes, d.base_price_paise, d.artist_eligibility, d.status],
+      );
+      id = r[0].id;
+      const maskUrl = await storeImage(mask, "designs", { requireAlpha: true });
+      const photoUrl = await storeImage(photo, "designs", { requireAlpha: true });
+      await q.query(`INSERT INTO design_assets(design_id, kind, url, source) VALUES ($1,$2,$3,'upload'), ($1,$4,$5,'upload')`, [id, region, maskUrl, `${region}_photo`, photoUrl]);
+    });
+    await audit(user.id, "design_from_photo", "design", id, { slug: d.slug, region, status: d.status });
+    updateTag("catalog");
+  } catch (e) {
+    return fail(e);
+  }
+  redirect(`/admin/designs/${id}?created=1`);
+}

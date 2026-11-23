@@ -48,6 +48,16 @@ Details (`mehndiMaterial.ts`):
    G = crease cavity → roughness and stain breaks), sheen and a warm subsurface-style bleed into shadows; the forearm
    cut dissolves into the stage with alpha.
 
+## Photo albedo (real skin + real henna)
+
+A design side can carry a **photo albedo** instead of the henna mask: `palm_photo` / `back_photo` assets — square RGBA
+in the same projection frame as the artwork (1000-unit square of `hand-landmarks.json`), sRGB colour, alpha = hand
+coverage. `mehndiMaterial.ts` blends it into the skin by alpha × surface-normal facing, disables the procedural stain
+and flattens the sculpted crease normals there; slots A/B crossfade with the artwork. Built-in photo looks for exact
+`PHOTO_MATCH` designs are produced by `scripts/hand-real/photo_transfer.py` (`public/designs/photo/<id>-palm[-stain].webp`,
+manifest `src/lib/mehndi/photo-palm.json`, helper `src/lib/mehndi/photo-palm.ts`); `HandViewer3D` accepts
+`palmPhoto` / `backPhoto` props for uploaded designs, which take precedence. Details: `HAND_REALISM.md` §7.
+
 ## Artwork system
 
 - All built-in designs are **generated in code** — `cone.ts` turns centre lines into cone-drawn strokes (variable width,

@@ -24,13 +24,15 @@ export interface MehndiUniforms {
   uBackB: { value: THREE.Texture };
   uDetail: { value: THREE.Texture };
   uMix: { value: number };
-  /** Photo palm (real skin + real henna, warped onto this hand by scripts/hand-real/photo_transfer.py). */
-  uPhotoA: { value: THREE.Texture };
-  uPhotoB: { value: THREE.Texture };
-  uPhotoMask: { value: THREE.Texture };
-  /** 1 when slot A / B holds a photo, 0 for the procedural look; crossfaded with uMix like the artwork. */
-  uPhotoOnA: { value: number };
-  uPhotoOnB: { value: number };
+  /**
+   * Photo albedo per side ("palm_photo" / "back_photo" design assets): square RGBA in the same projection frame
+   * as the artwork, sRGB colour, alpha = hand coverage. Uploaded premultiplied (no dark fringes when filtered).
+   * Slots A/B crossfade with uMix like the artwork.
+   */
+  uPhotoPalmA: { value: THREE.Texture };
+  uPhotoPalmB: { value: THREE.Texture };
+  uPhotoBackA: { value: THREE.Texture };
+  uPhotoBackB: { value: THREE.Texture };
   uStrength: { value: number };
 }
 
@@ -56,11 +58,10 @@ export function createMehndiMaterial(maps: SkinMaps) {
     uBackB: { value: empty },
     uDetail: { value: maps.detail },
     uMix: { value: 0 },
-    uPhotoA: { value: empty },
-    uPhotoB: { value: empty },
-    uPhotoMask: { value: empty },
-    uPhotoOnA: { value: 0 },
-    uPhotoOnB: { value: 0 },
+    uPhotoPalmA: { value: empty },
+    uPhotoPalmB: { value: empty },
+    uPhotoBackA: { value: empty },
+    uPhotoBackB: { value: empty },
     uStrength: { value: 1 },
   };
 
@@ -109,11 +110,10 @@ export function createMehndiMaterial(maps: SkinMaps) {
         uniform sampler2D uBackB;
         uniform sampler2D uDetail;
         uniform float uMix;
-        uniform sampler2D uPhotoA;
-        uniform sampler2D uPhotoB;
-        uniform sampler2D uPhotoMask;
-        uniform float uPhotoOnA;
-        uniform float uPhotoOnB;
+        uniform sampler2D uPhotoPalmA;
+        uniform sampler2D uPhotoPalmB;
+        uniform sampler2D uPhotoBackA;
+        uniform sampler2D uPhotoBackB;
         uniform float uStrength;
         const float FRAME_CU = ${frame.centerU.toFixed(6)};
         const float FRAME_CV = ${frame.centerV.toFixed(6)};
@@ -182,17 +182,20 @@ export function createMehndiMaterial(maps: SkinMaps) {
           float tone = vnoise(vBindPos * 55.0) * 0.6 + vnoise(vBindPos * 210.0) * 0.4;
           diffuseColor.rgb *= 0.985 + tone * 0.03;
 
-          // ---- photo palm: real skin and real henna from a photograph, in the same palm projection frame.
-          // Used on palm-facing surfaces inside the feathered photo mask; finger sides blend into our skin.
+          // ---- photo albedo: real skin and real henna from a photograph, in the artwork projection frame.
+          // Palm photo on palm-facing surfaces, back photo on the back; alpha feathers into our skin, and finger
+          // sides blend by the surface normal.
           {
-            vec2 uvPh = vec2(0.5 - (vBindPos.z - FRAME_CU) / FRAME_S, 0.5 + (FRAME_CV - vBindPos.y) / FRAME_S);
-            float facing = smoothstep(0.12, 0.5, -normalize(vBindNormal).x);
-            float m = texture2D(uPhotoMask, uvPh).r * facing;
-            photoW = m * mix(uPhotoOnA, uPhotoOnB, uMix);
-            vec3 pa = texture2D(uPhotoA, uvPh).rgb;
-            vec3 pb = texture2D(uPhotoB, uvPh).rgb;
-            vec3 pc = mix(pa * uPhotoOnA, pb * uPhotoOnB, uMix) / max(mix(uPhotoOnA, uPhotoOnB, uMix), 1e-3);
-            diffuseColor.rgb = mix(diffuseColor.rgb, pc, photoW);
+            vec3 nB = normalize(vBindNormal);
+            float v = 0.5 + (FRAME_CV - vBindPos.y) / FRAME_S;
+            vec2 uvP = vec2(0.5 - (vBindPos.z - FRAME_CU) / FRAME_S, v);
+            vec2 uvB = vec2(0.5 + (vBindPos.z - FRAME_CU) / FRAME_S, v);
+            // premultiplied samples: rgb already weighted by alpha
+            vec4 pp = mix(texture2D(uPhotoPalmA, uvP), texture2D(uPhotoPalmB, uvP), uMix) * smoothstep(0.04, 0.4, -nB.x);
+            vec4 pk = mix(texture2D(uPhotoBackA, uvB), texture2D(uPhotoBackB, uvB), uMix) * smoothstep(0.04, 0.4, nB.x);
+            vec4 ph = pp + pk;
+            photoW = clamp(ph.a, 0.0, 1.0);
+            diffuseColor.rgb = mix(diffuseColor.rgb, ph.rgb / max(ph.a, 1e-4), photoW);
           }
           // Nails: lighter, pinker, translucent-looking plate.
           // (nail bed / free-edge colours are in the albedo; gloss and translucency are handled below)
@@ -301,5 +304,40 @@ export function loadArtTexture(url: string, size: number, anisotropy: number): P
     tp?.then((t) => t.dispose()).catch(() => {});
   }
   p.catch(() => cache.delete(key));
+  return p;
+}
+
+const photoCache = new Map<string, Promise<THREE.Texture>>();
+const photoOrder: string[] = [];
+const MAX_PHOTOS = 3; // current + previous (crossfade) + one spare; evicted textures are disposed
+
+/**
+ * Load a photo albedo ("palm_photo" / "back_photo": RGBA, sRGB colour, alpha = coverage). Premultiplied on upload so
+ * filtering at the feathered edge never pulls in dark transparent texels; full mip chain and maximum anisotropy so
+ * it stays crisp when zoomed and at grazing angles.
+ */
+export function loadPhotoTexture(url: string, anisotropy: number): Promise<THREE.Texture> {
+  const hit = photoCache.get(url);
+  if (hit) return hit;
+  const p = new THREE.TextureLoader().loadAsync(url).then((tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.premultiplyAlpha = true;
+    tex.anisotropy = anisotropy;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = true;
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.needsUpdate = true;
+    return tex;
+  });
+  photoCache.set(url, p);
+  photoOrder.push(url);
+  while (photoOrder.length > MAX_PHOTOS) {
+    const old = photoOrder.shift()!;
+    const tp = photoCache.get(old);
+    photoCache.delete(old);
+    tp?.then((t) => t.dispose()).catch(() => {});
+  }
+  p.catch(() => photoCache.delete(url));
   return p;
 }

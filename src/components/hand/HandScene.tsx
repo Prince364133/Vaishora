@@ -10,7 +10,7 @@ import { Environment, Lightformer, OrbitControls, useGLTF, useTexture } from "@r
 import { forwardRef, Suspense, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { createMehndiMaterial, EMPTY_TEXTURE, loadArtTexture } from "./mehndiMaterial";
+import { createMehndiMaterial, EMPTY_TEXTURE, loadArtTexture, loadPhotoTexture } from "./mehndiMaterial";
 
 // Realistic female hand built from CC0 MakeHuman assets (scripts/hand-real, docs/HAND_REALISM.md).
 export const HAND_HQ_URL = "/models/hand-hq.glb";
@@ -31,6 +31,9 @@ export interface HandSceneHandle {
 interface Props {
   palmArt: string | null;
   backArt: string | null;
+  /** Optional photo albedo per side ("palm_photo" / "back_photo" assets): real skin + henna, used instead of the mask. */
+  palmPhoto?: string | null;
+  backPhoto?: string | null;
   quality: "high" | "low";
   onReady?: () => void;
   onError?: (e: Error) => void;
@@ -67,7 +70,7 @@ function useHandAssets(quality: "high" | "low") {
   }, [gltf, albedo, normal, detail, gl]);
 }
 
-function Hand({ palmArt, backArt, quality, onReady, onError }: Props) {
+function Hand({ palmArt, backArt, palmPhoto = null, backPhoto = null, quality, onReady, onError }: Props) {
   const { geo, maps } = useHandAssets(quality);
   const { material, uniforms } = useMemo(() => createMehndiMaterial(maps), [maps]);
   const invalidate = useThree((s) => s.invalidate);
@@ -83,15 +86,21 @@ function Hand({ palmArt, backArt, quality, onReady, onError }: Props) {
     let cancelled = false;
     const size = quality === "high" ? 2048 : 1024;
     const aniso = Math.min(8, gl.capabilities.getMaxAnisotropy());
+    const photoAniso = Math.min(16, gl.capabilities.getMaxAnisotropy());
+    // A side with a photo uses the photo instead of the procedural mask.
     Promise.all([
-      palmArt ? loadArtTexture(palmArt, size, aniso) : Promise.resolve(EMPTY_TEXTURE),
-      backArt ? loadArtTexture(backArt, size, aniso) : Promise.resolve(EMPTY_TEXTURE),
+      palmArt && !palmPhoto ? loadArtTexture(palmArt, size, aniso) : Promise.resolve(EMPTY_TEXTURE),
+      backArt && !backPhoto ? loadArtTexture(backArt, size, aniso) : Promise.resolve(EMPTY_TEXTURE),
+      palmPhoto ? loadPhotoTexture(palmPhoto, photoAniso) : Promise.resolve(EMPTY_TEXTURE),
+      backPhoto ? loadPhotoTexture(backPhoto, photoAniso) : Promise.resolve(EMPTY_TEXTURE),
     ])
-      .then(([palm, back]) => {
+      .then(([palm, back, pPalm, pBack]) => {
         if (cancelled) return;
         if (!readyRef.current) {
           uniforms.uPalmA.value = palm;
           uniforms.uBackA.value = back;
+          uniforms.uPhotoPalmA.value = pPalm;
+          uniforms.uPhotoBackA.value = pBack;
           uniforms.uMix.value = 0;
           readyRef.current = true;
           invalidate();
@@ -102,9 +111,13 @@ function Hand({ palmArt, backArt, quality, onReady, onError }: Props) {
         if (fade.current.active) {
           uniforms.uPalmA.value = uniforms.uMix.value > 0.5 ? uniforms.uPalmB.value : uniforms.uPalmA.value;
           uniforms.uBackA.value = uniforms.uMix.value > 0.5 ? uniforms.uBackB.value : uniforms.uBackA.value;
+          uniforms.uPhotoPalmA.value = uniforms.uMix.value > 0.5 ? uniforms.uPhotoPalmB.value : uniforms.uPhotoPalmA.value;
+          uniforms.uPhotoBackA.value = uniforms.uMix.value > 0.5 ? uniforms.uPhotoBackB.value : uniforms.uPhotoBackA.value;
         }
         uniforms.uPalmB.value = palm;
         uniforms.uBackB.value = back;
+        uniforms.uPhotoPalmB.value = pPalm;
+        uniforms.uPhotoBackB.value = pBack;
         uniforms.uMix.value = 0;
         fade.current = { active: true, t: 0 };
         invalidate();
@@ -113,7 +126,7 @@ function Hand({ palmArt, backArt, quality, onReady, onError }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [palmArt, backArt, quality, gl, uniforms, invalidate, onReady, onError]);
+  }, [palmArt, backArt, palmPhoto, backPhoto, quality, gl, uniforms, invalidate, onReady, onError]);
 
   useFrame((_, delta) => {
     if (!fade.current.active) return;
@@ -123,6 +136,8 @@ function Hand({ palmArt, backArt, quality, onReady, onError }: Props) {
     if (t >= 1) {
       uniforms.uPalmA.value = uniforms.uPalmB.value;
       uniforms.uBackA.value = uniforms.uBackB.value;
+      uniforms.uPhotoPalmA.value = uniforms.uPhotoPalmB.value;
+      uniforms.uPhotoBackA.value = uniforms.uPhotoBackB.value;
       uniforms.uMix.value = 0;
       fade.current.active = false;
     }

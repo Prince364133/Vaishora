@@ -1,6 +1,9 @@
 # Renders the photographic palm/back stills used by HandIllustration (thumbnails + WebGL fallback).
 #
 #   blender -b --factory-startup --python scripts/hand-real/render_stills.py -- <repo_root> <out_dir> [size]
+#       [--palm-photo <rgba.webp>] [--side palm|back] [--zoom <factor>] [--name <file stem>]
+#   --palm-photo applies a "palm_photo" asset as albedo exactly like the realtime shader (palm projection frame,
+#   alpha x palm-facing weight) — used to verify scripts/hand-real/photo_transfer.py without a running site.
 #
 # The orthographic camera covers exactly the mehndi projection frame from src/lib/mehndi/hand-landmarks.json, so a
 # 1000x1000 artwork (built-in SVG or an uploaded PNG/WebP aligned to these stills) overlays the still pixel-perfectly,
@@ -16,7 +19,17 @@ from mathutils import Matrix
 argv = sys.argv[sys.argv.index("--") + 1 :]
 ROOT = pathlib.Path(argv[0])
 OUT = pathlib.Path(argv[1])
-SIZE = int(argv[2]) if len(argv) > 2 else 1000
+SIZE = int(argv[2]) if len(argv) > 2 and not argv[2].startswith("--") else 1000
+
+
+def opt(name, default=None):
+    return argv[argv.index(name) + 1] if name in argv else default
+
+
+PALM_PHOTO = opt("--palm-photo")
+SIDES = [opt("--side")] if opt("--side") else ["palm", "back"]
+ZOOM = float(opt("--zoom", "1"))
+NAME = opt("--name")
 OUT.mkdir(parents=True, exist_ok=True)
 lm = json.loads((ROOT / "src/lib/mehndi/hand-landmarks.json").read_text())
 fr = lm["frame"]
@@ -84,7 +97,49 @@ hsv = N.new("ShaderNodeHueSaturation")
 hsv.inputs["Saturation"].default_value = 1.0
 hsv.inputs["Value"].default_value = 1.0
 L.new(mul.outputs["Result"], hsv.inputs["Color"])
-L.new(hsv.outputs["Color"], bsdf.inputs["Base Color"])
+skin_out = hsv.outputs["Color"]
+if PALM_PHOTO:
+    # projection exactly as in mehndiMaterial.ts: u = 0.5 - (z - cu)/S, v = 0.5 + (cv - y)/S (v = 1 at the top row)
+    pg = N.new("ShaderNodeNewGeometry")
+    ps = N.new("ShaderNodeSeparateXYZ")
+    L.new(pg.outputs["Position"], ps.inputs[0])
+    mu = N.new("ShaderNodeMath")
+    mu.operation = "MULTIPLY_ADD"
+    mu.inputs[1].default_value = -1.0 / fr["size"]
+    mu.inputs[2].default_value = 0.5 + fr["centerU"] / fr["size"]
+    L.new(ps.outputs["Z"], mu.inputs[0])
+    mv = N.new("ShaderNodeMath")
+    mv.operation = "MULTIPLY_ADD"
+    mv.inputs[1].default_value = -1.0 / fr["size"]
+    mv.inputs[2].default_value = 0.5 + fr["centerV"] / fr["size"]
+    L.new(ps.outputs["Y"], mv.inputs[0])
+    cmb = N.new("ShaderNodeCombineXYZ")
+    L.new(mu.outputs[0], cmb.inputs["X"])
+    L.new(mv.outputs[0], cmb.inputs["Y"])
+    ptex = N.new("ShaderNodeTexImage")
+    ptex.image = bpy.data.images.load(str(pathlib.Path(PALM_PHOTO).resolve()))
+    ptex.image.alpha_mode = "STRAIGHT"
+    ptex.interpolation = "Cubic"
+    ptex.extension = "CLIP"
+    L.new(cmb.outputs[0], ptex.inputs["Vector"])
+    nsep = N.new("ShaderNodeSeparateXYZ")
+    L.new(pg.outputs["Normal"], nsep.inputs[0])
+    face = N.new("ShaderNodeMapRange")
+    face.inputs["From Min"].default_value = -0.04
+    face.inputs["From Max"].default_value = -0.4
+    face.interpolation_type = "SMOOTHSTEP"
+    L.new(nsep.outputs["X"], face.inputs["Value"])
+    wgt = N.new("ShaderNodeMath")
+    wgt.operation = "MULTIPLY"
+    L.new(ptex.outputs["Alpha"], wgt.inputs[0])
+    L.new(face.outputs["Result"], wgt.inputs[1])
+    mixp = N.new("ShaderNodeMix")
+    mixp.data_type = "RGBA"
+    L.new(wgt.outputs[0], mixp.inputs["Factor"])
+    L.new(skin_out, mixp.inputs["A"])
+    L.new(ptex.outputs["Color"], mixp.inputs["B"])
+    skin_out = mixp.outputs["Result"]
+L.new(skin_out, bsdf.inputs["Base Color"])
 nmap = N.new("ShaderNodeNormalMap")
 nmap.inputs["Strength"].default_value = 0.9
 L.new(nrm.outputs["Color"], nmap.inputs["Color"])
@@ -139,7 +194,7 @@ scene.world.node_tree.nodes["Background"].inputs[1].default_value = 0.35
 
 cam_data = bpy.data.cameras.new("cam")
 cam_data.type = "ORTHO"
-cam_data.ortho_scale = fr["size"]
+cam_data.ortho_scale = fr["size"] / ZOOM
 cam = bpy.data.objects.new("cam", cam_data)
 scene.collection.objects.link(cam)
 scene.camera = cam
@@ -163,7 +218,7 @@ def aim(obj, target=(0, fr["centerV"], fr["centerU"])):
     obj.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
 
 
-for side, sx in (("palm", -1.0), ("back", 1.0)):
+for side, sx in [(s_, -1.0 if s_ == "palm" else 1.0) for s_ in SIDES]:
     for o in [o for o in scene.objects if o.type == "LIGHT"]:
         bpy.data.objects.remove(o)
     # key: large soft box above-front-left of the camera; fill opposite; warm rim from behind
@@ -172,9 +227,11 @@ for side, sx in (("palm", -1.0), ("back", 1.0)):
     rim = area("rim", (-sx * 0.4, fr["centerV"] - 0.2, fr["centerU"] + 0.45), 5.0, 0.4, (1.0, 0.86, 0.72))
     for o in (k, fl, rim):
         aim(o)
-    cam.location = (sx * 1.0, fr["centerV"], fr["centerU"])
+    # zoomed views look at the palm centre (between the wrist and the middle knuckle)
+    cy = fr["centerV"] if ZOOM == 1 else fr["centerV"] - 0.012
+    cam.location = (sx * 1.0, cy, fr["centerU"])
     cols = ((0, 0, -1), (0, -1, 0), (-1, 0, 0)) if sx < 0 else ((0, 0, 1), (0, -1, 0), (1, 0, 0))
     cam.rotation_euler = Matrix(cols).transposed().to_euler()
-    scene.render.filepath = str(OUT / f"{side}.png")
+    scene.render.filepath = str(OUT / f"{NAME or side}.png")
     bpy.ops.render.render(write_still=True)
 print("STILLS_OK")

@@ -25,7 +25,7 @@ export interface Design {
   status: "active" | "draft" | "unavailable";
   featured: boolean;
   sort: number;
-  assets: { palm?: string; back?: string; feet?: string };
+  assets: { palm?: string; back?: string; feet?: string; palm_photo?: string; back_photo?: string };
 }
 
 const DESIGN_SELECT = `

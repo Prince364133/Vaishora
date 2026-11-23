@@ -103,7 +103,7 @@ for f, key in names.items():
     B, T = np.array(hf["B"], float), np.array(hf["T"], float)
     dirp = (T - B) / np.linalg.norm(T - B)
     p_base = np.array([B[0], hf["web"]], float)
-    p_tip = T + dirp * hf["rT"] * 0.92
+    p_tip = T + dirp * hf["rT"] * 0.45  # inside the photo fingertip so our tip pad gets the (dipped) photo tip
     photo_axis = [p_base, p_tip]
     o0, o1, o2, o3 = (J[f"{key}-phalanx-proximal"], J[f"{key}-phalanx-intermediate"], J[f"{key}-phalanx-distal"], J[f"{key}-tip"])
     o_base = o0 + (o1 - o0) * 0.4  # palm-side digital crease (same rule as src/lib/mehndi/hand2d.ts)
@@ -125,7 +125,7 @@ th = hand["thumb"]
 P = [np.array(p, float) for p in th["P"]]
 R = th["R"]
 dth = (P[2] - P[1]) / np.linalg.norm(P[2] - P[1])
-photo_thumb = [P[0], P[1], P[2] + dth * R[2] * 0.9]
+photo_thumb = [P[0], P[1], P[2] + dth * R[2] * 0.45]
 our_thumb = [J["thumb-phalanx-proximal"], J["thumb-phalanx-distal"], J["thumb-tip"]]
 for t in (0.0, 0.33, 0.66, 1.0):
     ps, ds = along(photo_thumb, t)

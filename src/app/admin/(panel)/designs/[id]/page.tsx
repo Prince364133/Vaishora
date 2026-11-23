@@ -24,7 +24,7 @@ async function Editor({ params }: { params: Promise<{ id: string }> }) {
         <input type="hidden" name="id" value={d?.id ?? ""} />
         <div className="grid gap-4 md:grid-cols-2">
           <label className="field"><span className="label">Name</span><input name="name" required defaultValue={d?.name} className="input" /></label>
-          <label className="field"><span className="label">Slug (URL)</span><input name="slug" required pattern="[a-z0-9-]{3,60}" autoCapitalize="none" spellCheck={false} defaultValue={d?.slug} className="input" /></label>
+          <label className="field"><span className="label">Slug (URL)</span><input name="slug" required pattern="[a-z0-9\-]{3,60}" autoCapitalize="none" spellCheck={false} defaultValue={d?.slug} className="input" /></label>
           <label className="field"><span className="label">Category</span>
             <select name="category_slug" required defaultValue={d?.category_slug ?? ""} className="input">
               <option value="" disabled>Choose</option>

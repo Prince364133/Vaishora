@@ -6,6 +6,7 @@ import type { HandSceneHandle, HandView } from "./HandScene";
 import { HandIllustration } from "./HandIllustration";
 import { PhotoHandViewer } from "./PhotoHandViewer";
 import { getViewerMode, setViewerMode, subscribeViewerMode, ViewerMode } from "@/lib/photo-tryon";
+import { catalogHasStain, catalogPhotoPalm, PhotoPalmLook } from "@/lib/mehndi/photo-palm";
 
 const HandScene = dynamic(() => import("./HandScene"), { ssr: false });
 
@@ -41,6 +42,9 @@ interface Props {
   tone?: "stage" | "light";
   /** Catalogue slug, used to pick the closest look in the Photo 3D viewer. */
   designSlug?: string;
+  /** Photo albedo assets ("palm_photo" / "back_photo"); built-in catalogue photos are used when absent. */
+  palmPhoto?: string | null;
+  backPhoto?: string | null;
 }
 
 /**
@@ -89,7 +93,8 @@ export function HandViewer3D(props: Props) {
   );
 }
 
-function SculptedHandViewer({ palmArt, backArt, region, designName, className = "", tone = "stage" }: Props) {
+function SculptedHandViewer({ palmArt, backArt, region, designName, className = "", tone = "stage", designSlug, palmPhoto, backPhoto }: Props) {
+  const [look, setLook] = useState<PhotoPalmLook>("stain");
   const [mode, setMode] = useState<Mode>("checking");
   const [quality, setQuality] = useState<"high" | "low">("low");
   const [ready, setReady] = useState(false);
@@ -128,6 +133,11 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
   const fallbackArt = region === "feet" ? palmArt : fallbackSide === "back" ? backArt : palmArt;
   const showFeetNote = region === "feet";
   const onStage = tone === "stage";
+  // Real photographed palm (skin + henna) for designs that have one; the procedural mask otherwise.
+  const builtInPhoto = palmPhoto ? null : catalogPhotoPalm(designSlug, look, quality);
+  const photoPalm = region === "feet" ? null : palmPhoto ?? builtInPhoto;
+  const photoBack = region === "feet" ? null : backPhoto ?? null;
+  const showLook = mode === "3d" && !!builtInPhoto && catalogHasStain(designSlug) && region !== "feet";
 
   // Compact 44px icon buttons so the whole bar stays on one row down to 320px wide screens.
   const btn = `inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
@@ -150,13 +160,35 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
         )}
         {mode === "3d" && !showFeetNote && (
           <div className={`absolute inset-0 transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}>
-            <HandScene ref={scene} palmArt={palmArt} backArt={backArt} quality={quality} onReady={onReady} onError={onError} onViewChange={setView} />
+            <HandScene ref={scene} palmArt={palmArt} backArt={backArt} palmPhoto={photoPalm} backPhoto={photoBack} quality={quality} onReady={onReady} onError={onError} onViewChange={setView} />
           </div>
         )}
         {mode === "3d" && !ready && !showFeetNote && (
           <p className={`absolute bottom-3 inset-x-0 text-center text-xs ${onStage ? "text-blush/70" : "text-muted"}`} role="status">
             Loading 3D hand…
           </p>
+        )}
+        {showLook && (
+          <div
+            className={`absolute right-3 top-14 z-10 inline-flex rounded-full p-0.5 text-xs font-semibold ${onStage ? "bg-plum-deep/70 ring-1 ring-white/15" : "bg-blush ring-1 ring-[var(--color-line)]"}`}
+            role="radiogroup"
+            aria-label="Mehndi look"
+          >
+            {(["stain", "paste"] as const).map((l) => (
+              <button
+                key={l}
+                type="button"
+                role="radio"
+                aria-checked={look === l}
+                onClick={() => setLook(l)}
+                className={`min-h-9 rounded-full px-3 transition-colors ${
+                  look === l ? (onStage ? "bg-ivory text-plum" : "bg-plum text-ivory") : onStage ? "text-blush" : "text-plum"
+                }`}
+              >
+                {l === "stain" ? "Stain" : "Paste"}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

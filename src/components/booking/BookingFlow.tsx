@@ -356,6 +356,8 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
                   region={design.region}
                   designName={design.name}
                   designSlug={design.slug}
+                  palmPhoto={design.assets.palm_photo ?? null}
+                  backPhoto={design.assets.back_photo ?? null}
                   className="absolute inset-0 pt-6"
                 />
               </div>

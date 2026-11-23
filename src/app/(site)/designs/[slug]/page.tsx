@@ -27,7 +27,7 @@ async function Detail({ params }: { params: Promise<{ slug: string }> }) {
       <div className="container-v grid gap-6 pb-6 md:gap-8 md:pb-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] short-land:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)]">
         <div className="arch relative h-[clamp(260px,52svh,600px)] overflow-hidden bg-plum lg:h-[72svh] lg:max-h-[640px] short-land:sticky short-land:top-[calc(var(--header-h)+8px)] short-land:h-[calc(100svh-var(--header-h)-16px)]">
           <div aria-hidden className="pointer-events-none absolute inset-[7px] arch border border-gold/35" />
-          <HandViewer3D palmArt={isFeet ? d.assets.feet ?? null : d.assets.palm ?? null} backArt={isFeet ? null : d.assets.back ?? null} region={d.region} designName={d.name} designSlug={d.slug} className="absolute inset-0 pt-6" />
+          <HandViewer3D palmArt={isFeet ? d.assets.feet ?? null : d.assets.palm ?? null} backArt={isFeet ? null : d.assets.back ?? null} region={d.region} designName={d.name} designSlug={d.slug} palmPhoto={d.assets.palm_photo ?? null} backPhoto={d.assets.back_photo ?? null} className="absolute inset-0 pt-6" />
         </div>
         <div className="lg:pt-4">
           <p className="text-sm font-semibold text-rose-deep">{d.category_name}</p>

@@ -11,7 +11,7 @@ with sync_playwright() as p:
     pg = b.new_page(viewport={"width": 1366, "height": 900}, device_scale_factor=2)
     pg.on("pageerror", lambda e: print("[pageerror]", e))
     pg.on("console", lambda m: print(f"[{m.type}]", m.text) if m.type == "error" else None)
-    pg.goto(url, wait_until="networkidle")
+    pg.goto(url, wait_until="load", timeout=120000)
     pg.wait_for_timeout(6000)
     if design:
         pg.get_by_role("radio", name=design).first.click()

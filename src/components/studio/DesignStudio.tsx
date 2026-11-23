@@ -102,6 +102,8 @@ export function DesignStudio({ designs, categories, initialSlug }: Props) {
               region={selected.region}
               designName={selected.name}
               designSlug={selected.slug}
+              palmPhoto={selected.assets.palm_photo ?? null}
+              backPhoto={selected.assets.back_photo ?? null}
               className="absolute inset-0 pt-6"
             />
           </div>
