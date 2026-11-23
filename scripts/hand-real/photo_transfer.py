@@ -277,7 +277,13 @@ mask_w = cv2.GaussianBlur(cv2.erode(mask_w, np.ones((fe, fe), np.uint8)), (0, 0)
 
 for pid, look, fn in jobs:
     img = load_img(fn).astype(np.float32)
-    alb = img / shade[..., None] * gain[None, None]
+    # de-light with the bare hands' low-frequency shading (same pose, so the same shading), then white-balance and
+    # expose THIS photo's own skin to the sculpted palm tone: the AI-edited design photos differ in exposure/WB.
+    dl = img / shade[..., None]
+    px = dl[mask > 0]
+    lum = px @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    skin_i = np.median(px[lum >= np.percentile(lum, 75)], axis=0)
+    alb = dl * (PALM / skin_i)[None, None]
     # fill outside the hand with nearby hand colour so Lanczos/mip filtering never pulls in silk at the edges
     inv = (mask == 0).astype(np.uint8)
     filled = cv2.inpaint(np.clip(alb, 0, 255).astype(np.uint8), inv, 5, cv2.INPAINT_TELEA) if inv.any() else alb.astype(np.uint8)
@@ -301,7 +307,7 @@ for pid, look, fn in jobs:
         im.save(OUT / name, quality=90, method=6, alpha_quality=90)
         files[tier] = f"/designs/photo/{name}"
     manifest["looks"][key] = files
-    print(key, {t: f"{(OUT / pathlib.Path(n).name).stat().st_size // 1024} KB" for t, n in files.items()})
+    print(key, "skin", skin_i.round(1), {t: f"{(OUT / pathlib.Path(n).name).stat().st_size // 1024} KB" for t, n in files.items()})
     if pid in ("royal", "arabic", "bare"):
         prev = Image.fromarray(out).resize((1000, 1000), Image.LANCZOS)
         a = Image.fromarray(mask_w).resize((1000, 1000))

@@ -6,7 +6,8 @@
 // The WebGL part of the hand viewer. Loaded only on the client via next/dynamic.
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, OrbitControls, useGLTF, useTexture } from "@react-three/drei";
+import { Environment, OrbitControls, useGLTF, useTexture } from "@react-three/drei";
+import landmarks from "@/lib/mehndi/hand-landmarks.json";
 import { forwardRef, Suspense, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -15,6 +16,9 @@ import { createMehndiMaterial, EMPTY_TEXTURE, loadArtTexture, loadPhotoTexture }
 // Realistic female hand built from CC0 MakeHuman assets (scripts/hand-real, docs/HAND_REALISM.md).
 export const HAND_HQ_URL = "/models/hand-hq.glb";
 export const HAND_LQ_URL = "/models/hand-lq.glb";
+// Poly Haven "Studio Small 09" (CC0), 256x128 RGBE, and the tileable skin micro normal (scripts/hand-real/make_env_micro.py).
+const ENV_URL = "/models/studio-256.hdr";
+const MICRO_URL = "/models/skin-micro-normal.jpg";
 const SKIN_MAPS = {
   high: ["/models/hand-albedo-2k.jpg", "/models/hand-normal-2k.jpg", "/models/hand-detail-1k.jpg"],
   low: ["/models/hand-albedo-1k.jpg", "/models/hand-normal-1k.jpg", "/models/hand-detail-1k.jpg"],
@@ -43,11 +47,12 @@ interface Props {
 
 const DEFAULT_DISTANCE = 0.55;
 const MIN_DISTANCE = 0.28;
-const MAX_DISTANCE = 0.9;
+// The forearm runs ~19 cm past the wrist; at this distance and the polar limits below its closed end stays out of frame.
+const MAX_DISTANCE = 0.78;
 
 function useHandAssets(quality: "high" | "low") {
   const gltf = useGLTF(quality === "high" ? HAND_HQ_URL : HAND_LQ_URL, false);
-  const [albedo, normal, detail] = useTexture([...SKIN_MAPS[quality]]);
+  const [albedo, normal, detail, micro] = useTexture([...SKIN_MAPS[quality], MICRO_URL]);
   const gl = useThree((s) => s.gl);
   return useMemo(() => {
     let mesh: THREE.Mesh | null = null;
@@ -58,7 +63,9 @@ function useHandAssets(quality: "high" | "low") {
     const geo = (mesh as THREE.Mesh).geometry;
     geo.computeBoundingBox();
     const aniso = Math.min(8, gl.capabilities.getMaxAnisotropy());
-    for (const t of [albedo, normal, detail]) {
+    micro.wrapS = micro.wrapT = THREE.RepeatWrapping;
+    micro.colorSpace = THREE.NoColorSpace;
+    for (const t of [albedo, normal, detail, micro]) {
       t.flipY = false; // glTF UV convention
       t.anisotropy = aniso;
       t.needsUpdate = true;
@@ -66,8 +73,8 @@ function useHandAssets(quality: "high" | "low") {
     albedo.colorSpace = THREE.SRGBColorSpace;
     normal.colorSpace = THREE.NoColorSpace;
     detail.colorSpace = THREE.NoColorSpace;
-    return { geo, maps: { albedo, normal, detail } };
-  }, [gltf, albedo, normal, detail, gl]);
+    return { geo, maps: { albedo, normal, detail, micro } };
+  }, [gltf, albedo, normal, detail, micro, gl]);
 }
 
 function Hand({ palmArt, backArt, palmPhoto = null, backPhoto = null, quality, onReady, onError }: Props) {
@@ -150,7 +157,8 @@ function Hand({ palmArt, backArt, palmPhoto = null, backPhoto = null, quality, o
   const center = useMemo(() => {
     const bb = geo.boundingBox!;
     const c = bb.getCenter(new THREE.Vector3());
-    c.y = (bb.min.y + bb.max.y - 0.045) / 2;
+    // centre on the hand region of the projection frame (fingertips → 8.5 cm below the wrist), not the long forearm
+    c.y = (landmarks.frame.minY + landmarks.frame.maxY) / 2 - 0.004;
     return c;
   }, [geo]);
 
@@ -253,8 +261,8 @@ const CameraRig = forwardRef<HandSceneHandle, { onViewChange?: (v: HandView) => 
         zoomSpeed={0.6}
         minDistance={MIN_DISTANCE}
         maxDistance={MAX_DISTANCE}
-        minPolarAngle={Math.PI * 0.22}
-        maxPolarAngle={Math.PI * 0.78}
+        minPolarAngle={Math.PI * 0.3}
+        maxPolarAngle={Math.PI * 0.62}
         onStart={() => {
           if (anim.current) anim.current.active = false;
         }}
@@ -273,25 +281,23 @@ const HandScene = forwardRef<HandSceneHandle, Props>(function HandScene(props, r
       camera={{ position: [0, 0, DEFAULT_DISTANCE], fov: 28, near: 0.01, far: 10 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
-        gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.12;
+        // Khronos PBR Neutral: keeps skin and henna hue/saturation true (AgX greys skin, ACES pushes it orange)
+        // while still rolling off highlights.
+        gl.toneMapping = THREE.NeutralToneMapping;
+        gl.toneMappingExposure = 0.88;
       }}
       aria-hidden
     >
       {/* Flattering beauty lighting, symmetric so palm and back are both well lit: a soft warm key for each side,
           a warm low fill, and gentle ambient so the shadow side never goes muddy on the plum stage. */}
-      <ambientLight intensity={0.42} color="#fff0e6" />
-      <directionalLight position={[0.55, 0.8, 1]} intensity={1.35} color="#fff3ea" />
-      <directionalLight position={[-0.55, 0.8, -1]} intensity={1.35} color="#fff3ea" />
-      <directionalLight position={[-0.9, -0.4, 0.2]} intensity={0.45} color="#ffd8c4" />
+      {/* Studio HDRI for soft, natural fill and reflections; one soft key per side (palm/back), a warm fill and a
+          gentle cool-pink rim that separates the hand from the plum stage. */}
+      <directionalLight position={[0.6, 0.9, 1]} intensity={1.15} color="#fff4ec" />
+      <directionalLight position={[-0.6, 0.9, -1]} intensity={1.15} color="#fff4ec" />
+      <directionalLight position={[-1, -0.3, 0.3]} intensity={0.35} color="#ffd9c6" />
+      <directionalLight position={[1.2, 0.4, -0.2]} intensity={0.45} color="#f3d6e6" />
       <Suspense fallback={null}>
-        <Environment resolution={128} frames={1}>
-          <Lightformer form="rect" intensity={1.6} color="#fff6f0" position={[0, 2, 3]} scale={[4, 2, 1]} />
-          <Lightformer form="rect" intensity={1.6} color="#fff6f0" position={[0, 2, -3]} scale={[4, 2, 1]} />
-          <Lightformer form="rect" intensity={0.8} color="#f8e8ec" position={[-3, 0, 1]} scale={[2, 4, 1]} />
-          <Lightformer form="rect" intensity={0.7} color="#d4af7c" position={[3, -1, -2]} scale={[2, 3, 1]} />
-          <Lightformer form="circle" intensity={0.5} color="#ffffff" position={[0, -3, 0]} scale={2} />
-        </Environment>
+        <Environment files={ENV_URL} environmentIntensity={0.55} />
         <Hand {...props} />
       </Suspense>
       <CameraRig ref={ref} onViewChange={props.onViewChange} interactive={interactive} />

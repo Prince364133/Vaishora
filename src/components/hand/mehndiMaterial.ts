@@ -23,6 +23,7 @@ export interface MehndiUniforms {
   uBackA: { value: THREE.Texture };
   uBackB: { value: THREE.Texture };
   uDetail: { value: THREE.Texture };
+  uMicro: { value: THREE.Texture };
   uMix: { value: number };
   /**
    * Photo albedo per side ("palm_photo" / "back_photo" design assets): square RGBA in the same projection frame
@@ -47,6 +48,8 @@ export interface SkinMaps {
   albedo: THREE.Texture;
   normal: THREE.Texture;
   detail: THREE.Texture;
+  /** Tileable micro normal (pores, fine skin relief), repeated at ≈ 1.4 cm. */
+  micro: THREE.Texture;
 }
 
 export function createMehndiMaterial(maps: SkinMaps) {
@@ -57,6 +60,7 @@ export function createMehndiMaterial(maps: SkinMaps) {
     uBackA: { value: empty },
     uBackB: { value: empty },
     uDetail: { value: maps.detail },
+    uMicro: { value: maps.micro },
     uMix: { value: 0 },
     uPhotoPalmA: { value: empty },
     uPhotoPalmB: { value: empty },
@@ -68,18 +72,18 @@ export function createMehndiMaterial(maps: SkinMaps) {
   const mat = new THREE.MeshPhysicalMaterial({
     map: maps.albedo,
     normalMap: maps.normal,
-    normalScale: new THREE.Vector2(0.65, 0.65),
+    normalScale: new THREE.Vector2(0.75, 0.75),
     color: new THREE.Color(1, 1, 1),
-    roughness: 0.52,
+    // Dual-lobe skin specular: a broad base lobe (roughness ~0.55) plus a thin, sharper oily layer (clear coat).
+    roughness: 0.55,
     metalness: 0,
-    specularIntensity: 0.42,
-    specularColor: new THREE.Color("#fff4ec"),
-    sheen: 0.45,
+    specularIntensity: 0.5,
+    specularColor: new THREE.Color("#fff4ee"),
+    sheen: 0.22,
     sheenRoughness: 0.55,
-    sheenColor: new THREE.Color("#fce0d2"),
-    clearcoat: 0.02,
-    clearcoatRoughness: 0.45,
-    transparent: true,
+    sheenColor: new THREE.Color("#f0c4ad"),
+    clearcoat: 0.14,
+    clearcoatRoughness: 0.34,
   });
 
   mat.onBeforeCompile = (shader) => {
@@ -109,6 +113,8 @@ export function createMehndiMaterial(maps: SkinMaps) {
         uniform sampler2D uBackA;
         uniform sampler2D uBackB;
         uniform sampler2D uDetail;
+        uniform sampler2D uMicro;
+        const float MICRO_TILE = 18.0;
         uniform float uMix;
         uniform sampler2D uPhotoPalmA;
         uniform sampler2D uPhotoPalmB;
@@ -118,7 +124,6 @@ export function createMehndiMaterial(maps: SkinMaps) {
         const float FRAME_CU = ${frame.centerU.toFixed(6)};
         const float FRAME_CV = ${frame.centerV.toFixed(6)};
         const float FRAME_S = ${frame.size.toFixed(6)};
-        const float CUT_Y = ${frame.maxY.toFixed(6)};
         const float TIP_Y = ${frame.minY.toFixed(6)};
 
         float vhash(vec3 p) {
@@ -137,7 +142,9 @@ export function createMehndiMaterial(maps: SkinMaps) {
         }
         // Mask at a given blur level (mip bias) for one side, crossfaded between slots A and B.
         float sideMask(sampler2D a, sampler2D b, vec2 uv, float bias) {
-          return mix(texture2D(a, uv, bias).a, texture2D(b, uv, bias).a, uMix);
+          // artwork exists only inside the projection frame (the long forearm beyond it stays bare)
+          float inF = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
+          return mix(texture2D(a, uv, bias).a, texture2D(b, uv, bias).a, uMix) * inF;
         }
         // x = sharp coverage, y = halo (bleed), z = local density, w = palm weight (0 back .. 1 palm)
         vec4 hennaSample() {
@@ -147,12 +154,13 @@ export function createMehndiMaterial(maps: SkinMaps) {
           vec2 uvBack = vec2(0.5 + (vBindPos.z - FRAME_CU) / FRAME_S, v);
           float wPalm = smoothstep(0.05, 0.4, -n.x);
           float wBack = smoothstep(0.05, 0.4, n.x);
-          // tiny wobble of the lookup = organic, slightly irregular edges
-          vec2 wob = (vec2(vnoise(vBindPos * 2600.0), vnoise(vBindPos * 2600.0 + 7.1)) - 0.5) * 0.0011;
-          float pS = sideMask(uPalmA, uPalmB, uvPalm + wob, -0.3);
+          // two-octave wobble of the lookup: bled, irregular edges instead of vector-clean ones
+          vec2 wob = (vec2(vnoise(vBindPos * 2600.0), vnoise(vBindPos * 2600.0 + 7.1)) - 0.5) * 0.0005
+                   + (vec2(vnoise(vBindPos * 650.0 + 3.3), vnoise(vBindPos * 650.0 + 9.7)) - 0.5) * 0.0019;
+          float pS = sideMask(uPalmA, uPalmB, uvPalm + wob, 0.2);
           float pH = sideMask(uPalmA, uPalmB, uvPalm, 1.6);
           float pD = sideMask(uPalmA, uPalmB, uvPalm, 3.6);
-          float bS = sideMask(uBackA, uBackB, uvBack + wob, -0.3);
+          float bS = sideMask(uBackA, uBackB, uvBack + wob, 0.2);
           float bH = sideMask(uBackA, uBackB, uvBack, 1.6);
           float bD = sideMask(uBackA, uBackB, uvBack, 3.6);
           float wsum = max(wPalm + wBack, 1e-4);
@@ -173,10 +181,6 @@ export function createMehndiMaterial(maps: SkinMaps) {
         float cavity = skinDetail.g;
         float photoW = 0.0;
         {
-          // Forearm cut: dissolve the last few centimetres into the stage. Only front faces of the forearm are
-          // in this band, so plain alpha blending needs no sorting.
-          diffuseColor.a *= smoothstep(CUT_Y - 0.002, CUT_Y - 0.05, vBindPos.y);
-
           // (palm/back tone balance is baked into the composed albedo — see scripts/hand-real/postprocess.py)
           // Very gentle micro-tonal variation without blotchy low-frequency patches.
           float tone = vnoise(vBindPos * 320.0);
@@ -191,8 +195,9 @@ export function createMehndiMaterial(maps: SkinMaps) {
             vec2 uvP = vec2(0.5 - (vBindPos.z - FRAME_CU) / FRAME_S, v);
             vec2 uvB = vec2(0.5 + (vBindPos.z - FRAME_CU) / FRAME_S, v);
             // premultiplied samples: rgb already weighted by alpha
-            vec4 pp = mix(texture2D(uPhotoPalmA, uvP), texture2D(uPhotoPalmB, uvP), uMix) * smoothstep(0.04, 0.4, -nB.x);
-            vec4 pk = mix(texture2D(uPhotoBackA, uvB), texture2D(uPhotoBackB, uvB), uMix) * smoothstep(0.04, 0.4, nB.x);
+            float inF = step(0.0, uvP.x) * step(uvP.x, 1.0) * step(0.0, v) * step(v, 1.0);
+            vec4 pp = mix(texture2D(uPhotoPalmA, uvP), texture2D(uPhotoPalmB, uvP), uMix) * smoothstep(0.04, 0.4, -nB.x) * inF;
+            vec4 pk = mix(texture2D(uPhotoBackA, uvB), texture2D(uPhotoBackB, uvB), uMix) * smoothstep(0.04, 0.4, nB.x) * inF;
             vec4 ph = pp + pk;
             photoW = clamp(ph.a, 0.0, 1.0);
             diffuseColor.rgb = mix(diffuseColor.rgb, ph.rgb / max(ph.a, 1e-4), photoW);
@@ -201,39 +206,54 @@ export function createMehndiMaterial(maps: SkinMaps) {
           // (nail bed / free-edge colours are in the albedo; gloss and translucency are handled below)
 
           // ---- henna stain
+          // Henna as a dye in the skin, calibrated on the owner's stain photographs (linear-light multipliers of
+          // the skin colour measured at light / mid / dense stain): see docs/HAND_REALISM.md §8.
           vec4 hs = hennaSample();
-          float blot = vnoise(vBindPos * 85.0) * 0.65 + vnoise(vBindPos * 330.0) * 0.35;
-          float tipK = smoothstep(TIP_Y + 0.07, TIP_Y + 0.005, vBindPos.y); // darker towards fingertips
-          float halo = smoothstep(0.02, 0.6, hs.y) * 0.2;
-          // the halo is the lighter orange bleed, not the full stain colour
-          vec3 haloMul = vec3(0.86, 0.62, 0.5);
-          float cover = max(hs.x, halo);
-          // breaks where paste skipped deep creases, and uneven take-up (blotchiness)
-          cover *= 1.0 - smoothstep(0.35, 0.85, cavity) * 0.35;
-          cover *= 0.86 + blot * 0.22;
-          // depth of stain: dense fills and the palm stain deepest; back/wrist lighter and browner
-          float depth = clamp(0.4 + hs.z * 0.8 + tipK * 0.3, 0.0, 1.0) * mix(0.8, 1.0, hs.w);
-          vec3 thin = vec3(0.5, 0.2, 0.11);   // multiplier: warm red-brown for fine lines
-          vec3 deep = vec3(0.27, 0.085, 0.055); // multiplier: deep maroon-brown for fills and fingertips
-          vec3 hennaMul = mix(thin, deep, depth);
-          hennaMul = mix(hennaMul, hennaMul * vec3(1.06, 0.95, 0.9), blot);
-          hennaMul = mix(haloMul, hennaMul, smoothstep(0.0, 0.5, hs.x));
-          float s = cover * uStrength * (1.0 - nailM * 0.85) * (1.0 - photoW);
-          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * hennaMul, s);
+          float blot = vnoise(vBindPos * 85.0) * 0.65 + vnoise(vBindPos * 330.0) * 0.35;   // uneven take-up
+          float grain = vnoise(vBindPos * 3800.0) * 0.6 + vnoise(vBindPos * 1500.0) * 0.4; // paste grain ~0.3 mm
+          float tipK = smoothstep(TIP_Y + 0.06, TIP_Y + 0.004, vBindPos.y);                 // dipped tips: darker at the end
+          float cov = smoothstep(0.06, 0.8, hs.x);                                           // soft, slightly bled edge
+          float halo = smoothstep(0.03, 0.55, hs.y) * (1.0 - cov) * 0.32;                    // light orange bleed around lines
+          float edge = clamp(hs.x - hs.z * 1.15, 0.0, 1.0);                                  // paste pools at shape edges
+          cov *= 1.0 - smoothstep(0.35, 0.85, cavity) * 0.3;                                 // skips deep creases
+          float dens = clamp(0.24 + hs.z * 1.05 + edge * 0.3, 0.0, 1.0);
+          // dipped fingertips: darkest at the very tip, lighter and warmer towards the cap's edge
+          dens = mix(dens * 0.8, min(1.0, dens + 0.2), tipK);
+          vec3 lightM = vec3(0.66, 0.34, 0.2);
+          vec3 midM = vec3(0.44, 0.12, 0.06);
+          vec3 deepM = vec3(0.21, 0.048, 0.024);
+          vec3 mulS = dens < 0.5 ? mix(lightM, midM, dens * 2.0) : mix(midM, deepM, dens * 2.0 - 1.0);
+          // back of the hand / wrist: thinner keratin takes less dye → lighter and browner
+          mulS = mix(mix(mulS, lightM, 0.3) * vec3(1.0, 1.1, 1.15), mulS, hs.w);
+          float along = vnoise(vBindPos * 420.0);                                            // ~2.5 mm: paste thickness along a line
+          float take = 0.74 + blot * 0.24 + (grain - 0.5) * 0.3 + (along - 0.5) * 0.34;
+          mulS = pow(mulS, vec3(take));
+          float s = cov * uStrength * (1.0 - nailM * 0.85) * (1.0 - photoW);
+          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * mulS, s);
+          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.9, 0.72, 0.62), halo * uStrength * (1.0 - photoW));
         }`,
       )
       .replace(
         "#include <roughnessmap_fragment>",
         `#include <roughnessmap_fragment>
-        roughnessFactor = mix(roughnessFactor, 0.28, nailM);
-        roughnessFactor = mix(roughnessFactor, 0.64, cavity * 0.4);
-        roughnessFactor *= 0.97 + vnoise(vBindPos * 700.0) * 0.06;`,
+        roughnessFactor = mix(roughnessFactor, 0.16, nailM);
+        roughnessFactor = mix(roughnessFactor, 0.68, cavity * 0.5);
+        {
+          // micro-roughness: pores and grooves are rougher than the plateaus between them
+          vec3 micR = texture2D(uMicro, vMapUv * MICRO_TILE).xyz * 2.0 - 1.0;
+          roughnessFactor *= 0.9 + (1.0 - micR.z) * 2.5 + vnoise(vBindPos * 700.0) * 0.08;
+        }`,
       )
       .replace(
         "#include <normal_fragment_maps>",
         `#include <normal_fragment_maps>
         // the photo already carries the real palm creases: don't stack our sculpted crease normals on top
-        normal = normalize(mix(normal, nonPerturbedNormal, photoW * 0.8));`,
+        normal = normalize(mix(normal, nonPerturbedNormal, photoW * 0.6));
+        #ifdef USE_NORMALMAP_TANGENTSPACE
+          // micro detail (pores, fine relief) on top of the hand's own normal map — holds up at maximum zoom
+          vec3 mic = texture2D(uMicro, vNormalMapUv * MICRO_TILE).xyz * 2.0 - 1.0;
+          normal = normalize(normal + tbn * vec3(mic.xy * 0.9 * (1.0 - nailM), 0.0));
+        #endif`,
       )
       .replace(
         "#include <lights_physical_fragment>",
@@ -249,11 +269,11 @@ export function createMehndiMaterial(maps: SkinMaps) {
         `{
           // Subsurface approximation: warm, golden-red light bleeding into the shadowed side and the terminator.
           float l = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722));
-          vec3 sss = diffuseColor.rgb * vec3(1.0, 0.48, 0.32) * (0.05 + 0.05 * (1.0 - smoothstep(0.0, 0.5, l)));
+          vec3 sss = diffuseColor.rgb * vec3(1.0, 0.38, 0.24) * (0.03 + 0.05 * (1.0 - smoothstep(0.0, 0.45, l)));
           outgoingLight += sss * (1.0 - nailM * 0.5) * (1.0 - cavity * 0.8);
           // translucency at thin silhouette edges (finger sides, web of the hand): warm glow, strongest at grazing view
           float edge = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 2.2);
-          outgoingLight += diffuseColor.rgb * vec3(1.0, 0.55, 0.38) * edge * 0.14;
+          outgoingLight += diffuseColor.rgb * vec3(1.0, 0.5, 0.34) * edge * 0.07;
         }
         #include <opaque_fragment>`,
       );

@@ -315,8 +315,16 @@ export function checker(poly: Pt[], cell: number, angle = Math.PI / 4, w = 1.8, 
       const o = add(c, add(mul(d1, i * cell), mul(d2, j * cell)));
       const q: Pt[] = [o, add(o, mul(d1, cell)), add(add(o, mul(d1, cell)), mul(d2, cell)), add(o, mul(d2, cell))];
       if (!q.every((p) => pointInPoly(p, poly) && !inHole(p, holes))) continue;
-      const ins = q.map((p) => lerp(p, add(o, mul(add(d1, d2), cell / 2)), 0.12));
-      out += `<path d="${polyPath(ins)}"${op(0.93 + r() * 0.07)}/>`;
+      // hand-piped cells are never identical: vary size, position and angle a little
+      const cc = add(o, mul(add(d1, d2), cell / 2));
+      const k = 0.1 + r() * 0.16;
+      const rot = jitter(0.14);
+      const sh = add(cc, [jitter(cell * 0.06), jitter(cell * 0.06)] as Pt);
+      const ins = q.map((p) => {
+        const v = mul(sub(p, cc), 1 - k);
+        return add(sh, [v[0] * Math.cos(rot) - v[1] * Math.sin(rot), v[0] * Math.sin(rot) + v[1] * Math.cos(rot)] as Pt);
+      });
+      out += `<path d="${polyPath(ins)}"${op(0.86 + r() * 0.14)}/>`;
     }
   }
   return out;

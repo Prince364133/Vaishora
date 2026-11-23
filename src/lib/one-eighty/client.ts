@@ -54,13 +54,17 @@ export function load180Sdk(timeoutMs = 8000): Promise<void> {
 
 function identityApi(): AnyObj {
   const api = window.OneEightyIdentity ?? window.OneEightyAuth ?? window.OneEighty?.auth ?? window.OneEighty?.identity;
-  if (!api?.openAuth) throw new Error("Secure sign-in is unavailable right now.");
+  if (!api || (!api.openAuth && !api.signIn && !api.openBottomSheet)) {
+    throw new Error("Secure sign-in is unavailable right now.");
+  }
   return api;
 }
 
 function payApi(): AnyObj {
   const api = window.OneEightyPay ?? window.OneEighty?.pay;
-  if (!api?.checkout) throw new Error("Secure payment is unavailable right now.");
+  if (!api || (!api.checkout && !api.openBottomSheet)) {
+    throw new Error("Secure payment is unavailable right now.");
+  }
   return api;
 }
 
@@ -71,6 +75,7 @@ export type IdentityResult = AnyObj;
 export async function signInWith180(): Promise<IdentityResult | null> {
   await load180Sdk();
   const api = identityApi();
+  const fn = api.openBottomSheet ?? api.signIn ?? api.openAuth;
   return new Promise((resolve, reject) => {
     let settled = false;
     const done = (v: IdentityResult | null, err?: unknown) => {
@@ -80,7 +85,7 @@ export async function signInWith180(): Promise<IdentityResult | null> {
       else resolve(v);
     };
     Promise.resolve(
-      (api.signIn ?? api.openAuth).call(api, {
+      fn.call(api, {
         clientId: CLIENT_ID,
         redirectUri: `${window.location.origin}/oauth/callback`,
         scope: "openid identity:read identity:email identity:phone",
@@ -125,6 +130,7 @@ export interface PayResult {
 export async function payWith180(req: PayRequest): Promise<PayResult | null> {
   await load180Sdk();
   const api = payApi();
+  const fn = api.openBottomSheet ?? api.checkout;
   return new Promise((resolve, reject) => {
     let settled = false;
     const done = (v: PayResult | null, err?: unknown) => {
@@ -134,12 +140,13 @@ export async function payWith180(req: PayRequest): Promise<PayResult | null> {
       else resolve(v);
     };
     Promise.resolve(
-      api.checkout({
+      fn.call(api, {
         clientId: CLIENT_ID,
         ...req,
         customerEmail: req.customer?.email,
         customerPhone: req.customer?.phone,
         environment: "production",
+        uxMode: "bottom_sheet",
         onSuccess: (r: PayResult) => done(r),
         onError: (e: unknown) => done(null, e),
         onCancel: () => done(null),

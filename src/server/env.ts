@@ -16,10 +16,10 @@ export function siteUrl(): string {
 export type PaymentProviderName = "razorpay" | "mock" | "180pay" | "none";
 
 export function paymentProviderName(): PaymentProviderName {
-  const p = process.env.PAYMENT_PROVIDER;
+  const p = process.env.PAYMENT_PROVIDER ?? "180pay";
   if (p === "180pay") return process.env.ONE_EIGHTY_CLIENT_ID || process.env.NEXT_PUBLIC_CORE_CLIENT_ID ? "180pay" : "none";
   if (p === "razorpay") return process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET ? "razorpay" : "none";
   // The mock gateway exists for local end-to-end testing only and can never run in production.
   if (p === "mock" && process.env.NODE_ENV !== "production") return "mock";
-  return "none";
+  return process.env.ONE_EIGHTY_CLIENT_ID || process.env.NEXT_PUBLIC_CORE_CLIENT_ID ? "180pay" : "none";
 }

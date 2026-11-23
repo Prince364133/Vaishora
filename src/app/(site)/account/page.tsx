@@ -9,23 +9,14 @@ import { STATUS_LABEL, BookingStatus } from "@/lib/booking-status";
 import { formatPaise } from "@/lib/money";
 import { formatIstDate, formatIstTime } from "@/lib/time";
 import { SignOutButton } from "./SignOutButton";
+import { AccountAuthCard } from "./AccountAuthCard";
 
 export const metadata: Metadata = { title: "My bookings", robots: { index: false } };
 
 async function Bookings() {
   await connection();
   const me = await currentCustomer();
-  if (!me)
-    return (
-      <div className="card mt-6 p-6">
-        <p className="font-semibold">You’re not signed in on this device.</p>
-        <p className="mt-1 text-sm text-muted">Your account is created at checkout. To open an earlier booking, use your booking ID and mobile number.</p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/booking/find" className="btn btn-secondary">Find a booking</Link>
-          <Link href="/designs" className="btn btn-primary">Browse designs</Link>
-        </div>
-      </div>
-    );
+  if (!me) return <AccountAuthCard />;
   const db = await getDb();
   const rows = await db.query<{ id: string; code: string; status: BookingStatus; starts_at: string; design: string; total_paise: number }>(
     `SELECT b.id, b.code, b.status, b.starts_at, d.name AS design, b.total_paise FROM bookings b JOIN designs d ON d.id = b.design_id
