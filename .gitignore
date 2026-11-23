@@ -43,3 +43,12 @@ next-env.d.ts
 scripts/out/
 !.env.example
 .next-*/
+
+# Private business notes — not for the public repository
+research/
+# Large generated ad media (re-render with marketing/ad/build); keep scripts and docs
+marketing/ad/render/
+marketing/ad/captures/
+marketing/ad/audio/
+# Local uploads in development
+public/uploads/

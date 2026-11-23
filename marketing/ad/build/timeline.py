@@ -49,13 +49,13 @@ def visual_spec(kind, d, split, cfg, man):
             tags.append({"at": max(0.15, at + 0.1), "label": designs.get(s, {}).get("name", s),
                          "price": f"{cur}{inr(designs[s]['price'])}" if s in designs else ""})
         return {"states": states, "tags": tags,
-                "camera": [{"at": 0, "top": 70, "zoom": 1.0}, {"at": d, "top": 92, "zoom": 1.06, "ease": "inout"}]}
+                "camera": [{"at": 0, "top": 70, "zoom": 1.0}, {"at": d, "top": 92, "zoom": 1.0, "ease": "inout"}]}
     if kind == "summary_price":
         ex = designs[cfg["prices"]["example_design"]]
         adv = advance_of(ex["price"], cfg["prices"]["advance_percent"])
         return {"states": [{"img": "summary_price", "at": 0}],
-                "camera": [{"at": 0, "top": 230, "zoom": 1.0}, {"at": 0.85, "top": 400, "zoom": 1.25, "ease": "inout"},
-                           {"at": d, "top": 400, "zoom": 1.27, "ease": "inout"}],
+                "camera": [{"at": 0, "top": 230, "zoom": 1.0}, {"at": 0.85, "top": 400, "zoom": 1.0, "ease": "inout"},
+                           {"at": d, "top": 400, "zoom": 1.0, "ease": "inout"}],
                 "highlights": [{"at": 1.0, "img": "summary_price", "box": "advance", "pad": 8},
                                {"at": split if split else d * 0.6, "img": "summary_price", "box": "balance", "pad": 8}],
                 "advance": {"at": 0.55, "design": f"{ex['name']} · {cur}{inr(ex['price'])}", "value": f"{cur}{inr(adv)}",
@@ -65,15 +65,15 @@ def visual_spec(kind, d, split, cfg, man):
         states = [{"img": f"studio_{last}", "at": 0}]
         if "studio_back" in man:
             states.append({"img": "studio_back", "at": round(min(0.75, d * 0.4), 3), "tap": "tap"})
-        return {"states": states, "camera": [{"at": 0, "top": 64, "zoom": 1.75}, {"at": d, "top": 70, "zoom": 1.9, "ease": "inout"}]}
+        return {"states": states, "camera": [{"at": 0, "top": 64, "zoom": 1.0}, {"at": d, "top": 70, "zoom": 1.0, "ease": "inout"}]}
     if kind == "slot":
         return {"states": [{"img": "slot_date", "at": 0}, {"img": "slot_time", "at": round(d * 0.42, 3), "tap": "tap"}],
-                "camera": [{"at": 0, "top": 250, "zoom": 1.0}, {"at": d, "top": 330, "zoom": 1.12, "ease": "inout"}],
+                "camera": [{"at": 0, "top": 250, "zoom": 1.0}, {"at": d, "top": 330, "zoom": 1.0, "ease": "inout"}],
                 "taps": [{"at": 0.2, "img": "slot_date", "box": "tap"}]}
     if kind == "policy":
         return {"states": [{"img": "policy", "at": 0}],
-                "camera": [{"at": 0, "top": 120, "zoom": 1.0}, {"at": 0.8, "top": 300, "zoom": 1.08, "ease": "inout"},
-                           {"at": d, "top": 304, "zoom": 1.1, "ease": "inout"}],
+                "camera": [{"at": 0, "top": 120, "zoom": 1.0}, {"at": 0.8, "top": 300, "zoom": 1.0, "ease": "inout"},
+                           {"at": d, "top": 304, "zoom": 1.0, "ease": "inout"}],
                 "highlights": [{"at": 0.95, "img": "policy", "box": "full", "pad": 8}]}
     return {}
 

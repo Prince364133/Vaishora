@@ -1,20 +1,26 @@
 # 3D mehndi hand — implementation
 
+Realistic female hand built from CC0 MakeHuman assets. Research, licences, the photo study of real henna and the
+honest list of remaining gaps are in [`HAND_REALISM.md`](HAND_REALISM.md). One-shot rebuild: `scripts/hand-real/build.sh`.
+
 ## Pipeline overview
 
 ```
-public/models/hand-right.glb   (WebXR generic hand, MIT)
-        │  scripts/extract-landmarks.mjs   → src/lib/mehndi/hand-landmarks.json (joint positions in artwork space + projection frame)
-        │  scripts/build-hand.mjs          → public/models/hand-hq.glb (18.5k verts) + hand-lq.glb (4.6k verts)
-        │                                    src/lib/mehndi/hand-nails.json (nail centres)
+MakeHuman base mesh + CC0 hand targets + CC0 "Indian female" skin   (MPFB2 in portable Blender 4.5, headless)
+        │  scripts/hand-real/build_hand.py   → scripts/out/hand-build/hand-{hq,lq}.glb, albedo.png, nails.png
+        │                                      (cut at mid-forearm; metres, palm faces −X, fingers −Y; WebXR-named joint empties)
+        │  scripts/build-hand.mjs            → public/models/hand-hq.glb (55k tris) / hand-lq.glb (13.7k tris)
+        │  scripts/hand-real/postprocess.py  → public/models/hand-albedo-{2k,1k}.jpg, hand-normal-{2k,1k}.jpg, hand-detail-1k.jpg
+        │  scripts/extract-landmarks.mjs     → src/lib/mehndi/hand-landmarks.json (projection frame, joints, finger widths)
         ▼
-src/lib/mehndi/{geometry,motifs,hand2d,artwork}.ts   original artwork generator, placed on the landmarks
-        │  scripts/generate-artwork.ts      → public/designs/<style>-<palm|back|feet>.svg (white on transparent)
+src/lib/mehndi/{geometry,cone,motifs,hand2d,artwork}.ts   original cone-drawn artwork placed on the landmarks
+        │  scripts/generate-artwork.ts      → public/designs/<style>-<palm|back|feet>.svg (white on transparent; alpha = paste density)
         ▼
-src/components/hand/mehndiMaterial.ts   skin shader + mehndi projection + nail simulation
-src/components/hand/HandScene.tsx       R3F canvas, lighting, controls, crossfade
-src/components/hand/HandViewer3D.tsx    lazy loading, WebGL detection, quality tiers, DOM controls, fallback
-src/components/hand/HandIllustration.tsx  static (non-WebGL) preview: silhouette + artwork mask
+src/components/hand/mehndiMaterial.ts     skin (albedo / normal / detail, subsurface-style bleed) + multiplicative henna stain
+src/components/hand/HandScene.tsx         R3F canvas, lighting, controls, crossfade, per-tier skin maps
+src/components/hand/HandViewer3D.tsx      lazy loading, WebGL detection, quality tiers, one-row 44px controls, fallback
+src/components/hand/HandIllustration.tsx  thumbnails + fallback: Cycles still (public/hand/{palm,back}.webp from
+                                          scripts/hand-real/render_stills.py) + stain layers masked by artwork ∩ hand
 ```
 
 ## Why shader projection (decision record)
@@ -28,35 +34,37 @@ src/components/hand/HandIllustration.tsx  static (non-WebGL) preview: silhouette
 
 Details (`mehndiMaterial.ts`):
 
-1. The vertex shader passes the **bind-pose** position and normal (`position`, `normal`), so the artwork stays glued to the
-   skin regardless of how the hand is rotated.
-2. Two planar projections share one frame (from `hand-landmarks.json`): palm projection (viewer looking at the palm) and back
-   projection (mirrored). The frame is square (0.2205 m) so artwork is never stretched.
-3. Blend weight = `smoothstep(0.08, 0.42, ±normal.x)`, so finger sides fade naturally instead of smearing.
-4. The artwork alpha becomes a mask that mixes the albedo towards a henna colour with low-frequency tonal variation — a
-   stain, not a sticker. It is then shaded by the PBR lighting like the rest of the skin.
+1. The vertex shader passes the **bind-pose** position and normal, so the artwork stays glued to the skin however the
+   hand is rotated.
+2. Two planar projections share one square frame from `hand-landmarks.json` (palm projection, and the mirrored back
+   projection), so artwork is never stretched.
+3. Blend weight = `smoothstep(0.05, 0.4, ±normal.x)`, so finger sides fade naturally instead of smearing.
+4. The artwork alpha is sampled at three blur levels (edge with a tiny wobble, bleed halo, local paste density) and
+   darkens the skin albedo **multiplicatively**: thin lines warm red-brown, dense fills and fingertips deep maroon-brown,
+   palm deeper than the back, blotchy take-up, small breaks in deep creases; nails excluded. Pores and creases show
+   through, as with a real dye. See `HAND_REALISM.md` §3–4.
 5. Two texture slots per side (`A`/`B`) and `uMix` give a 450 ms smoothstep crossfade; the scene is not recreated.
-6. Skin: `MeshPhysicalMaterial` with sheen and a little clearcoat, lighter/pinker palm tone, subtle pigment and roughness
-   noise. Nails: elliptical masks around precomputed nail centres, glossier and lighter.
+6. Skin: `MeshPhysicalMaterial` with the CC0 albedo, a photo-derived normal map, a detail map (R = nail mask → gloss,
+   G = crease cavity → roughness and stain breaks), sheen and a warm subsurface-style bleed into shadows; the forearm
+   cut dissolves into the stage with alpha.
 
 ## Artwork system
 
-- All built-in designs are **generated in code** (`src/lib/mehndi/artwork.ts`) from an original motif library — paisleys, petal
-  rings, mandalas, lattices (jaal), vines with leaves, roses, finger bands, fingertip caps and wrist bracelets — positioned
-  using the hand’s real joint landmarks. Nothing is traced from photographs or third-party designs.
-- Output: square SVGs, white on transparent (`public/designs/*.svg`), used as a texture mask (3D), as a CSS mask in henna
-  colour (thumbnails and fallback), and as portfolio samples for demo artists.
-- Admin uploads: transparent PNG/WebP aligned to the palm/back templates (`/hand/palm.webp`, `/hand/back.webp`), stored as
-  `design_assets`. The shader uses only the alpha channel, so any colour works.
-- Feet designs are illustrations only (there is no 3D foot model); the viewer says so.
+- All built-in designs are **generated in code** — `cone.ts` turns centre lines into cone-drawn strokes (variable width,
+  blob start, taper/dot end, tremor) and provides hatch, jaal (net) and checker fills; `motifs.ts` holds keri, lotus,
+  peacock, bel vine with tendrils, rose, shaded-petal mandalas, bands; `artwork.ts` composes each style on the hand's
+  landmarks. Nothing is traced from photographs or third-party designs. Slugs/file names are unchanged.
+- Output: square SVGs, white on transparent (`public/designs/*.svg`), used as a texture mask (3D), as a CSS mask in the
+  2D stain composite (thumbnails and fallback), and as portfolio samples for demo artists.
+- Admin uploads: transparent PNG/WebP aligned to the palm/back templates (`/hand/palm.webp`, `/hand/back.webp` — the
+  stills cover exactly the projection frame). Only alpha is used.
+- Feet designs are illustrations only (no 3D foot model); the viewer says so.
 
-## Geometry
+## Geometry & textures
 
-- The source mesh is low poly. `three-subdivide` produced cracks and faceting and took up to ~7 s on the main thread, so
-  `scripts/build-hand.mjs` implements standard **Loop subdivision** (with boundary rules for the wrist opening), welds
-  vertices, recomputes smooth normals and writes a minimal GLB (positions, normals, indices).
-- Two LODs: `hand-lq.glb` (1 iteration, 4.6k verts, 164 KB raw / 141 KB transferred) and `hand-hq.glb` (2 iterations,
-  18.5k verts, 652 KB / 562 KB).
+- MakeHuman hm08 hand, Catmull-Clark subdivided: `hand-hq.glb` 55k tris (981 KB), `hand-lq.glb` 13.7k tris (276 KB),
+  packed with `KHR_mesh_quantization` (float positions for exact projection, int8 normals, uint16 UVs).
+- Albedo / normal 2048² (high tier) or 1024² (low tier) JPEG; detail 1024² for both.
 
 ## Interaction
 
@@ -66,32 +74,33 @@ Details (`mehndiMaterial.ts`):
   horizontal drags rotate and pinches zoom. A “Free rotate” toggle switches to `touch-action: none` for full rotation.
 - One short introductory turn (three-quarter view → palm) on load; skipped with `prefers-reduced-motion`. No auto-rotation.
 - The camera turns to the side that has artwork when a back-only or palm-only design is selected.
+- **Controls bar**: one row at every width — Palm/Back segmented control (44px) and 44px icon buttons (zoom in/out,
+  reset, free-rotate below `md`) with `aria-label`s. Below 360px the zoom buttons are hidden (pinch covers zoom) so the
+  row fits inside the stage.
 
 ## Performance
 
 - Canvas `frameloop="demand"`: nothing renders while idle; animations call `invalidate()` only while active.
 - The 3D bundle (three + R3F + drei) loads via `next/dynamic` only when the viewer nears the viewport; text, CTAs and the
   static illustration paint first.
-- Quality tier: `low` (LQ mesh, 1024² artwork, dpr ≤ 1.5) for phones, ≤ 4 cores, ≤ 3 GB memory or Save-Data; otherwise
-  `high` (HQ mesh, 2048² artwork, dpr ≤ 2).
+- Quality tier: `low` (LQ mesh, 1K skin maps, 1024² artwork, dpr ≤ 1.5) for phones, ≤ 4 cores, ≤ 3 GB memory or
+  Save-Data; otherwise `high` (HQ mesh, 2K skin maps, 2048² artwork, dpr ≤ 2).
+- Payload: mobile ≈ 0.52 MB, desktop ≈ 1.48 MB (+ the design SVG, 17–330 KB, gzip-friendly).
 - Environment lighting is baked once from local `Lightformer`s (no HDR download).
-- Artwork textures are cached (LRU of 8) and disposed on eviction; material is disposed on unmount.
+- Artwork textures are cached (LRU of 8) and disposed on eviction; material and skin maps are disposed on unmount.
 
 ## Fallback
 
-`HandViewer3D` detects WebGL; if unavailable (or the scene errors), `HandIllustration` shows the hand silhouette with the
-selected design. Design switching, prices and booking keep working (verified by `tests/e2e/webgl_fallback.py`).
+`HandViewer3D` detects WebGL; if unavailable (or the scene errors), `HandIllustration` shows the photographic still
+with the selected design composited as a stain. Design switching, prices and booking keep working
+(`tests/e2e/webgl_fallback.py`).
 
-## Upgrading to a photoreal hand
+## Upgrading to a scanned hand
 
-1. Buy/licence a realistic female hand GLB (e.g. V-ARM 02) and confirm web redistribution is allowed.
-2. Pose it open and flat, palm facing −X with fingers along −Y (or adapt the frame constants), export GLB.
-3. Replace `public/models/hand-right.glb`, then run `node scripts/extract-landmarks.mjs public/models/hand-right.glb`,
-   `node scripts/build-hand.mjs` (set iterations to 0 if the mesh is already dense), and `pnpm artwork:generate`.
-4. If the model has skin textures, add them as `map`/`normalMap` on the material — the projection code is unchanged.
+Any GLB in the same convention (metres, palm −X, fingers −Y, WebXR-named joint empties, one UV set + albedo) can replace
+`scripts/out/hand-build/hand-*.glb` / `albedo.png`; then rerun `build-hand.mjs`, `postprocess.py`,
+`extract-landmarks.mjs`, `pnpm artwork:generate`, `render_stills.py` and `stills_web.py`. Candidate: V-ARM 03 (paid).
 
 ## Known limitations
 
-- Stylised, not photoreal (see above). No real fingernails geometry.
-- KTX2 compression is not used: artwork is generated at runtime from SVG (crisp at any size); textures are 1–2K RGBA.
-- Mobile GPU testing was done with desktop Chromium device emulation and a 4× CPU slowdown, not on physical phones.
+See `HAND_REALISM.md` §5. Mobile GPU testing was done with desktop Chromium device emulation, not on physical phones.

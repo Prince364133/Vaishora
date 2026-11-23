@@ -106,11 +106,12 @@ height -= pores * 0.06
 height += blurf(rng.standard_normal((H, W)).astype(np.float32), 1) * 0.004
 height *= 1 - nails  # nails are smooth
 cavity = np.clip(-blurf(hp_fine + hp_mid * 0.5, 1) * 6.0, 0, 1)
-# Creases in the source are painted red; real creases are just shadowed skin. Desaturate them (albedo was graded
-# above, so recompute the greyscale and pull crease pixels towards it).
+# Creases in the source are painted red; real creases are just shadowed skin. Keep their darkness but give them the
+# hue of the surrounding skin.
 cav_soft = blurf(cavity, 2)[..., None]
 gY2 = (graded @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32))[..., None]
-graded = np.clip(graded + (gY2 * np.array([1.08, 0.97, 0.9]) - graded) * np.clip(cav_soft * 1.6, 0, 0.75), 0, 1)
+local_skin = np.stack([blurf(graded[..., c], 8) for c in range(3)], axis=-1)
+graded = np.clip(graded + (local_skin * (gY2 / np.maximum(local_skin @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32), 1e-3)[..., None]) - graded) * np.clip(cav_soft * 1.4, 0, 0.6), 0, 1)
 
 gy, gx = np.gradient(height)
 strength = 7.0 * (W / 2048)

@@ -15,8 +15,9 @@ pnpm dev                            # http://localhost:3000
 - With `PAYMENT_PROVIDER=mock`, the booking page shows a clearly marked “Test payment gateway (development only)” panel.
 - Demo artists are flagged `is_demo`, labelled “Sample profile” everywhere, and hidden in production unless an admin turns on
   *Show demo artists* (keep it off for a real launch).
-- Regenerate assets after changing the hand or the artwork generator:
-  `node scripts/extract-landmarks.mjs public/models/hand-right.glb`, `node scripts/build-hand.mjs`, `pnpm artwork:generate`.
+- Rebuild the realistic hand (portable Blender + CC0 MakeHuman assets): `bash scripts/hand-real/build.sh` — see
+  `docs/HAND_REALISM.md`. Regenerate mehndi artwork after changing the generator: `pnpm artwork:generate`.
+- The embedded dev database can't be opened by two processes: run `next build` with a separate `PGLITE_DIR` while `next dev` is running.
 - Only one `next dev` may run per project folder. To run a second isolated instance, use `NEXT_DIST_DIR=.next-alt`.
 
 ## Tests

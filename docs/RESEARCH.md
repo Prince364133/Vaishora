@@ -47,33 +47,34 @@ Evaluated but **not** installed:
 
 ## 3. 3D hand model — licensed assets
 
-| Candidate | Licence | Format | Verdict |
-|---|---|---|---|
-| **WebXR Input Profiles `generic-hand`** (github.com/immersive-web/webxr-input-profiles, `packages/assets/profiles/generic-hand/right.glb`) | **MIT** (© 2019 Amazon; `packages/assets/LICENSE.md`) | GLB, 1,360 verts, 2,314 tris, 25-joint skin, UVs, untextured | **Selected for v1.** Freely redistributable, correct hand anatomy and an open relaxed bind pose. Low poly, no nails, no skin textures. |
-| V-ARM 02 Realistic Female Hands (TurboSquid / CGTrader / Fab / Superhive) | Paid, standard royalty-free (≈ US$35) | Blend/FBX/**GLB**, rigged, textures | **Recommended upgrade** — realistic female hands with nails and skin maps. Needs purchase + licence check for web redistribution. |
-| free3d “female hands 2400” | Licence not visible in listing | Maya/FBX/3ds | Rejected — licence unclear. |
-| CGTrader “HAND-018 woman right hand” (~US$7, Royalty Free No-AI) and others | Paid | some GLB | Possible alternatives; check “No AI” clauses. |
-| Poly Haven / Sketchfab CC0 | — | — | No suitable realistic CC0 female hand found in this pass. |
+Updated Nov 2026 after owner feedback that the hand and designs looked cartoonish (full study: `HAND_REALISM.md`).
 
-Sources: TurboSquid/CGTrader/Fab listings returned by search (2026-11-23); webxr-input-profiles repository and licence read
-directly via the GitHub API.
+| Candidate | Licence | Verdict |
+|---|---|---|
+| **MakeHuman base mesh via MPFB2 2.0.18** (extensions.blender.org) + asset packs *Skins 01* (`cutoff3d_indian_female_enhanced`, CutOff3D) and *Hands 01* (Mindfront, jujube) from static.makehumancommunity.org | **CC0** ("All core assets are shared under Creative Commons, CC0"; each pack lists CC0 per asset) | **Selected (v2).** Anatomical female hand with knuckles and nail beds, photo-derived Indian female skin texture, built headless in portable Blender; redistributable without restriction. |
+| WebXR Input Profiles `generic-hand` | MIT (© 2019 Amazon) | v1, retired — low-poly VR hand without nails or skin texture. |
+| V-ARM 02/03 Realistic Female Hands (TurboSquid/CGTrader/RenderHub), CGTrader photogrammetry hand scans | Paid royalty-free | Highest fidelity (8K scans); upgrade path if budget allows — confirm real-time/web redistribution and "No-AI" clauses. |
+| MANO, NIMBLE, DART, HTML | Research / non-commercial | Rejected (licence). |
+| Poly Haven, Smithsonian Open Access, Poly Pizza, OpenGameArt | CC0 / various | No realistic textured female hand (Smithsonian: male life casts in clenched poses; others stylised). |
+| BlendSwap CC0, Sketchfab CC-BY hand scans | CC0 / CC-BY | Account required to download; not evaluated further. |
 
-**Limitation (important):** the shipped hand is a smoothed version of a low-poly VR hand. It reads as a clean, stylised hand,
-but it is not photoreal (no skin textures, nails are simulated in the shader, generic proportions). The texture system is
-model-agnostic — swapping to a licensed photoreal GLB requires re-running two scripts (see `3D_IMPLEMENTATION.md`).
+**Remaining limitation:** the CC0 skin is a full-body 2048² atlas (~400 px of real photo data for the hand), so extreme
+close-ups are softer than a commercial scan; photo-derived crease normals and procedural pores compensate at normal
+viewing distance.
 
 ## 4. Existing implementations and techniques
 
-- **Decals** (`three/addons/geometries/DecalGeometry.js`): projects onto a mesh by creating new geometry per decal. Good for
-  stickers; for full-hand artwork it creates seams at projection edges and costs geometry rebuilds on each switch.
-- **UV mapping**: best fidelity when the model has clean, purpose-made UVs. The candidate model’s UVs are a VR atlas not
-  laid out for artwork; a paid model would need checking too.
-- **Shader-based projection + blending** (MeshPhysicalMaterial `onBeforeCompile`): project artwork in object space, weight by
-  surface normal, blend into albedo. No extra geometry, instant texture swap, GPU crossfade, works with any model.
-- R3F patterns (from the installed skill): `frameloop="demand"`, `useGLTF` caching, drei `OrbitControls` with damping,
-  disposal of textures, `PerformanceMonitor`/dpr capping.
-
-Selected: shader projection (details and reasoning in `3D_IMPLEMENTATION.md`).
+- **Decals** (`DecalGeometry`): new geometry per decal, seams at projection edges, rebuild on every switch — rejected.
+- **UV mapping**: the new hand has its own baked hand-only UV layout for skin maps, but artwork is authored in a planar
+  palm/back frame so it stays model-agnostic and works with admin uploads.
+- **Shader projection + multiplicative stain** (chosen): object-space planar projection; mask sampled at several mip
+  levels for edge / bleed halo / paste density; colour depends on density, side (palm darker) and fingertip proximity;
+  applied as a multiplier on the skin albedo so skin texture shows through (henna is a dye in the outer skin layer).
+- **Cone-stroke artwork**: centre-line paths converted to variable-width filled outlines (blob start, pressure, taper,
+  tremor) plus hatch/jaal/checker fills; the v1 generator used uniform SVG strokes, which read as clip-art.
+- **2D thumbnails**: Cycles render of the same hand with an orthographic camera matching the projection frame; CSS
+  multiply layers masked by `artwork ∩ hand alpha` (`mask-composite: intersect`), blur for bleed.
+- R3F patterns: `frameloop="demand"`, `useGLTF`/`useTexture` caching, texture disposal, dpr capping.
 
 ## 5. Payment gateway
 

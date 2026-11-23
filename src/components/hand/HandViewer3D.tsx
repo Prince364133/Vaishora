@@ -79,8 +79,8 @@ export function HandViewer3D({ palmArt, backArt, region, designName, className =
   const showFeetNote = region === "feet";
   const onStage = tone === "stage";
 
-  // Compact icon buttons so the whole bar stays on one row down to 320px wide screens.
-  const btn = `inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
+  // Compact 44px icon buttons so the whole bar stays on one row down to 320px wide screens.
+  const btn = `inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
     onStage ? "bg-white/10 text-ivory hover:bg-white/18 border border-white/15" : "bg-white text-plum border hairline hover:bg-blush"
   }`;
   const icon = { width: 18, height: 18, viewBox: "0 0 18 18", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
@@ -113,7 +113,7 @@ export function HandViewer3D({ palmArt, backArt, region, designName, className =
       {showFeetNote ? (
         <p className={`px-4 pb-3 text-center text-sm ${onStage ? "text-blush/80" : "text-muted"}`}>Feet designs are shown as an illustration. The 3D preview is for hands.</p>
       ) : (
-        <div className="relative z-10 flex flex-nowrap items-center justify-center gap-1.5 px-2 pb-3" role="toolbar" aria-label="3D hand controls">
+        <div className="relative z-10 flex flex-nowrap items-center justify-center gap-1 px-2 pb-3 sm:gap-1.5" role="toolbar" aria-label="3D hand controls">
           <div className={`inline-flex shrink-0 rounded-[var(--radius-sm)] p-0.5 ${onStage ? "bg-white/10" : "bg-blush"}`} role="radiogroup" aria-label="Hand side">
             {(["palm", "back"] as const).map((v) => (
               <button
@@ -126,7 +126,7 @@ export function HandViewer3D({ palmArt, backArt, region, designName, className =
                   setView(v);
                   scene.current?.setView(v);
                 }}
-                className={`h-9 px-3 rounded-[5px] text-sm font-semibold transition-colors disabled:opacity-40 ${
+                className={`h-11 min-w-11 px-3 rounded-[5px] text-sm font-semibold transition-colors disabled:opacity-40 ${
                   view === v ? (onStage ? "bg-ivory text-plum" : "bg-plum text-ivory") : onStage ? "text-ivory" : "text-plum"
                 }`}
               >
@@ -136,10 +136,11 @@ export function HandViewer3D({ palmArt, backArt, region, designName, className =
           </div>
           {mode === "3d" && (
             <>
-              <button type="button" className={btn} onClick={() => scene.current?.zoom(0.8)} aria-label="Zoom in" title="Zoom in">
+              {/* Below 360px the stage is too narrow for six 44px controls; pinch-zoom covers zooming there. */}
+              <button type="button" className={`${btn} max-[359px]:hidden`} onClick={() => scene.current?.zoom(0.8)} aria-label="Zoom in" title="Zoom in">
                 <svg {...icon}><path d="M9 4v10M4 9h10" /></svg>
               </button>
-              <button type="button" className={btn} onClick={() => scene.current?.zoom(1.25)} aria-label="Zoom out" title="Zoom out">
+              <button type="button" className={`${btn} max-[359px]:hidden`} onClick={() => scene.current?.zoom(1.25)} aria-label="Zoom out" title="Zoom out">
                 <svg {...icon}><path d="M4 9h10" /></svg>
               </button>
               <button
