@@ -1,23 +1,21 @@
 "use client";
 
-// Port of mehndi-3d-tryon/index.html: photographed hands rebuilt as a relief mesh from a 16-bit
-// height map (R<<8|G), textured with per-design photo atlases (paste / stain), with skin-tone tint.
+// Photo 3D hands from mehndi-3d-tryon as a standalone 3D model (public/tryon/hands.glb, built from the
+// photo relief by scripts/tryon/build_model.py), textured with the original photo atlases (paste / stain).
 // Loaded lazily (next/dynamic) only when the visitor switches to the "Photo 3D" viewer.
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { PHOTO_TONES, PhotoLook, PhotoPresetId, PhotoTone } from "@/lib/photo-tryon";
 
 interface Manifest {
   geo: { geo: { x0: number; x1: number; y0: number; y1: number; d: number; w: number; h: number; hmax: number }; tex: { x0: number; x1: number; y0: number; y1: number } };
-  bgFrame: { x0: number; x1: number; y0: number; y1: number };
   presets: { id: string; stain: boolean }[];
   atlas: Record<string, string>;
-  hmap: string;
   mask: string;
-  background: string;
 }
 
 export interface PhotoSceneHandle {
@@ -33,9 +31,6 @@ interface Props {
   onError?: (e: Error) => void;
 }
 
-const U = 0.01;
-const CX = 768;
-const CY = 960;
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -63,7 +58,7 @@ const PhotoHandScene = forwardRef<PhotoSceneHandle, Props>(function PhotoHandSce
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
     } catch (e) {
       onError?.(e as Error);
       return;
@@ -76,11 +71,11 @@ const PhotoHandScene = forwardRef<PhotoSceneHandle, Props>(function PhotoHandSce
     const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#4b1d3f");
+    // No backdrop: the hands float as a 3D model on the page’s own stage.
     const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 400);
     camera.up.set(0, 0, 1);
     const controls = new OrbitControls(camera, canvas);
-    Object.assign(controls, { enableDamping: true, dampingFactor: 0.08, rotateSpeed: 0.7, zoomSpeed: 0.9, enablePan: false, minPolarAngle: 0, maxPolarAngle: 0.9, minAzimuthAngle: -0.9, maxAzimuthAngle: 0.9 });
+    Object.assign(controls, { enableDamping: true, dampingFactor: 0.08, rotateSpeed: 0.7, zoomSpeed: 0.9, enablePan: false, minPolarAngle: 0, maxPolarAngle: Math.PI });
     controls.target.set(0, 0, 0.45);
 
     const pmrem = new THREE.PMREMGenerator(renderer);
@@ -116,6 +111,8 @@ const PhotoHandScene = forwardRef<PhotoSceneHandle, Props>(function PhotoHandSce
     const atlasCache = new Map<string, Promise<THREE.Texture>>();
     let manifest: Manifest;
     let handMat: THREE.MeshStandardMaterial | null = null;
+    let underMat: THREE.MeshStandardMaterial | null = null;
+    let underBase: THREE.Color | null = null;
     const disposables: { dispose: () => void }[] = [];
     let fitDist = 30;
     let anim: { from: View; to: View; t0: number; dur: number } | null = null;
@@ -157,6 +154,10 @@ const PhotoHandScene = forwardRef<PhotoSceneHandle, Props>(function PhotoHandSce
       const m = PHOTO_TONES[t].mul;
       handMat.color.setRGB(m[0], m[1], m[2]);
       handMat.emissive.setRGB(m[0], m[1], m[2]);
+      if (underMat && underBase) {
+        underMat.color.setRGB(underBase.r * m[0], underBase.g * m[1], underBase.b * m[2]);
+        underMat.emissive.copy(underMat.color).multiplyScalar(0.5);
+      }
     };
 
     const resize = () => {
@@ -174,72 +175,11 @@ const PhotoHandScene = forwardRef<PhotoSceneHandle, Props>(function PhotoHandSce
 
     (async () => {
       manifest = await (await fetch("/tryon/manifest.json")).json();
-      const F = manifest.geo.geo;
-      const T = manifest.geo.tex;
-      const TW = T.x1 - T.x0;
-      const TH = T.y1 - T.y0;
-
-      // heights: 16-bit packed in R (high) and G (low)
-      const blob = await (await fetch(manifest.hmap)).blob();
-      let bmp: ImageBitmap;
-      try {
-        bmp = await createImageBitmap(blob, { colorSpaceConversion: "none", premultiplyAlpha: "none" });
-      } catch {
-        bmp = await createImageBitmap(blob);
-      }
-      const c2 = document.createElement("canvas");
-      c2.width = F.w;
-      c2.height = F.h;
-      const g = c2.getContext("2d", { willReadFrequently: true })!;
-      g.drawImage(bmp, 0, 0);
-      const d = g.getImageData(0, 0, F.w, F.h).data;
-      const n = F.w * F.h;
-      const h = new Float32Array(n);
-      for (let i = 0; i < n; i++) h[i] = (((d[i * 4] << 8) | d[i * 4 + 1]) / 65535) * F.hmax;
-
-      const pos = new Float32Array(n * 3);
-      const uv = new Float32Array(n * 2);
-      for (let j = 0; j < F.h; j++)
-        for (let i = 0; i < F.w; i++) {
-          const k = j * F.w + i;
-          const px = F.x0 + (i + 0.5) * F.d;
-          const py = F.y0 + (j + 0.5) * F.d;
-          pos[k * 3] = (px - CX) * U;
-          pos[k * 3 + 1] = -(py - CY) * U;
-          pos[k * 3 + 2] = h[k] * U;
-          uv[k * 2] = (px - T.x0) / TW;
-          uv[k * 2 + 1] = 1 - (py - T.y0) / TH;
-        }
-      const idx: number[] = [];
-      const on = (k: number) => h[k] > 0.15;
-      for (let j = 0; j < F.h - 1; j++)
-        for (let i = 0; i < F.w - 1; i++) {
-          const a = j * F.w + i;
-          const b = a + 1;
-          const c = a + F.w;
-          const dd = c + 1;
-          if (on(a) || on(b) || on(c) || on(dd)) idx.push(a, c, b, b, c, dd);
-        }
-      const handGeo = new THREE.BufferGeometry();
-      handGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-      handGeo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
-      handGeo.setIndex(idx);
-      handGeo.computeVertexNormals();
-      handGeo.computeBoundingSphere();
-
-      const [bgTex, maskTex] = await Promise.all([loadTex(manifest.background), loadTex(manifest.mask, false)]);
+      // Standalone 3D model built from the photo relief (scripts/tryon/build_model.py): the front
+      // surface carries the original photo atlases unchanged; underside + sides use plain skin colour.
+      const [gltf, maskTex] = await Promise.all([new GLTFLoader().loadAsync("/tryon/hands.glb"), loadTex(manifest.mask, false)]);
       if (disposed) return;
-      const B = manifest.bgFrame;
-      const bgGeo = new THREE.PlaneGeometry((B.x1 - B.x0) * U, (B.y1 - B.y0) * U);
-      bgGeo.translate(((B.x0 + B.x1) / 2 - CX) * U, -((B.y0 + B.y1) / 2 - CY) * U, -0.006);
-      const bgMat = new THREE.MeshBasicMaterial({ map: bgTex });
-      scene.add(new THREE.Mesh(bgGeo, bgMat));
-      const shadowMat = new THREE.ShadowMaterial({ color: 0x4a1a22, opacity: 0.2 });
-      const catcher = new THREE.Mesh(bgGeo, shadowMat);
-      catcher.position.z = 0.002;
-      catcher.receiveShadow = true;
-      scene.add(catcher);
-
+      const model = gltf.scene;
       handMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         emissive: 0xffffff,
@@ -251,11 +191,27 @@ const PhotoHandScene = forwardRef<PhotoSceneHandle, Props>(function PhotoHandSce
         alphaToCoverage: true,
         envMapIntensity: 0.18,
       });
-      const hands = new THREE.Mesh(handGeo, handMat);
-      hands.castShadow = true;
-      hands.receiveShadow = true;
-      scene.add(hands);
-      disposables.push(handGeo, bgGeo, bgMat, shadowMat, handMat, bgTex, maskTex, envTex, pmrem);
+      model.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (!m.isMesh) return;
+        const src = m.material as THREE.MeshStandardMaterial;
+        if (src.name === "photo") {
+          m.material = handMat!;
+        } else {
+          underMat = new THREE.MeshStandardMaterial({ color: src.color.clone(), roughness: 0.62, metalness: 0, envMapIntensity: 0.18 });
+          underBase = src.color.clone();
+          underMat.emissive.copy(src.color).multiplyScalar(0.5);
+          m.material = underMat;
+          disposables.push(m.geometry);
+        }
+        src.dispose();
+        m.castShadow = true;
+        m.receiveShadow = true;
+        if (m.material === handMat) disposables.push(m.geometry);
+      });
+      scene.add(model);
+      disposables.push(handMat, maskTex, envTex, pmrem);
+      if (underMat) disposables.push(underMat);
 
       setTone(latest.current.tone);
       await setDesign(latest.current.preset, latest.current.look);
