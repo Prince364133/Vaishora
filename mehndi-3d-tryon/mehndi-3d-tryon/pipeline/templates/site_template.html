@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mehndi Try-On 3D</title>
+<meta name="description" content="Try mehndi designs on photoreal 3D hands. Rotate, zoom, switch fresh paste or dried stain, and download the result.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6eee8; --panel: #fffaf6; --ink: #2f1c14; --muted: #86695c; --line: rgba(47, 28, 20, .12);
+    --accent: #8c3b1d; --accent-ink: #fff7f0; --chip: #f2e6dd; --chip-on: #fffaf6;
+    --stage: #efcfcf; --hud-ink: #3a1d12;
+    --shadow: 0 1px 2px rgba(47, 28, 20, .06), 0 10px 28px rgba(47, 28, 20, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17110e; --panel: #1f1713; --ink: #f4e8de; --muted: #b39a8c; --line: rgba(244, 232, 222, .12);
+      --accent: #e0915f; --accent-ink: #1b120d; --chip: #2a201b; --chip-on: #3a2c25;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17110e; --panel: #1f1713; --ink: #f4e8de; --muted: #b39a8c; --line: rgba(244, 232, 222, .12);
+    --accent: #e0915f; --accent-ink: #1b120d; --chip: #2a201b; --chip-on: #3a2c25;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Jost', system-ui, -apple-system, sans-serif; font-size: 15px; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; }
+  .app { display: grid; grid-template-columns: minmax(0, 1fr) 384px; height: 100dvh; }
+
+  .stage { position: relative; overflow: hidden; background: var(--stage); min-height: 420px; min-width: 0; }
+  .stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; outline: none; }
+  .stage canvas:active { cursor: grabbing; }
+  .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 46%, transparent 58%, rgba(96, 34, 40, .16) 100%); }
+  .hud-top { position: absolute; left: 28px; top: 22px; pointer-events: none; color: var(--hud-ink); text-shadow: 0 1px 12px rgba(255, 240, 238, .7); }
+  .eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; opacity: .78; font-weight: 500; }
+  .design-title { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 600; font-size: 40px; line-height: 1.05; margin-top: 4px; letter-spacing: -.01em; }
+  .hud-bottom { position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 0 16px; flex-wrap: wrap; pointer-events: none; }
+  .pill { pointer-events: auto; background: rgba(255, 250, 246, .82); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border: 1px solid rgba(58, 29, 18, .10); border-radius: 999px; padding: 8px 14px; font-size: 13px; color: var(--hud-ink); line-height: 1.2; }
+  .pill.hint { pointer-events: none; color: rgba(58, 29, 18, .78); }
+  .pill.btn { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; transition: background .15s, transform .15s; }
+  .pill.btn:hover { background: rgba(255, 250, 246, .96); }
+  .pill.btn:active { transform: scale(.97); }
+  .pill.btn[aria-pressed="true"] { background: #3a1d12; color: #fff3ea; border-color: #3a1d12; }
+  .pill.btn svg { width: 15px; height: 15px; }
+  .busy { position: absolute; right: 22px; top: 24px; font-size: 12px; color: var(--hud-ink); opacity: 0; transition: opacity .2s; pointer-events: none; display: flex; align-items: center; gap: 8px; }
+  .busy.on { opacity: .85; }
+  .loader { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px; background: var(--stage); color: var(--hud-ink); transition: opacity .6s; z-index: 3; text-align: center; padding: 16px; }
+  .loader.done { opacity: 0; pointer-events: none; }
+  .spin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid rgba(58, 29, 18, .15); border-top-color: #8c3b1d; animation: spin .9s linear infinite; }
+  .busy .spin { width: 14px; height: 14px; border-width: 2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .panel { min-width: 0; background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; padding: 26px 24px 32px; display: flex; flex-direction: column; gap: 26px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { width: 38px; height: 38px; flex: none; color: var(--accent); }
+  .brand-name { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; font-size: 25px; line-height: 1; }
+  .brand-sub { font-size: 12px; color: var(--muted); letter-spacing: .06em; margin-top: 4px; }
+  h2 { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 12px; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .count { font-size: 12px; color: var(--muted); }
+  .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .preset { border: 1px solid var(--line); border-radius: 14px; padding: 6px 6px 10px; background: transparent; text-align: left; cursor: pointer; transition: border-color .15s, box-shadow .15s, transform .15s; }
+  .preset:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .preset:active { transform: scale(.985); }
+  .preset[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow); }
+  .preset img { width: 100%; aspect-ratio: 236 / 300; object-fit: cover; border-radius: 9px; display: block; background: #f2d3d7; }
+  .p-name { font-weight: 500; font-size: 14px; margin: 8px 4px 0; }
+  .p-tag { font-size: 12px; color: var(--muted); margin: 2px 4px 0; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--chip); border-radius: 12px; padding: 4px; gap: 4px; }
+  .seg button { border: 0; background: transparent; border-radius: 9px; padding: 10px 8px; cursor: pointer; font-weight: 500; color: var(--muted); transition: background .15s, color .15s; }
+  .seg button[aria-pressed="true"] { background: var(--chip-on); color: var(--ink); box-shadow: var(--shadow); }
+  .seg button:disabled { opacity: .45; cursor: not-allowed; }
+  .note { font-size: 12px; color: var(--muted); margin: 8px 2px 0; min-height: 1em; }
+  .tones { display: flex; gap: 14px; flex-wrap: wrap; }
+  .tone { border: 0; background: transparent; cursor: pointer; display: grid; justify-items: center; gap: 6px; font-size: 12px; color: var(--muted); padding: 0; }
+  .tone i { width: 40px; height: 40px; border-radius: 50%; display: block; box-shadow: inset 0 -6px 10px rgba(0, 0, 0, .12), 0 0 0 1px var(--line); }
+  .tone[aria-pressed="true"] { color: var(--ink); }
+  .tone[aria-pressed="true"] i { box-shadow: inset 0 -6px 10px rgba(0, 0, 0, .12), 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+  .actions { display: grid; gap: 10px; margin-top: auto; }
+  .primary { border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-ink); padding: 14px 16px; font-weight: 600; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; gap: 8px; transition: filter .15s, transform .15s; }
+  .primary:hover { filter: brightness(1.08); }
+  .primary:active { transform: scale(.985); }
+  .primary svg { width: 18px; height: 18px; }
+  .fine { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.5; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: 66dvh auto; height: auto; min-height: 100dvh; }
+    .panel { border-left: 0; border-top: 1px solid var(--line); padding: 20px 16px 36px; overflow: visible; }
+    .preset-grid { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 132px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x mandatory; }
+    .preset { scroll-snap-align: start; }
+    .hud-top { left: 16px; top: 14px; }
+    .design-title { font-size: 30px; }
+    .hud-bottom { bottom: 12px; }
+    .pill.hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.5s; } }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div class="app">
+  <main class="stage" id="stage" aria-label="3D preview of hands with mehndi">
+    <canvas id="gl" tabindex="0"></canvas>
+    <div class="vignette"></div>
+    <div class="hud-top">
+      <div class="eyebrow" id="metaLine">Fresh paste · Natural skin</div>
+      <div class="design-title" id="designTitle">Royal Bridal</div>
+    </div>
+    <div class="busy" id="busy"><div class="spin"></div><span>Loading design</span></div>
+    <div class="hud-bottom">
+      <span class="pill hint" id="hint">Drag to rotate · Scroll to zoom · Right-drag to move</span>
+      <button class="pill btn" id="btnShowcase" aria-pressed="false" title="Slowly turn the hands">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+        Showcase
+      </button>
+      <button class="pill btn" id="btnReset" title="Back to the front view">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4M17 12h4M12 3v4M12 17v4"/><circle cx="12" cy="12" r="3"/></svg>
+        Reset view
+      </button>
+    </div>
+    <div class="loader" id="loader"><div class="spin"></div><div class="msg">Preparing 3D hands…</div></div>
+  </main>
+
+  <aside class="panel">
+    <header class="brand">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="24" cy="24" r="6"/><circle cx="24" cy="24" r="1.8" fill="currentColor"/>
+        <path d="M24 6c4 5 4 8 0 12-4-4-4-7 0-12zM24 42c4-5 4-8 0-12-4 4-4 7 0 12zM6 24c5-4 8-4 12 0-4 4-7 4-12 0zM42 24c-5-4-8-4-12 0 4 4 7 4 12 0z"/>
+        <circle cx="24" cy="24" r="21" stroke-dasharray="0.1 5.2" stroke-width="2.6"/>
+      </svg>
+      <div><div class="brand-name">Mehndi Studio</div><div class="brand-sub">3D design try-on</div></div>
+    </header>
+
+    <section aria-labelledby="h-design">
+      <div class="sec-head"><h2 id="h-design">Design</h2><span class="count" id="presetCount"></span></div>
+      <div class="preset-grid" id="presets"></div>
+    </section>
+
+    <section aria-labelledby="h-look">
+      <h2 id="h-look">Henna look</h2>
+      <div class="seg" role="group" aria-label="Henna look">
+        <button data-look="paste" aria-pressed="true">Fresh paste</button>
+        <button data-look="stain" aria-pressed="false">Dried stain</button>
+      </div>
+      <p class="note" id="lookNote"></p>
+    </section>
+
+    <section aria-labelledby="h-tone">
+      <h2 id="h-tone">Skin tone</h2>
+      <div class="tones" id="tones"></div>
+    </section>
+
+    <section class="actions">
+      <button class="primary" id="btnDownload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+        Download image
+      </button>
+      <p class="fine">Real photographed skin and henna on 3D hands shaped from the photo itself. Drag to turn them and see the depth.</p>
+    </section>
+  </aside>
+</div>
+
+<script>
+  setTimeout(function () {
+    if (!window.__mehndiReady) {
+      var m = document.querySelector('#loader .msg');
+      if (m) m.textContent = 'Still loading the 3D engine… please check your internet connection.';
+    }
+  }, 15000);
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* 3D shape built from the bare-hands photo's own outline + photo assets */
+const GEO = /*GEO*/null;
+const HMAP_URL = 'data:image/png;base64,/*HMAP*/';
+const MASK_URL = 'data:image/png;base64,/*MASK*/';
+const ASSETS = /*ASSETS*/null;
+
+const F = GEO.geo;                            // geometry frame (reference px)
+const T = GEO.tex;                            // texture frame (matches the atlases)
+const TW = T.x1 - T.x0, TH = T.y1 - T.y0;
+const U = 0.01, CX = 768, CY = 960, TAU = Math.PI * 2;
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const store = {
+  get(k, d) { try { return localStorage.getItem('mehndi3dp.' + k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('mehndi3dp.' + k, v); } catch { /* private mode */ } },
+};
+function canvas2(w, h) { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; }
+
+/* ---------- presets ---------- */
+const PRESETS = ASSETS.presets;          // filled from tools/data/designs.json by tools/mehndi.py
+const presetOf = id => PRESETS.find(p => p.id === id) || PRESETS[0];
+const TONES = {
+  natural: { name: 'Natural', mul: [1, 1, 1], sw: '#d9a184' },
+  fair: { name: 'Fair', mul: [1.07, 1.05, 1.04], sw: '#ecc0a6' },
+  tan: { name: 'Tan', mul: [0.86, 0.79, 0.74], sw: '#b9825f' },
+  deep: { name: 'Deep', mul: [0.68, 0.58, 0.52], sw: '#8e5a3e' },
+};
+const assetKey = (id, look) => (look === 'stain' && presetOf(id).stain) ? `${id}_stain` : id;
+
+const state = { preset: store.get('preset', 'royal'), look: store.get('look', 'paste'), tone: store.get('tone', 'natural'), showcase: false };
+if (!PRESETS.some(p => p.id === state.preset)) state.preset = 'royal';
+if (!['paste', 'stain'].includes(state.look)) state.look = 'paste';
+if (!TONES[state.tone]) state.tone = 'natural';
+
+/* ---------- renderer / scene ---------- */
+const stage = document.getElementById('stage');
+const glCanvas = document.getElementById('gl');
+const loaderEl = document.getElementById('loader');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas: glCanvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+} catch (e) {
+  loaderEl.querySelector('.msg').textContent = 'This browser could not start 3D (WebGL). Try Chrome, Edge, Safari or Firefox.';
+  loaderEl.querySelector('.spin').remove();
+  throw e;
+}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;          // keep the photographs' true colours
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+const ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#efcfcf');
+const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 400);
+camera.up.set(0, 0, 1);
+const controls = new OrbitControls(camera, glCanvas);
+controls.enableDamping = true; controls.dampingFactor = 0.08; controls.rotateSpeed = 0.7; controls.zoomSpeed = 0.9; controls.panSpeed = 0.7;
+controls.screenSpacePanning = true; controls.minPolarAngle = 0; controls.maxPolarAngle = 0.9; controls.minAzimuthAngle = -0.9; controls.maxAzimuthAngle = 0.9;
+controls.target.set(0, 0, 0.45);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+const hemi = new THREE.HemisphereLight(0xffffff, 0xf2d6d2, 0.62); hemi.position.set(0, 0, 1); scene.add(hemi);
+const key = new THREE.DirectionalLight(0xfff4ec, 1.35); key.position.set(-11, 8, 15); key.target.position.set(0, 0, 0);
+key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 6; key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+Object.assign(key.shadow.camera, { left: -14, right: 14, top: 16, bottom: -14, near: 1, far: 60 });
+scene.add(key, key.target);
+
+function loadTex(url, srgb = true) {
+  return new Promise((res, rej) => new THREE.TextureLoader().load(url, t => { t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.anisotropy = ANISO; res(t); }, undefined, rej));
+}
+async function loadHeights() {
+  const blob = await (await fetch(HMAP_URL)).blob();
+  let bmp; try { bmp = await createImageBitmap(blob, { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }); } catch { bmp = await createImageBitmap(blob); }
+  const c = canvas2(F.w, F.h), g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bmp, 0, 0);
+  const d = g.getImageData(0, 0, F.w, F.h).data, n = F.w * F.h, h = new Float32Array(n);
+  for (let i = 0; i < n; i++) h[i] = ((d[i * 4] << 8) | d[i * 4 + 1]) / 65535 * F.hmax;
+  return h;
+}
+function buildHandGeometry(h) {
+  const w = F.w, hh = F.h, n = w * hh, pos = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+  for (let j = 0; j < hh; j++) for (let i = 0; i < w; i++) {
+    const k = j * w + i, px = F.x0 + (i + 0.5) * F.d, py = F.y0 + (j + 0.5) * F.d;
+    pos[k * 3] = (px - CX) * U; pos[k * 3 + 1] = -(py - CY) * U; pos[k * 3 + 2] = h[k] * U;
+    uv[k * 2] = (px - T.x0) / TW; uv[k * 2 + 1] = 1 - (py - T.y0) / TH;
+  }
+  const idx = [], on = k => h[k] > 0.15;
+  for (let j = 0; j < hh - 1; j++) for (let i = 0; i < w - 1; i++) {
+    const a = j * w + i, b = a + 1, c = a + w, d = c + 1;
+    if (on(a) || on(b) || on(c) || on(d)) idx.push(a, c, b, b, c, d);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  geo.setIndex(idx); geo.computeVertexNormals(); geo.computeBoundingSphere();
+  return geo;
+}
+/* ---------- photo textures (lazy, cached) ---------- */
+const cache = new Map();
+function getAtlas(k) {
+  if (!cache.has(k)) cache.set(k, loadTex(ASSETS.atlas[k]).then(tex => { tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping; return tex; }));
+  return cache.get(k);
+}
+let handMat = null;
+function makeHandMat(maskTex) {
+  return new THREE.MeshStandardMaterial({
+    color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5, roughness: 0.62, metalness: 0,
+    alphaMap: maskTex, alphaTest: 0.5, alphaToCoverage: true, envMapIntensity: 0.18,
+  });
+}
+function applyTone() {
+  const m = TONES[state.tone].mul;
+  handMat.color.setRGB(m[0], m[1], m[2]); handMat.emissive.setRGB(m[0], m[1], m[2]);
+}
+
+/* ---------- camera helpers ---------- */
+function fitDistance() { const t = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2); return Math.max(9.3 / t, 6.6 / (t * camera.aspect)); }
+function defaultView() { return { theta: 0, phi: 0.2, dist: fitDistance(), tx: 0, ty: 0 }; }
+function getView() { const o = camera.position.clone().sub(controls.target), dist = o.length(); return { theta: Math.atan2(o.x, -o.y), phi: Math.acos(clamp(o.z / dist, -1, 1)), dist, tx: controls.target.x, ty: controls.target.y }; }
+function setView(v) { controls.target.set(v.tx, v.ty, 0.45); const sp = Math.sin(v.phi); camera.position.set(v.tx + v.dist * sp * Math.sin(v.theta), v.ty - v.dist * sp * Math.cos(v.theta), 0.45 + v.dist * Math.cos(v.phi)); camera.lookAt(controls.target); }
+let anim = null;
+function animateTo(to, dur = 1200) { anim = { from: getView(), to, t0: performance.now(), dur }; }
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+/* ---------- UI ---------- */
+const $ = s => document.querySelector(s);
+const titleEl = $('#designTitle'), metaEl = $('#metaLine'), busyEl = $('#busy');
+function hud() {
+  const p = presetOf(state.preset);
+  titleEl.textContent = p.name;
+  const look = state.preset === 'bare' ? 'No mehndi' : (state.look === 'stain' && p.stain) ? 'Dried stain' : 'Fresh paste';
+  metaEl.textContent = look + ' · ' + TONES[state.tone].name + ' skin';
+}
+function syncUI() {
+  document.querySelectorAll('.preset').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.id === state.preset));
+    const img = b.querySelector('img'), k = assetKey(b.dataset.id, state.look);
+    if (img.dataset.k !== k) { img.src = ASSETS.thumb[k]; img.dataset.k = k; }
+  });
+  const p = presetOf(state.preset), bare = state.preset === 'bare', look = p.stain ? state.look : 'paste';
+  document.querySelectorAll('.seg button').forEach(b => { b.setAttribute('aria-pressed', String(!bare && b.dataset.look === look)); b.disabled = bare || !p.stain; });
+  $('#lookNote').textContent = bare ? 'Pick a design to compare fresh paste and dried stain.' : !p.stain ? 'This design only has a fresh-paste version.' : look === 'paste' ? 'Wet cone paste, as it looks right after application.' : 'The colour left on the skin after the paste comes off.';
+  document.querySelectorAll('.tone').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === state.tone)));
+  hud();
+}
+let job = 0;
+async function applyDesign() {
+  const my = ++job; busyEl.classList.add('on');
+  try {
+    const tex = await getAtlas(assetKey(state.preset, state.look));
+    if (my !== job) return;
+    handMat.map = handMat.emissiveMap = tex; handMat.needsUpdate = true;
+  } finally { if (my === job) busyEl.classList.remove('on'); }
+}
+function change(k, v) {
+  state[k] = v; ['preset', 'look', 'tone'].forEach(n => store.set(n, state[n]));
+  syncUI();
+  if (k === 'tone') applyTone(); else applyDesign();
+}
+function buildUI() {
+  const grid = $('#presets');
+  PRESETS.forEach(p => {
+    const b = document.createElement('button'); b.className = 'preset'; b.dataset.id = p.id; b.type = 'button';
+    b.innerHTML = `<img alt="" width="236" height="300" decoding="async"><div class="p-name"></div><div class="p-tag"></div>`;
+    b.querySelector('.p-name').textContent = p.name; b.querySelector('.p-tag').textContent = p.tag;
+    b.addEventListener('click', () => { if (state.preset !== p.id) change('preset', p.id); });
+    grid.appendChild(b);
+  });
+  $('#presetCount').textContent = `${PRESETS.filter(p => p.id !== 'bare').length} designs`;
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => { if (state.look !== b.dataset.look) change('look', b.dataset.look); }));
+  const tn = $('#tones');
+  Object.entries(TONES).forEach(([id, t]) => {
+    const b = document.createElement('button'); b.className = 'tone'; b.dataset.id = id; b.type = 'button';
+    b.innerHTML = `<i style="background:radial-gradient(circle at 35% 30%, #fff3, ${t.sw} 55%)"></i><span></span>`;
+    b.querySelector('span').textContent = t.name; b.setAttribute('aria-label', `${t.name} skin`);
+    b.addEventListener('click', () => { if (state.tone !== id) change('tone', id); });
+    tn.appendChild(b);
+  });
+  $('#btnReset').addEventListener('click', () => { setShowcase(false); animateTo(defaultView(), 1100); });
+  $('#btnShowcase').addEventListener('click', () => setShowcase(!state.showcase));
+  $('#btnDownload').addEventListener('click', download);
+  if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Drag to rotate · Pinch to zoom';
+  syncUI();
+}
+function setShowcase(on) { state.showcase = on; $('#btnShowcase').setAttribute('aria-pressed', String(on)); if (on) anim = null; }
+function download() {
+  renderer.render(scene, camera);
+  const a = document.createElement('a'); a.href = renderer.domElement.toDataURL('image/png');
+  a.download = `mehndi-${state.preset}${state.preset === 'bare' ? '' : '-' + state.look}.png`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ---------- main ---------- */
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  const fd = fitDistance(); controls.minDistance = fd * 0.3; controls.maxDistance = fd * 1.25;
+}
+async function init() {
+  buildUI();
+  const [heights, bgTex] = await Promise.all([loadHeights(), loadTex(ASSETS.background)]);
+  // backdrop: the photo's own silk and petals (hands removed), unlit so it keeps the photo's colours
+  const B = ASSETS.bgFrame, bw = (B.x1 - B.x0) * U, bh = (B.y1 - B.y0) * U;
+  const bgGeo = new THREE.PlaneGeometry(bw, bh); bgGeo.translate(((B.x0 + B.x1) / 2 - CX) * U, -((B.y0 + B.y1) / 2 - CY) * U, -0.006);
+  scene.add(new THREE.Mesh(bgGeo, new THREE.MeshBasicMaterial({ map: bgTex })));
+  const catcher = new THREE.Mesh(bgGeo, new THREE.ShadowMaterial({ color: 0x4a1a22, opacity: 0.2 })); catcher.position.z = 0.002; catcher.receiveShadow = true; scene.add(catcher);
+  const maskTex = await loadTex(MASK_URL, false);
+  handMat = makeHandMat(maskTex);
+  const hands = new THREE.Mesh(buildHandGeometry(heights), handMat);
+  hands.castShadow = true; hands.receiveShadow = true; scene.add(hands);
+  applyTone();
+  await applyDesign();
+  resize(); new ResizeObserver(resize).observe(stage);
+  const d = defaultView(); setView({ ...d, theta: -0.55, phi: 0.85, dist: d.dist * 1.12 }); animateTo(d, 2200);
+  controls.addEventListener('start', () => { anim = null; if (state.showcase) setShowcase(false); });
+  controls.addEventListener('change', () => { const t = controls.target; t.x = clamp(t.x, -5, 5); t.y = clamp(t.y, -8, 8); });
+  const clock = new THREE.Clock(); let first = true;
+  renderer.setAnimationLoop(() => {
+    const now = performance.now(), t = clock.getElapsedTime();
+    if (anim) {
+      const k = ease(clamp((now - anim.t0) / anim.dur, 0, 1)), a = anim.from, b = anim.to;
+      setView({ theta: lerp(a.theta, b.theta, k), phi: lerp(a.phi, b.phi, k), dist: lerp(a.dist, b.dist, k), tx: lerp(a.tx, b.tx, k), ty: lerp(a.ty, b.ty, k) });
+      if (k >= 1) anim = null;
+    } else if (state.showcase) {
+      const v = getView(), th = 0.42 * Math.sin(t * 0.35), ph = 0.36 + 0.1 * Math.sin(t * 0.23 + 1);
+      setView({ ...v, theta: lerp(v.theta, th, 0.03), phi: lerp(v.phi, ph, 0.03) });
+    }
+    controls.update();
+    renderer.render(scene, camera);
+    if (first) {
+      first = false; window.__mehndiReady = true; loaderEl.classList.add('done');
+      // warm the other designs in the background so switching is instant
+      const keys = PRESETS.flatMap(p => p.stain ? [p.id, p.id + '_stain'] : [p.id]);
+      let i = 0; const next = () => { if (i < keys.length) getAtlas(keys[i++]).then(() => setTimeout(next, 120)); }; setTimeout(next, 1500);
+    }
+  });
+}
+init().catch(err => {
+  console.error(err);
+  loaderEl.querySelector('.msg').textContent = 'Something went wrong while building the 3D hands. Please reload the page.';
+});
+</script>
+</body>
+</html>

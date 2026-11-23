@@ -1,0 +1,50 @@
+[
+  {
+    "id": "royal",
+    "name": "Royal Bridal",
+    "tag": "Your reference design",
+    "photo": "royal-bridal",
+    "stain": true,
+    "style": "The bridal design from reference/reference.webp (forearm bands, lattice, palm mandala, dipped fingertips)."
+  },
+  {
+    "id": "bridal",
+    "name": "Full Bridal",
+    "tag": "Domes, peacocks & mesh",
+    "photo": "full-bridal",
+    "stain": true,
+    "style": "Very dense full bridal mehndi covering both forearms up to the top of the photo. The forearms have stacked horizontal bands: architectural arches and domes, fine lattice nets, leafy bands, floral bands and small peacock motifs. The palms are covered with a large fine diamond mesh lattice framed by florals and a central mandala. Every finger has detailed bands and all fingertips are fully dipped in solid henna caps. Extremely intricate, professional bridal work."
+  },
+  {
+    "id": "arabic",
+    "name": "Bold Arabic",
+    "tag": "Shaded fern leaves",
+    "photo": "bold-arabic",
+    "stain": true,
+    "style": "Bold modern Arabic mehndi. A bold diagonal composition running from the wrist across the palm up to the index finger, made of large fern-like leaves in thick filled dark maroon-black strokes, with shaded half-mandalas whose insides have fine detailed linework, plus leafy vines running up each finger. All five fingertips fully dipped in solid dark henna caps. Forearms mostly bare except a small leafy trail above the wrist."
+  },
+  {
+    "id": "trail",
+    "name": "Peacock Trail",
+    "tag": "Flower with tassels",
+    "photo": "peacock-trail",
+    "stain": true,
+    "style": "Elegant Indo-Arabic trail mehndi. One large flower near the wrist with a dot-filled centre and shaded petals, with dangling chains of dots hanging from it like tassels, and sweeping swirls, curls and peacock-feather paisleys flowing diagonally up toward the index finger. The fingers have half-cap designs of curved feather strokes near the tips and small motifs. Fine, crisp, intricate linework. Forearms bare apart from the tassels."
+  },
+  {
+    "id": "floral",
+    "name": "Rose Lattice",
+    "tag": "Roses & finger nets",
+    "photo": "rose-lattice",
+    "stain": true,
+    "style": "Floral palm mehndi. Several large open roses with outlined petals and lightly shaded insides arranged in the palm around a central paisley medallion whose inside is a small checkered grid, small leaf sprigs between flowers, and a decorated band at the wrist. Each finger has stacked bands of fine lattice / checkered net with small leaf tops, ending below the fingertip so the fingertips stay mostly bare. Forearms bare."
+  },
+  {
+    "id": "minimal",
+    "name": "Minimal Mandala",
+    "tag": "Light & modern",
+    "photo": "minimal-mandala",
+    "stain": true,
+    "style": "Minimal elegant mehndi. A single round mandala flower in the centre of each palm with fine petals and a ring of dots, a delicate dotted chain from the mandala to the middle finger, small dots at the base of each finger, and only the very tips of the fingers lightly dipped. A thin delicate bracelet line with tiny hanging dots at each wrist. Lots of bare skin, clean and modern."
+  }
+]

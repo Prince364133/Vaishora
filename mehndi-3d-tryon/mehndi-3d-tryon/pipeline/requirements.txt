@@ -1,0 +1,3 @@
+# Python 3.10+ (built and tested with Python 3.10.14)
+opencv-python>=4.9   # tested 4.9.0 — GrabCut, ECC alignment, distance transforms, image I/O
+numpy>=1.26          # tested 1.26.4 — Poisson solve (conjugate gradient), height maps
