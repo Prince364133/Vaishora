@@ -43,26 +43,32 @@ export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" 
 
   return (
     <div className="absolute inset-0">
+      <PhotoBackdrop />
       <div className="absolute inset-0">
-        {failed ? (
+        {(!ready || failed) && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={thumb} alt={`${presetName} mehndi on photographed hands`} className="absolute inset-0 m-auto h-full w-auto object-contain p-4" />
-        ) : (
-          <div className={`absolute inset-0 transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}>
+          <img
+            src={thumb}
+            alt={`${presetName} mehndi on photographed hands`}
+            className="pointer-events-none absolute inset-0 m-auto h-full w-auto object-contain p-4"
+          />
+        )}
+        {!failed && (
+          <div className={`absolute inset-0 transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
             {isModel ? (
-              <>
-                <PhotoBackdrop />
-                <ModelHandScene ref={model} insetBottom={TOOLBAR_SPACE} preset={preset} look={bare ? "paste" : look} tone={tone} showcase={showcase} onShowcaseEnd={onShowcaseEnd} onReady={onReady} onError={onError} />
-              </>
+              <ModelHandScene ref={model} insetBottom={TOOLBAR_SPACE} preset={preset} look={bare ? "paste" : look} tone={tone} showcase={showcase} onShowcaseEnd={onShowcaseEnd} onReady={onReady} onError={onError} />
             ) : (
               <PhotoHandScene ref={scene} insetBottom={TOOLBAR_SPACE} preset={preset} look={bare ? "paste" : look} tone={tone} showcase={showcase} onShowcaseEnd={onShowcaseEnd} onReady={onReady} onError={onError} />
             )}
           </div>
         )}
         {!ready && !failed && (
-          <p className="absolute inset-x-0 bottom-20 text-center text-xs text-plum/70" role="status">
-            {isModel ? "Loading 3D model…" : "Loading photo 3D…"}
-          </p>
+          <div className="pointer-events-none absolute inset-x-0 bottom-24 flex justify-center z-10">
+            <span className="inline-flex items-center gap-2 rounded-full bg-plum-deep/85 px-3 py-1 text-xs text-ivory backdrop-blur-md shadow-sm" role="status">
+              <span className="h-1.5 w-1.5 animate-ping rounded-full bg-gold" />
+              {isModel ? "Loading 3D model…" : "Loading photo 3D…"}
+            </span>
+          </div>
         )}
         <p className="pointer-events-none absolute inset-x-0 bottom-[4.25rem] flex justify-center px-4">
           <span className="rounded-full bg-plum-deep/80 px-3 py-1 text-center text-[0.72rem] text-ivory backdrop-blur-sm">
