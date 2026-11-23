@@ -37,7 +37,7 @@ export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" 
   const presetName = PHOTO_PRESETS.find((p) => p.id === preset)?.name ?? "";
   const bare = preset === "bare";
   const thumb = `/tryon/thumb-${bare ? "bare" : look === "stain" ? `${preset}_stain` : preset}.jpg`;
-  const btn = `inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] px-2 text-sm font-semibold transition-colors ${
+  const btn = `inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] px-2 text-sm @max-[340px]:min-w-9 @max-[340px]:px-1 font-semibold transition-colors ${
     onStage ? "bg-white/10 text-ivory hover:bg-white/18 border border-white/15" : "bg-white text-plum border hairline hover:bg-blush"
   }`;
 
@@ -71,8 +71,8 @@ export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" 
         </p>
       </div>
       {/* floating over the photo backdrop, on a soft plum pill so the controls read on the light silk */}
-      <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center px-2 pb-3">
-      <div className="flex flex-nowrap items-center justify-center gap-1 rounded-[calc(var(--radius-sm)+4px)] bg-plum-deep/75 p-1 shadow-lg backdrop-blur-md sm:gap-1.5" role="toolbar" aria-label={isModel ? "3D hand controls" : "Photo 3D controls"}>
+      <div className="@container absolute inset-x-0 bottom-0 z-10 flex justify-center px-2 pb-3 max-[359px]:px-1">
+      <div className="flex max-w-full flex-nowrap items-center justify-center gap-1 rounded-[calc(var(--radius-sm)+4px)] bg-plum-deep/75 p-1 shadow-lg backdrop-blur-md @min-[500px]:gap-1.5 @max-[340px]:gap-0.5 @max-[340px]:p-0.5" role="toolbar" aria-label={isModel ? "3D hand controls" : "Photo 3D controls"}>
         <div className={`inline-flex shrink-0 rounded-[var(--radius-sm)] p-0.5 ${onStage ? "bg-white/10" : "bg-blush"}`} role="radiogroup" aria-label="Henna look">
           {(["paste", "stain"] as const).map((l) => (
             <button
@@ -82,7 +82,7 @@ export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" 
               aria-checked={look === l}
               disabled={bare}
               onClick={() => setLook(l)}
-              className={`h-11 rounded-[5px] px-3 text-sm font-semibold transition-colors disabled:opacity-40 ${
+              className={`h-11 rounded-[5px] px-3 @max-[420px]:px-2 @max-[340px]:px-1 @max-[340px]:text-[13px] text-sm font-semibold transition-colors disabled:opacity-40 ${
                 look === l ? (onStage ? "bg-ivory text-plum" : "bg-plum text-ivory") : onStage ? "text-ivory" : "text-plum"
               }`}
             >
@@ -102,7 +102,7 @@ export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" 
         <label className="sr-only" htmlFor="photo-look-select">Photo design</label>
         <select
           id="photo-look-select"
-          className={`${btn} w-[7.5rem] max-[419px]:w-[6.5rem] cursor-pointer appearance-none truncate text-left`}
+          className={`${btn} w-[7.5rem] @max-[420px]:w-[6.25rem] @max-[340px]:w-[4.25rem] @max-[340px]:px-1.5 cursor-pointer appearance-none truncate text-left`}
           value={preset}
           onChange={(e) => setPick({ slug: designSlug, id: e.target.value as PhotoPresetId })}
         >
@@ -130,7 +130,7 @@ export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" 
             </button>
             <button
               type="button"
-              className={`${btn} max-[419px]:hidden ${showcase ? (onStage ? "!bg-ivory !text-plum" : "!bg-plum !text-ivory") : ""}`}
+              className={`${btn} @max-[500px]:hidden ${showcase ? (onStage ? "!bg-ivory !text-plum" : "!bg-plum !text-ivory") : ""}`}
               aria-pressed={showcase}
               aria-label="Spin 360°"
               title="Spin 360°"
@@ -138,10 +138,10 @@ export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" 
             >
               360°
             </button>
-            <button type="button" className={`${btn} max-[639px]:hidden`} aria-label="Zoom in" title="Zoom in" onClick={() => model.current?.zoom(0.8)}>
+            <button type="button" className={`${btn} @max-[620px]:hidden`} aria-label="Zoom in" title="Zoom in" onClick={() => model.current?.zoom(0.8)}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden><path d="M9 4v10M4 9h10" /></svg>
             </button>
-            <button type="button" className={`${btn} max-[639px]:hidden`} aria-label="Zoom out" title="Zoom out" onClick={() => model.current?.zoom(1.25)}>
+            <button type="button" className={`${btn} @max-[620px]:hidden`} aria-label="Zoom out" title="Zoom out" onClick={() => model.current?.zoom(1.25)}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden><path d="M4 9h10" /></svg>
             </button>
           </>
@@ -149,7 +149,7 @@ export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" 
           <>
         <button
           type="button"
-          className={`${btn} max-[419px]:hidden ${showcase ? (onStage ? "!bg-ivory !text-plum" : "!bg-plum !text-ivory") : ""}`}
+          className={`${btn} @max-[500px]:hidden ${showcase ? (onStage ? "!bg-ivory !text-plum" : "!bg-plum !text-ivory") : ""}`}
           aria-pressed={showcase}
           aria-label="Showcase: gentle automatic turn"
           title="Showcase"
@@ -162,7 +162,7 @@ export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" 
         </button>
         <button
           type="button"
-          className={`${btn} max-[419px]:hidden`}
+          className={`${btn} @max-[500px]:hidden`}
           aria-label="Download image"
           title="Download image"
           onClick={() => ctl()?.download(`vaishora-mehndi-${preset}${bare ? "" : `-${look}`}.png`)}
