@@ -2,16 +2,10 @@
 #
 #   python scripts/hand-real/postprocess.py <build_dir> <public_models_dir>
 #
-# The CC0 MakeHuman skin is photo-derived but blotchy (red/brown patches, dark knuckles, muddy nails). For a
-# well-groomed, evenly toned hand (docs/HAND_REALISM.md §5) the albedo is *composed*:
-#   colour  = designed target tones — warm honey-medium back of hand, lighter pinker palm, pink nail beds with a light
-#             free edge — blended by a baked palm/back mask (object-space normal) and a soft fingertip flush;
-#   detail  = only the fine, low-contrast structure of the photo (pores, fine lines, palm creases), luminance only.
-# Writes (into <public_models_dir>):
-#   hand-albedo-2k.jpg / -1k.jpg   composed skin colour
-#   hand-normal-2k.jpg / -1k.jpg   soft normal map (creases strong on the palm, faint on the back), pores, smooth nails
-#   hand-detail-1k.jpg             R = nail mask, G = crease cavity, B = nail free edge
-# Requires Pillow + numpy.
+# The CC0 MakeHuman skin is photo-derived but blotchy. For a well-groomed, evenly toned
+# hand (docs/HAND_REALISM.md §5) the albedo is composed:
+#   colour  = warm golden-honey medium Indian complexion, soft peachy palm, clean manicured nails
+#   detail  = fine, low-contrast pore & palm crease structure, free of muddy patches.
 
 import pathlib
 import sys
@@ -51,7 +45,7 @@ def blurf(a, r):
 
 
 def fill_empty(img, mask):
-    """Fill pixels outside the UV islands with nearby values (normalised convolution) so mips/seams stay clean."""
+    """Fill pixels outside the UV islands with nearby values (normalised convolution)."""
     single = img.ndim == 2
     im = img[..., None] if single else img
     out = im * mask[..., None]
@@ -75,65 +69,69 @@ free = fill_empty(free, valid)
 
 srgb = lambda h: np.array([int(h[i : i + 2], 16) for i in (1, 3, 5)], dtype=np.float32) / 255.0  # noqa: E731
 
-# ------------------------------------------------------------------ target tones (sRGB albedo, before lighting)
-BACK = srgb("#C9956F")  # back of hand: warm honey / wheatish medium Indian complexion
-PALM = srgb("#E3AF92")  # palm: lighter, pinker (thick stratum corneum, little melanin)
-FLUSH = srgb("#D99A86")  # soft rosy flush at fingertips / knuckle tops (blood close to the surface)
-NAILBED = srgb("#E9AFA3")  # healthy pink nail bed
-FREEEDGE = srgb("#F6EADF")  # translucent white free edge
-CUTICLE = srgb("#C8907A")
+# ------------------------------------------------------------------ target tones (warm Indian female complexion)
+BACK = srgb("#CCA080")      # back of hand: luminous warm golden-honey / warm wheatish complexion
+PALM = srgb("#E8C2AC")      # palm: soft warm peachy ivory
+FLUSH = srgb("#DF9C8B")     # delicate rosy warmth at fingertips and knuckle curves
+NAILBED = srgb("#DB9D92")   # healthy, soft manicured natural pink nail bed
+FREEEDGE = srgb("#EDE3DA")  # soft natural ivory edge (not harsh chalky white)
+CUTICLE = srgb("#CBA091")   # smooth gentle border
 
 nx = blurf(nos[..., 0], 3)
 palm_w = np.clip((-nx + 0.05) / 0.6, 0, 1)
 palm_w = palm_w * palm_w * (3 - 2 * palm_w)
 base = BACK[None, None] * (1 - palm_w[..., None]) + PALM[None, None] * palm_w[..., None]
 
-# fingertip flush: near nails (pads and the skin around the nail) — a gentle, wide falloff
-near_nail = np.clip(blurf(nails, 22) * 3.0, 0, 1)
-base = base + (FLUSH[None, None] - base) * (near_nail * 0.35)[..., None]
+# Soft fingertip rosy flush
+near_nail = np.clip(blurf(nails, 24) * 2.5, 0, 1)
+base = base + (FLUSH[None, None] - base) * (near_nail * 0.28)[..., None]
 
-# ------------------------------------------------------------------ fine photo detail, luminance only, low contrast
+# ------------------------------------------------------------------ micro-detail: smooth & clean
 L = photo @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
-fine = L / np.maximum(blurf(L, 3), 1e-3)  # pores, fine lines
-mid = blurf(L, 3) / np.maximum(blurf(L, 14), 1e-3)  # creases / folds
-fine = np.clip(fine, 0.7, 1.3)
-mid = np.clip(mid, 0.6, 1.4)
-detail = fine ** 0.55 * mid ** np.where(palm_w > 0.5, 0.32, 0.24)  # palm lines visible, back of hand smooth
-pores = 1 - 0.035 * blurf((rng.random((H, W)) > 0.982).astype(np.float32), 1) * 4
-tone = 1 + 0.012 * blurf(rng.standard_normal((H, W)).astype(np.float32), 18) * 6  # barely-there natural variation
-skin = np.clip(base * (detail * pores * tone)[..., None], 0, 1)
+fine = L / np.maximum(blurf(L, 3), 1e-3)
+mid = blurf(L, 3) / np.maximum(blurf(L, 14), 1e-3)
 
-# ------------------------------------------------------------------ nails
+# Keep fine micro-structure subtle so skin looks silky, not noisy
+fine = np.clip(fine, 0.88, 1.12)
+mid = np.clip(mid, 0.75, 1.25)
+
+# Palm lines remain defined; back of hand is kept smooth without muddy splotches
+detail = fine ** 0.35 * mid ** np.where(palm_w > 0.5, 0.28, 0.04)
+pores = 1 - 0.015 * blurf((rng.random((H, W)) > 0.985).astype(np.float32), 1) * 2
+skin = np.clip(base * (detail * pores)[..., None], 0, 1)
+
+# ------------------------------------------------------------------ clean manicured nails
 nm = np.clip((nails - 0.15) / 0.6, 0, 1)
-fe = np.clip(free * 1.6, 0, 1)
+fe = np.clip(free * 1.5, 0, 1)
+# Natural soft gradient from nail bed to free edge
 nail_col = NAILBED[None, None] * (1 - fe[..., None]) + FREEEDGE[None, None] * fe[..., None]
-nail_col = nail_col * (fine ** 0.15)[..., None]
-cuticle = np.clip(blurf(nm, 2) - blurf(nm, 6), 0, 1) * 1.2  # thin soft edge just outside the plate
-skin = skin + (CUTICLE[None, None] - skin) * (cuticle * 0.35)[..., None]
+cuticle = np.clip(blurf(nm, 2) - blurf(nm, 6), 0, 1) * 0.9
+skin = skin + (CUTICLE[None, None] - skin) * (cuticle * 0.25)[..., None]
 albedo = skin * (1 - nm[..., None]) + nail_col * nm[..., None]
-# baked ambient occlusion (between the fingers, palm hollow, finger webs): soft, so it reads as contact shading
+
+# Very subtle contact shading only (prevents muddy dark splotches between fingers)
 ao_path = src / "ao.png"
 if ao_path.exists():
     ao = fill_empty(load("ao.png", "L"), valid)
-    ao = blurf(ao, 2)
-    albedo = albedo * (0.35 + 0.65 * ao)[..., None] ** 0.8
+    ao = blurf(ao, 4)
+    albedo = albedo * (0.88 + 0.12 * ao)[..., None]
 
-# ------------------------------------------------------------------ normal map
-crease = np.log(np.clip(mid, 0.6, 1.4))
-finel = np.log(np.clip(fine, 0.7, 1.3))
-height = finel * 0.6 + crease * np.where(palm_w > 0.5, 0.9, 0.48)
+# ------------------------------------------------------------------ refined normal map (smooth, delicate skin)
+crease = np.log(np.clip(mid, 0.75, 1.25))
+finel = np.log(np.clip(fine, 0.88, 1.12))
+# Palm keeps natural creases; back of hand has gentle knuckle folds, not coarse roughness
+height = finel * 0.3 + crease * np.where(palm_w > 0.5, 0.75, 0.22)
 height = blurf(height, 1)
-height -= blurf((rng.random((H, W)) > 0.985).astype(np.float32), 1) * 0.03  # pores
 height *= 1 - nm
 gy, gx = np.gradient(height)
-strength = 6.0 * (W / 2048)
+strength = 3.5 * (W / 2048)  # soft, elegant relief
 n3 = np.stack([-gx * strength, gy * strength, np.ones_like(gx)], axis=-1)
 n3 /= np.linalg.norm(n3, axis=-1, keepdims=True)
 normal = n3 * 0.5 + 0.5
-cavity = np.clip(-blurf(crease, 1) * 5.0, 0, 1) * np.where(palm_w > 0.5, 1.0, 0.4)
+cavity = np.clip(-blurf(crease, 1) * 4.0, 0, 1) * np.where(palm_w > 0.5, 1.0, 0.3)
 
 
-def save(arr, name, size, q=86):
+def save(arr, name, size, q=88):
     im = Image.fromarray(np.clip(arr * 255 + 0.5, 0, 255).astype(np.uint8))
     if im.size[0] != size:
         im = im.resize((size, size), Image.LANCZOS)
@@ -141,8 +139,9 @@ def save(arr, name, size, q=86):
     print(name, (dst / name).stat().st_size // 1024, "KB")
 
 
-save(albedo, "hand-albedo-2k.jpg", 2048, 84)
-save(albedo, "hand-albedo-1k.jpg", 1024, 86)
-save(normal, "hand-normal-2k.jpg", 2048, 80)
-save(normal, "hand-normal-1k.jpg", 1024, 84)
-save(np.stack([nm, cavity, fe], axis=-1), "hand-detail-1k.jpg", 1024, 85)
+save(albedo, "hand-albedo-2k.jpg", 2048, 88)
+save(albedo, "hand-albedo-1k.jpg", 1024, 88)
+save(normal, "hand-normal-2k.jpg", 2048, 82)
+save(normal, "hand-normal-1k.jpg", 1024, 85)
+save(np.stack([nm, cavity, fe], axis=-1), "hand-detail-1k.jpg", 1024, 88)
+print("Texture post-processing complete.")

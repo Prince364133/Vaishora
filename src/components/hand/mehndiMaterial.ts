@@ -68,15 +68,15 @@ export function createMehndiMaterial(maps: SkinMaps) {
   const mat = new THREE.MeshPhysicalMaterial({
     map: maps.albedo,
     normalMap: maps.normal,
-    normalScale: new THREE.Vector2(0.7, 0.7),
+    normalScale: new THREE.Vector2(0.65, 0.65),
     color: new THREE.Color(1, 1, 1),
-    roughness: 0.58,
+    roughness: 0.52,
     metalness: 0,
-    specularIntensity: 0.45,
-    specularColor: new THREE.Color("#fff1ea"),
-    sheen: 0.35,
-    sheenRoughness: 0.6,
-    sheenColor: new THREE.Color("#f3c7b0"),
+    specularIntensity: 0.42,
+    specularColor: new THREE.Color("#fff4ec"),
+    sheen: 0.45,
+    sheenRoughness: 0.55,
+    sheenColor: new THREE.Color("#fce0d2"),
     clearcoat: 0.02,
     clearcoatRoughness: 0.45,
     transparent: true,
@@ -178,9 +178,9 @@ export function createMehndiMaterial(maps: SkinMaps) {
           diffuseColor.a *= smoothstep(CUT_Y - 0.002, CUT_Y - 0.05, vBindPos.y);
 
           // (palm/back tone balance is baked into the composed albedo — see scripts/hand-real/postprocess.py)
-          // Natural pigment variation at two scales on top of the skin texture.
-          float tone = vnoise(vBindPos * 55.0) * 0.6 + vnoise(vBindPos * 210.0) * 0.4;
-          diffuseColor.rgb *= 0.985 + tone * 0.03;
+          // Very gentle micro-tonal variation without blotchy low-frequency patches.
+          float tone = vnoise(vBindPos * 320.0);
+          diffuseColor.rgb *= 0.995 + tone * 0.01;
 
           // ---- photo albedo: real skin and real henna from a photograph, in the artwork projection frame.
           // Palm photo on palm-facing surfaces, back photo on the back; alpha feathers into our skin, and finger
@@ -225,9 +225,9 @@ export function createMehndiMaterial(maps: SkinMaps) {
       .replace(
         "#include <roughnessmap_fragment>",
         `#include <roughnessmap_fragment>
-        roughnessFactor = mix(roughnessFactor, 0.16, nailM);
-        roughnessFactor = mix(roughnessFactor, 0.66, cavity * 0.5);
-        roughnessFactor *= 0.96 + vnoise(vBindPos * 700.0) * 0.08;`,
+        roughnessFactor = mix(roughnessFactor, 0.28, nailM);
+        roughnessFactor = mix(roughnessFactor, 0.64, cavity * 0.4);
+        roughnessFactor *= 0.97 + vnoise(vBindPos * 700.0) * 0.06;`,
       )
       .replace(
         "#include <normal_fragment_maps>",
@@ -239,28 +239,26 @@ export function createMehndiMaterial(maps: SkinMaps) {
         "#include <lights_physical_fragment>",
         `#include <lights_physical_fragment>
         #ifdef USE_CLEARCOAT
-          // healthy nails: glossy clear coat on the nail plate only
-          material.clearcoat = mix(material.clearcoat, 1.0, nailM);
-          material.clearcoatRoughness = mix(material.clearcoatRoughness, 0.05, nailM);
+          // healthy nails: soft satin clear coat on the nail plate without harsh glare blobs
+          material.clearcoat = mix(material.clearcoat, 0.42, nailM);
+          material.clearcoatRoughness = mix(material.clearcoatRoughness, 0.22, nailM);
         #endif`,
       )
       .replace(
         "#include <opaque_fragment>",
         `{
-          // Subsurface approximation: warm, red light bleeding into the shadowed side and the terminator.
+          // Subsurface approximation: warm, golden-red light bleeding into the shadowed side and the terminator.
           float l = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722));
-          vec3 sss = diffuseColor.rgb * vec3(1.0, 0.45, 0.3) * (0.05 + 0.05 * (1.0 - smoothstep(0.0, 0.5, l)));
+          vec3 sss = diffuseColor.rgb * vec3(1.0, 0.48, 0.32) * (0.05 + 0.05 * (1.0 - smoothstep(0.0, 0.5, l)));
           outgoingLight += sss * (1.0 - nailM * 0.5) * (1.0 - cavity * 0.8);
           // translucency at thin silhouette edges (finger sides, web of the hand): warm glow, strongest at grazing view
           float edge = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 2.2);
-          outgoingLight += diffuseColor.rgb * vec3(1.0, 0.55, 0.38) * edge * 0.16;
-          // free edge of the nail lets light through
-          outgoingLight += vec3(1.0, 0.93, 0.88) * freeEdge * 0.05;
+          outgoingLight += diffuseColor.rgb * vec3(1.0, 0.55, 0.38) * edge * 0.14;
         }
         #include <opaque_fragment>`,
       );
   };
-  mat.customProgramCacheKey = () => "vaishora-mehndi-skin-v4";
+  mat.customProgramCacheKey = () => "vaishora-mehndi-skin-v5";
   return { material: mat, uniforms };
 }
 
