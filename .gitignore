@@ -52,3 +52,4 @@ marketing/ad/captures/
 marketing/ad/audio/
 # Local uploads in development
 public/uploads/
+marketing/ad/.cache/
