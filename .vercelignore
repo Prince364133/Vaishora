@@ -1,0 +1,12 @@
+.next
+.next-*
+.data
+.git
+node_modules
+marketing/ad/.cache
+marketing/ad/render
+marketing/ad/captures
+marketing/ad/audio
+scripts/out
+tests
+research
