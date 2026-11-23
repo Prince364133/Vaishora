@@ -1,0 +1,62 @@
+{
+ "sizes": {
+  "desktop": 2048,
+  "mobile": 2048
+ },
+ "density": 1.123,
+ "source": "1121x1403",
+ "looks": {
+  "bare-paste": {
+   "desktop": "palm-bare-paste-2048.jpg",
+   "mobile": "palm-bare-paste-2048.jpg"
+  },
+  "royal-paste": {
+   "desktop": "palm-royal-paste-2048.jpg",
+   "mobile": "palm-royal-paste-2048.jpg"
+  },
+  "royal-stain": {
+   "desktop": "palm-royal-stain-2048.jpg",
+   "mobile": "palm-royal-stain-2048.jpg"
+  },
+  "bridal-paste": {
+   "desktop": "palm-bridal-paste-2048.jpg",
+   "mobile": "palm-bridal-paste-2048.jpg"
+  },
+  "bridal-stain": {
+   "desktop": "palm-bridal-stain-2048.jpg",
+   "mobile": "palm-bridal-stain-2048.jpg"
+  },
+  "arabic-paste": {
+   "desktop": "palm-arabic-paste-2048.jpg",
+   "mobile": "palm-arabic-paste-2048.jpg"
+  },
+  "arabic-stain": {
+   "desktop": "palm-arabic-stain-2048.jpg",
+   "mobile": "palm-arabic-stain-2048.jpg"
+  },
+  "trail-paste": {
+   "desktop": "palm-trail-paste-2048.jpg",
+   "mobile": "palm-trail-paste-2048.jpg"
+  },
+  "trail-stain": {
+   "desktop": "palm-trail-stain-2048.jpg",
+   "mobile": "palm-trail-stain-2048.jpg"
+  },
+  "floral-paste": {
+   "desktop": "palm-floral-paste-2048.jpg",
+   "mobile": "palm-floral-paste-2048.jpg"
+  },
+  "floral-stain": {
+   "desktop": "palm-floral-stain-2048.jpg",
+   "mobile": "palm-floral-stain-2048.jpg"
+  },
+  "minimal-paste": {
+   "desktop": "palm-minimal-paste-2048.jpg",
+   "mobile": "palm-minimal-paste-2048.jpg"
+  },
+  "minimal-stain": {
+   "desktop": "palm-minimal-stain-2048.jpg",
+   "mobile": "palm-minimal-stain-2048.jpg"
+  }
+ }
+}

@@ -24,6 +24,13 @@ export interface MehndiUniforms {
   uBackB: { value: THREE.Texture };
   uDetail: { value: THREE.Texture };
   uMix: { value: number };
+  /** Photo palm (real skin + real henna, warped onto this hand by scripts/hand-real/photo_transfer.py). */
+  uPhotoA: { value: THREE.Texture };
+  uPhotoB: { value: THREE.Texture };
+  uPhotoMask: { value: THREE.Texture };
+  /** 1 when slot A / B holds a photo, 0 for the procedural look; crossfaded with uMix like the artwork. */
+  uPhotoOnA: { value: number };
+  uPhotoOnB: { value: number };
   uStrength: { value: number };
 }
 
@@ -49,6 +56,11 @@ export function createMehndiMaterial(maps: SkinMaps) {
     uBackB: { value: empty },
     uDetail: { value: maps.detail },
     uMix: { value: 0 },
+    uPhotoA: { value: empty },
+    uPhotoB: { value: empty },
+    uPhotoMask: { value: empty },
+    uPhotoOnA: { value: 0 },
+    uPhotoOnB: { value: 0 },
     uStrength: { value: 1 },
   };
 
@@ -97,6 +109,11 @@ export function createMehndiMaterial(maps: SkinMaps) {
         uniform sampler2D uBackB;
         uniform sampler2D uDetail;
         uniform float uMix;
+        uniform sampler2D uPhotoA;
+        uniform sampler2D uPhotoB;
+        uniform sampler2D uPhotoMask;
+        uniform float uPhotoOnA;
+        uniform float uPhotoOnB;
         uniform float uStrength;
         const float FRAME_CU = ${frame.centerU.toFixed(6)};
         const float FRAME_CV = ${frame.centerV.toFixed(6)};
@@ -154,16 +171,29 @@ export function createMehndiMaterial(maps: SkinMaps) {
         float nailM = smoothstep(0.25, 0.7, skinDetail.r);
         float freeEdge = skinDetail.b * nailM;
         float cavity = skinDetail.g;
+        float photoW = 0.0;
         {
           // Forearm cut: dissolve the last few centimetres into the stage. Only front faces of the forearm are
           // in this band, so plain alpha blending needs no sorting.
           diffuseColor.a *= smoothstep(CUT_Y - 0.002, CUT_Y - 0.05, vBindPos.y);
 
-          // Tone balance: the back of the hand a little lighter/less red than the source, palms warm and soft.
           // (palm/back tone balance is baked into the composed albedo — see scripts/hand-real/postprocess.py)
-          // Natural pigment variation at two scales on top of the photo texture.
+          // Natural pigment variation at two scales on top of the skin texture.
           float tone = vnoise(vBindPos * 55.0) * 0.6 + vnoise(vBindPos * 210.0) * 0.4;
           diffuseColor.rgb *= 0.985 + tone * 0.03;
+
+          // ---- photo palm: real skin and real henna from a photograph, in the same palm projection frame.
+          // Used on palm-facing surfaces inside the feathered photo mask; finger sides blend into our skin.
+          {
+            vec2 uvPh = vec2(0.5 - (vBindPos.z - FRAME_CU) / FRAME_S, 0.5 + (FRAME_CV - vBindPos.y) / FRAME_S);
+            float facing = smoothstep(0.12, 0.5, -normalize(vBindNormal).x);
+            float m = texture2D(uPhotoMask, uvPh).r * facing;
+            photoW = m * mix(uPhotoOnA, uPhotoOnB, uMix);
+            vec3 pa = texture2D(uPhotoA, uvPh).rgb;
+            vec3 pb = texture2D(uPhotoB, uvPh).rgb;
+            vec3 pc = mix(pa * uPhotoOnA, pb * uPhotoOnB, uMix) / max(mix(uPhotoOnA, uPhotoOnB, uMix), 1e-3);
+            diffuseColor.rgb = mix(diffuseColor.rgb, pc, photoW);
+          }
           // Nails: lighter, pinker, translucent-looking plate.
           // (nail bed / free-edge colours are in the albedo; gloss and translucency are handled below)
 
@@ -185,7 +215,7 @@ export function createMehndiMaterial(maps: SkinMaps) {
           vec3 hennaMul = mix(thin, deep, depth);
           hennaMul = mix(hennaMul, hennaMul * vec3(1.06, 0.95, 0.9), blot);
           hennaMul = mix(haloMul, hennaMul, smoothstep(0.0, 0.5, hs.x));
-          float s = cover * uStrength * (1.0 - nailM * 0.85);
+          float s = cover * uStrength * (1.0 - nailM * 0.85) * (1.0 - photoW);
           diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * hennaMul, s);
         }`,
       )
@@ -195,6 +225,12 @@ export function createMehndiMaterial(maps: SkinMaps) {
         roughnessFactor = mix(roughnessFactor, 0.16, nailM);
         roughnessFactor = mix(roughnessFactor, 0.66, cavity * 0.5);
         roughnessFactor *= 0.96 + vnoise(vBindPos * 700.0) * 0.08;`,
+      )
+      .replace(
+        "#include <normal_fragment_maps>",
+        `#include <normal_fragment_maps>
+        // the photo already carries the real palm creases: don't stack our sculpted crease normals on top
+        normal = normalize(mix(normal, nonPerturbedNormal, photoW * 0.8));`,
       )
       .replace(
         "#include <lights_physical_fragment>",
@@ -221,7 +257,7 @@ export function createMehndiMaterial(maps: SkinMaps) {
         #include <opaque_fragment>`,
       );
   };
-  mat.customProgramCacheKey = () => "vaishora-mehndi-skin-v3";
+  mat.customProgramCacheKey = () => "vaishora-mehndi-skin-v4";
   return { material: mat, uniforms };
 }
 
