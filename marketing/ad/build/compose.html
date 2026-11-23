@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VAISHORA ad compositor</title>
+<style>
+@font-face { font-family: "Cormorant"; src: url("fonts/CormorantGaramond-VF.ttf") format("truetype"); font-weight: 300 700; font-style: normal; }
+@font-face { font-family: "Cormorant"; src: url("fonts/CormorantGaramond-Italic-VF.ttf") format("truetype"); font-weight: 300 700; font-style: italic; }
+@font-face { font-family: "Manrope"; src: url("fonts/Manrope-VF.ttf") format("truetype"); font-weight: 200 800; }
+:root {
+  --plum: #4B1D3F; --plum-deep: #3D1734; --plum-ink: #2E1228; --rose: #D484A6; --gold: #D4AF7C;
+  --blush: #F8E8EC; --ivory: #FFFAF8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--plum); overflow: hidden; }
+#stage { position: relative; overflow: hidden; background: var(--plum);
+  background-image: radial-gradient(120% 70% at 18% 8%, #5d2950 0%, rgba(93,41,80,0) 60%),
+                    radial-gradient(90% 60% at 100% 100%, #3d1734 0%, rgba(61,23,52,0) 70%); }
+.abs { position: absolute; }
+#wordmark { position: absolute; }
+/* captions */
+#caption { position: absolute; font-family: Manrope; font-weight: 800; color: var(--ivory); letter-spacing: -0.01em; }
+#caption .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 0 0.06em; margin-bottom: -0.06em; }
+#caption .w > span { display: inline-block; will-change: transform; }
+#caption .hl > span { color: var(--gold); }
+#fineprint { position: absolute; font-family: Manrope; font-weight: 600; color: rgba(255,250,248,.82); line-height: 1.3; }
+/* phone-screen card showing real website captures */
+#card { position: absolute; overflow: hidden; background: var(--ivory);
+  box-shadow: 0 50px 90px rgba(25,6,20,.45), 0 0 0 2px rgba(212,175,124,.55); }
+#card img { position: absolute; left: 0; top: 0; transform-origin: 0 0; image-rendering: auto; }
+#overlay { position: absolute; pointer-events: none; overflow: hidden; }
+.ring { position: absolute; border-radius: 50%; border: 4px solid #fff; background: rgba(255,255,255,.22);
+  box-shadow: 0 0 0 2px rgba(46,18,40,.35); }
+.hlbox { position: absolute; border: 4px solid var(--gold); border-radius: 14px; box-shadow: 0 0 0 3px rgba(75,29,63,.25); }
+/* full-bleed slot video (Veo) */
+#slotimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+#scrim { position: absolute; left: 0; top: 0; width: 100%; display: none;
+  background: linear-gradient(180deg, rgba(46,18,40,.86) 0%, rgba(46,18,40,.6) 60%, rgba(46,18,40,0) 100%); }
+/* stickers */
+.sticker { position: absolute; transform-origin: 50% 50%; }
+#dm { background: var(--rose); color: var(--plum-ink); font-family: Cormorant; font-style: italic; font-weight: 700;
+  border-radius: 22px; box-shadow: 0 24px 50px rgba(25,6,20,.4); white-space: nowrap; }
+#dm .strike { position: absolute; left: 6%; top: 52%; height: 7px; background: var(--plum); border-radius: 4px; transform-origin: 0 50%; }
+#tag, #adv { background: var(--ivory); color: var(--plum); border-radius: 22px; box-shadow: 0 24px 50px rgba(25,6,20,.42);
+  border: 3px solid var(--gold); }
+.tlabel { font-family: Manrope; font-weight: 700; color: #6b4a62; white-space: nowrap; }
+.tprice { font-family: Cormorant; font-weight: 700; line-height: .95; white-space: nowrap; }
+#adv { background: var(--plum-deep); color: var(--ivory); }
+#adv .tlabel { color: rgba(255,250,248,.78); }
+#adv .tprice { color: var(--gold); }
+#home { background: var(--rose); color: var(--plum-ink); font-family: Manrope; font-weight: 800; border-radius: 999px;
+  box-shadow: 0 20px 40px rgba(25,6,20,.35); white-space: nowrap; }
+/* trust motif + end card */
+#motif { position: absolute; display: none; }
+#motif svg { width: 100%; height: 100%; overflow: visible; }
+#motif svg * { color: #D4AF7C !important; }
+#motif svg [stroke]:not([stroke="none"]) { stroke: #D4AF7C !important; }
+#motif svg [fill]:not([fill="none"]) { fill: #D4AF7C !important; }
+#end { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: none; text-align: center; color: var(--ivory); }
+#end .arch { position: absolute; border: 2px solid rgba(212,175,124,.75); border-bottom: none; }
+#end .logo { position: absolute; left: 50%; }
+#end .head { position: absolute; width: 100%; font-family: Cormorant; font-weight: 600; line-height: 1.04; }
+#end .head i { color: var(--gold); font-weight: 600; }
+#end .cta1 { position: absolute; width: 100%; font-family: Manrope; font-weight: 800; color: var(--blush); }
+#end .cta1 b { color: var(--gold); }
+#end .cta2 { position: absolute; width: 100%; font-family: Manrope; font-weight: 600; color: rgba(255,250,248,.86); }
+#end .line { position: absolute; font-family: Manrope; font-weight: 600; color: rgba(255,250,248,.9); line-height: 1.32; }
+#end .fp { position: absolute; font-family: Manrope; font-weight: 500; color: rgba(255,250,248,.72); line-height: 1.35; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="slotimg" alt="">
+  <div id="scrim"></div>
+  <div id="card"><img id="imgA" alt=""><img id="imgB" alt=""></div>
+  <div id="overlay"></div>
+  <div id="motif"></div>
+  <div id="end">
+    <div class="arch"></div>
+    <img class="logo" src="brand/logo_full.png" alt="">
+    <div class="head">Apna design chuno.<br><i>Slot lock karo.</i></div>
+    <div class="cta1"></div>
+    <div class="cta2"></div>
+    <div class="line"></div>
+    <div class="fp"></div>
+  </div>
+  <img id="wordmark" src="brand/wordmark.png" alt="">
+  <div id="caption"></div>
+  <div id="fineprint"></div>
+  <div id="dm" class="sticker">“DM karo.”<div class="strike"></div></div>
+  <div id="tag" class="sticker"><div class="tlabel"></div><div class="tprice"></div></div>
+  <div id="adv" class="sticker"><div class="tlabel a1"></div><div class="tprice"></div><div class="tlabel a2"></div></div>
+  <div id="home" class="sticker">Ghar pe · Hyderabad</div>
+</div>
+<script>
+// ---------- easing / helpers (one clock: everything is a pure function of t) ----------
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eOut = k => 1 - Math.pow(1 - clamp(k), 3);
+const eOutExpo = k => (k = clamp(k), k === 1 ? 1 : 1 - Math.pow(2, -10 * k));
+const eIn = k => Math.pow(clamp(k), 3);
+const eInOut = k => (k = clamp(k), k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const backOut = k => { k = clamp(k); const c = 1.2, c3 = c + 1; return 1 + c3 * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
+const $ = id => document.getElementById(id);
+
+let TL, L, MAN, BASE_CAP = "../captures/", SLOTDIR = "";
+const LAYOUTS = {
+  "9x16": { w: 1080, h: 1920, word: { x: 80, y: 268, h: 34 }, cap: { x: 80, y: 340, w: 920, fs: 60 },
+            fp: { x: 80, y: 598, w: 880, fs: 26 }, card: { x: 110, y: 684, w: 860, h: 1236 },
+            tag: { x: 820, y: 960, s: 1 }, dm: { x: 470, y: 1000, s: 1 }, adv: { x: 780, y: 880, s: 1 }, home: { x: 720, y: 1180, s: 1 },
+            motif: { x: 110, y: 600, s: 860 },
+            end: { arch: [70, 200, 940, 1080], logo: [250, 640], head: [690, 80], cta1: [905, 50], cta2: [975, 36],
+                   line: [80, 1040, 920, 31], fp: [110, 1148, 860, 24] } },
+  "4x5":  { w: 1080, h: 1350, word: { x: 70, y: 56, h: 30 }, cap: { x: 70, y: 112, w: 940, fs: 50 },
+            fp: { x: 70, y: 344, w: 940, fs: 24 }, card: { x: 170, y: 420, w: 740, h: 930 },
+            tag: { x: 610, y: 690, s: .9 }, dm: { x: 520, y: 640, s: .9 }, adv: { x: 610, y: 700, s: .9 }, home: { x: 640, y: 760, s: .9 },
+            motif: { x: 250, y: 400, s: 580 },
+            end: { arch: [70, 50, 940, 1300], logo: [90, 540], head: [430, 72], cta1: [626, 46], cta2: [690, 33],
+                   line: [90, 748, 900, 29], fp: [120, 850, 840, 23] } },
+};
+
+function px(el, o) { for (const k in o) el.style[k] = typeof o[k] === "number" ? o[k] + "px" : o[k]; }
+
+// ---------- setup ----------
+window.setup = async function (timeline, fmt, slotFrames) {
+  TL = timeline; L = LAYOUTS[fmt]; MAN = TL.manifest; window.SLOT_FRAMES = slotFrames || {};
+  const st = $("stage"); px(st, { width: L.w, height: L.h });
+  document.body.style.width = L.w + "px";
+  const wm = $("wordmark"); px(wm, { left: L.word.x, top: L.word.y, height: L.word.h });
+  px($("caption"), { left: L.cap.x, top: L.cap.y, width: L.cap.w, fontSize: L.cap.fs, lineHeight: "1.16" });
+  px($("fineprint"), { left: L.fp.x, top: L.fp.y, width: L.fp.w, fontSize: L.fp.fs });
+  const c = L.card; px($("card"), { left: c.x, top: c.y, width: c.w, height: c.h, borderRadius: "44px 44px 0 0" });
+  if (fmt === "4x5") $("card").style.borderRadius = "40px 40px 0 0";
+  px($("overlay"), { left: c.x, top: c.y, width: c.w, height: c.h });
+  px($("scrim"), { height: Math.round(L.h * 0.42) });
+  // stickers
+  px($("dm"), { fontSize: 84 * L.dm.s, padding: `${14 * L.dm.s}px ${34 * L.dm.s}px ${20 * L.dm.s}px` });
+  px($("tag"), { padding: `${20 * L.tag.s}px ${30 * L.tag.s}px ${22 * L.tag.s}px` });
+  $("tag").querySelector(".tlabel").style.fontSize = 26 * L.tag.s + "px";
+  $("tag").querySelector(".tprice").style.fontSize = 104 * L.tag.s + "px";
+  px($("adv"), { padding: `${20 * L.adv.s}px ${30 * L.adv.s}px ${22 * L.adv.s}px` });
+  $("adv").querySelectorAll(".tlabel").forEach(e => e.style.fontSize = 26 * L.adv.s + "px");
+  $("adv").querySelector(".tprice").style.fontSize = 112 * L.adv.s + "px";
+  px($("home"), { fontSize: 34 * L.home.s, padding: `${16 * L.home.s}px ${30 * L.home.s}px` });
+  // end card
+  const E = L.end, end = $("end");
+  px(end.querySelector(".arch"), { left: E.arch[0], top: E.arch[1], width: E.arch[2], height: E.arch[3],
+    borderRadius: `${E.arch[2] / 2}px ${E.arch[2] / 2}px 0 0 / ${E.arch[2] * 0.36}px ${E.arch[2] * 0.36}px 0 0` });
+  px(end.querySelector(".logo"), { top: E.logo[0], width: E.logo[1], marginLeft: -E.logo[1] / 2 });
+  px(end.querySelector(".head"), { top: E.head[0], fontSize: E.head[1] });
+  const cta = TL.cta;
+  end.querySelector(".cta1").innerHTML = cta.primary.replace(/“([^”]+)”/, "<b>“$1”</b>") + " ↓";
+  px(end.querySelector(".cta1"), { top: E.cta1[0], fontSize: E.cta1[1] });
+  end.querySelector(".cta2").textContent = cta.secondary;
+  px(end.querySelector(".cta2"), { top: E.cta2[0], fontSize: E.cta2[1] });
+  end.querySelector(".line").textContent = cta.line;
+  px(end.querySelector(".line"), { left: E.line[0], top: E.line[1], width: E.line[2], fontSize: E.line[3] });
+  end.querySelector(".fp").textContent = cta.fineprint;
+  px(end.querySelector(".fp"), { left: E.fp[0], top: E.fp[1], width: E.fp[2], fontSize: E.fp[3] });
+  // trust motif: VAISHORA's own mandala artwork, drawn stroke by stroke
+  const svgText = await (await fetch("../../../public/designs/mandala-classic-palm.svg")).text();
+  const m = $("motif"); m.innerHTML = svgText;
+  m.style.display = "block"; px(m, { left: L.motif.x, top: L.motif.y, width: L.motif.s, height: L.motif.s });
+  const svg = m.querySelector("svg"); svg.removeAttribute("width"); svg.removeAttribute("height");
+  svg.querySelector("g").style.color = "#D4AF7C";
+  window.MOTIF = [...svg.querySelectorAll("path,circle")].map(el => {
+    const len = el.getTotalLength ? el.getTotalLength() : 100;
+    const bb = el.getBBox(); return { el, len, x: bb.x + bb.width / 2, y: bb.y + bb.height / 2, fill: el.getAttribute("fill") === "currentColor" };
+  });
+  const gb = svg.getBBox(); const pad = 30;
+  svg.setAttribute("viewBox", `${gb.x - pad} ${gb.y - pad} ${gb.width + 2 * pad} ${gb.height + 2 * pad}`);
+  const ccx = gb.x + gb.width / 2, ccy = gb.y + gb.height * 0.62;
+  MOTIF.forEach(o => o.r = Math.hypot(o.x - ccx, o.y - ccy));
+  const maxR = Math.max(...MOTIF.map(o => o.r));
+  MOTIF.forEach(o => { o.k = o.r / maxR; if (!o.fill) { o.el.style.strokeDasharray = o.len; } });
+  svg.querySelectorAll("path,circle").forEach(el => { if (!MOTIF.find(o => o.el === el)) el.style.display = "none"; });
+  m.style.display = "none";
+  // preload captures
+  await Promise.all(Object.keys(MAN).map(k => new Promise(r => { const i = new Image(); i.onload = i.onerror = r; i.src = BASE_CAP + MAN[k].file; })));
+  await document.fonts.ready;
+  return true;
+};
+
+// ---------- captions ----------
+let capKey = "";
+function renderCaption(sc, t) {
+  const cap = $("caption");
+  const local = t - sc.start;
+  const t1 = sc.vo_start - sc.start - 0.04, t2 = sc.split != null ? sc.split - 0.04 : 1e9;
+  const n = local >= t2 ? 2 : 1;
+  const key = sc.id + ":" + n;
+  if (key !== capKey) {
+    capKey = key;
+    let html = "";
+    sc.chunks.slice(0, n).forEach((chunk, ci) => {
+      chunk.forEach(([w, hl], wi) => { html += `<span class="w${hl ? " hl" : ""}" data-c="${ci}" data-i="${wi}"><span>${w}</span></span> `; });
+    });
+    cap.innerHTML = html;
+  }
+  const exitK = clamp((local - (sc.dur - 0.16)) / 0.16);
+  cap.querySelectorAll(".w").forEach(w => {
+    const ci = +w.dataset.c, wi = +w.dataset.i;
+    const st = (ci === 0 ? t1 : t2) + wi * 0.035;
+    const first = sc === TL.scenes[0] && ci === 0;   // hook line readable from frame 0 (thumbnail)
+    const k = first ? 1 : eOutExpo((local - st) / 0.42);
+    w.firstChild.style.transform = `translateY(${(1 - k) * 105}%)`;
+  });
+  cap.style.opacity = sc.id === "cta" ? 1 - clamp((local - 0) / 1e9) : 1 - eIn(exitK);
+  // fine print
+  const fp = $("fineprint");
+  fp.textContent = sc.fineprint || "";
+  fp.style.opacity = sc.fineprint ? eOut((local - 0.35) / 0.4) * (1 - eIn(exitK)) : 0;
+  // keep fine print just under the caption block
+  const r = cap.getBoundingClientRect();
+  fp.style.top = Math.max(L.fp.y, r.bottom + 14) + "px";
+}
+
+// ---------- camera over a capture ----------
+function camAt(spec, local) {
+  const ks = spec.camera || [{ at: 0, top: 0, zoom: 1 }];
+  if (local <= ks[0].at) return { ...ks[0] };
+  for (let i = 1; i < ks.length; i++) {
+    if (local <= ks[i].at) {
+      const a = ks[i - 1], b = ks[i];
+      const k = (b.ease === "inout" ? eInOut : eOut)((local - a.at) / (b.at - a.at));
+      return { top: lerp(a.top, b.top, k), zoom: lerp(a.zoom, b.zoom, k), cx: lerp(a.cx ?? 195, b.cx ?? 195, k) };
+    }
+  }
+  return { ...ks[ks.length - 1] };
+}
+function placeImg(img, name, cam) {
+  const m = MAN[name]; if (!m) { img.style.opacity = 0; return null; }
+  const src = BASE_CAP + m.file;
+  if (img.getAttribute("src") !== src) img.setAttribute("src", src);
+  const s = L.card.w * cam.zoom / m.w;           // card px per CSS px
+  const viewH = L.card.h / s;
+  const top = clamp(cam.top, 0, Math.max(0, m.h - viewH));
+  const viewW = m.w / cam.zoom;
+  const left = clamp((cam.cx ?? m.w / 2) - viewW / 2, 0, Math.max(0, m.w - viewW));
+  img.style.width = (m.w * m.dsf) + "px";
+  img.style.transform = `translate(${-left * s}px, ${-top * s}px) scale(${s / m.dsf})`;
+  return { s, top, left };
+}
+function boxToCard(name, key, geo, pad = 0) {
+  const b = MAN[name] && MAN[name].boxes[key]; if (!b || !geo) return null;
+  return { x: (b[0] - pad - geo.left) * geo.s, y: (b[1] - pad - geo.top) * geo.s, w: (b[2] + 2 * pad) * geo.s, h: (b[3] + 2 * pad) * geo.s };
+}
+
+function renderCard(sc, t, cardVisible) {
+  const card = $("card"), ov = $("overlay"), A = $("imgA"), B = $("imgB");
+  ov.innerHTML = "";
+  const local = t - sc.start, spec = sc.spec || {};
+  // card entrance/exit motion between website scenes and non-website scenes
+  card.style.display = ov.style.display = cardVisible ? "block" : "none";
+  if (!cardVisible) return;
+  const prev = TL.scenes[TL.scenes.indexOf(sc) - 1];
+  const next = TL.scenes[TL.scenes.indexOf(sc) + 1];
+  const isWeb = s => s && s.spec && s.spec.states && !s.slot_video;
+  let dy = 0, sc0 = 1;
+  if (!isWeb(next)) dy += eIn((local - (sc.dur - 0.4)) / 0.4) * (L.h - L.card.y + 80);
+  if (prev && isWeb(prev)) sc0 = lerp(0.985, 1, eOut(local / 0.35));        // small push on each cut
+  else if (prev) dy += (1 - eOut(local / 0.5)) * (L.h - L.card.y);
+  else dy += (1 - eOut((local + 0.5) / 0.9)) * 120;                          // first frame already mostly in place
+  const tr = `translateY(${dy}px) scale(${sc0})`;
+  card.style.transform = ov.style.transform = tr;
+  card.style.transformOrigin = ov.style.transformOrigin = "50% 0";
+  // states (crossfade 0.22 s between captures)
+  const states = spec.states || [];
+  let cur = 0; states.forEach((s, i) => { if (local >= s.at) cur = i; });
+  const cam = camAt(spec, local);
+  const geoA = placeImg(A, states[cur] && states[cur].img, cam);
+  const fadeK = cur > 0 ? eOut((local - states[cur].at) / 0.22) : 1;
+  if (cur > 0 && fadeK < 1) { placeImg(B, states[cur - 1].img, cam); B.style.opacity = 1; A.style.opacity = fadeK; B.style.zIndex = 0; A.style.zIndex = 1; }
+  else { A.style.opacity = 1; B.style.opacity = 0; }
+  // taps: ring on the element just before the state changes
+  const taps = [];
+  states.forEach((s, i) => { if (s.tap) taps.push({ at: s.at - 0.16, img: s.img, box: s.tap }); });
+  (spec.taps || []).forEach(tp => taps.push(tp));
+  taps.forEach(tp => {
+    const k = (local - tp.at) / 0.55; if (k < 0 || k > 1) return;
+    const b = boxToCard(tp.img, tp.box, geoA); if (!b) return;
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2, r = lerp(30, 70, eOut(k)) * (L.card.w / 860);
+    const d = document.createElement("div"); d.className = "ring";
+    px(d, { left: cx - r, top: cy - r, width: 2 * r, height: 2 * r, opacity: 1 - eIn(k) });
+    ov.appendChild(d);
+  });
+  (spec.highlights || []).forEach(h => {
+    const k = (local - h.at) / 0.4; if (k < 0) return;
+    const b = boxToCard(h.img, h.box, geoA, h.pad || 0); if (!b) return;
+    const d = document.createElement("div"); d.className = "hlbox";
+    const kk = eOut(k);
+    px(d, { left: b.x - (1 - kk) * 14, top: b.y - (1 - kk) * 8, width: b.w + (1 - kk) * 28, height: b.h + (1 - kk) * 16, opacity: kk });
+    ov.appendChild(d);
+  });
+}
+
+// ---------- stickers ----------
+function pop(el, k, rot, base) {
+  const kk = backOut(k);
+  el.style.display = k > 0 ? "block" : "none";
+  el.style.opacity = clamp(k * 2.2);
+  el.style.transform = `translate(-50%,-50%) rotate(${rot}deg) scale(${lerp(0.86, 1, kk) * base})`;
+}
+function renderStickers(sc, t) {
+  const local = t - sc.start;
+  ["dm", "tag", "adv", "home"].forEach(id => $(id).style.display = "none");
+  const exitK = eIn((local - (sc.dur - 0.18)) / 0.18);
+  if (sc.sticker === "dm") {
+    const el = $("dm"); px(el, { left: L.dm.x, top: L.dm.y });
+    const at = sc.split != null ? sc.split - 0.06 : 0.9;
+    pop(el, (local - at) / 0.32, -4, 1);
+    el.style.opacity = clamp((local - at) * 7) * (1 - exitK);
+    const sk = eInOut((local - (sc.dur - 0.62)) / 0.3);
+    const s = el.querySelector(".strike"); s.style.width = "88%"; s.style.transform = `scaleX(${sk})`;
+  }
+  const spec = sc.spec || {};
+  if (spec.tags) {
+    let cur = -1; spec.tags.forEach((g, i) => { if (local >= g.at) cur = i; });
+    if (cur >= 0) {
+      const el = $("tag"); px(el, { left: L.tag.x, top: L.tag.y });
+      const g = spec.tags[cur];
+      el.querySelector(".tlabel").textContent = g.label + " · one hand";
+      el.querySelector(".tprice").textContent = g.price;
+      pop(el, cur === 0 ? (local - g.at) / 0.34 : 1, 3, 1);
+      const roll = cur > 0 ? eOutExpo((local - g.at) / 0.35) : 1;
+      el.querySelector(".tprice").style.transform = `translateY(${(1 - roll) * 30}px)`;
+      el.querySelector(".tprice").style.opacity = roll;
+      el.style.opacity = (cur === 0 ? clamp((local - g.at) * 6) : 1) * (1 - exitK);
+    }
+  }
+  if (spec.advance) {
+    const a = spec.advance, el = $("adv"); px(el, { left: L.adv.x, top: L.adv.y });
+    el.querySelector(".a1").textContent = a.design;
+    el.querySelector(".tprice").textContent = a.value;
+    el.querySelector(".a2").textContent = a.label + " · slot lock";
+    pop(el, (local - a.at) / 0.34, -3, 1);
+    el.style.opacity = clamp((local - a.at) * 6) * (1 - exitK);
+  }
+  if (sc.sticker === "home") {
+    const el = $("home"); px(el, { left: L.home.x, top: L.home.y });
+    const at = sc.split != null ? sc.split : 1;
+    pop(el, (local - at) / 0.32, -3, 1);
+    el.style.opacity = clamp((local - at) * 6) * (1 - exitK);
+  }
+}
+
+// ---------- trust motif & end card ----------
+function renderMotif(sc, t) {
+  const m = $("motif"), local = t - sc.start;
+  const on = sc.kind === "motif" && !sc.slot_video;
+  m.style.display = on ? "block" : "none";
+  if (!on) return;
+  const span = Math.max(1.2, sc.dur - 0.5);
+  MOTIF.forEach(o => {
+    const k = eOut((local + 0.25 - o.k * span * 0.55) / 0.5);
+    if (o.fill) { o.el.style.opacity = k; }
+    else { o.el.style.strokeDashoffset = o.len * (1 - k); }
+  });
+  const ex = eIn((local - (sc.dur - 0.3)) / 0.3);
+  m.style.opacity = 1 - ex;
+  m.style.transform = `rotate(${lerp(-6, 0, eOut(local / sc.dur))}deg) scale(${lerp(0.94, 1, eOut(local / 1.6)) * (1 - 0.06 * ex)})`;
+}
+function renderEnd(sc, t) {
+  const end = $("end"), local = t - sc.start;
+  const on = sc.kind === "endcard" && !sc.slot_video;
+  end.style.display = on ? "block" : "none";
+  const isEnd = sc.kind === "endcard";
+  $("wordmark").style.opacity = isEnd ? 1 - eOut(local / 0.3) : 1;
+  if (!on) return;
+  const parts = [[".arch", 0.0], [".logo", 0.1], [".head", 0.45], [".cta1", 1.0], [".cta2", 1.15], [".line", 1.3], [".fp", 1.45]];
+  parts.forEach(([sel, at]) => {
+    const el = end.querySelector(sel), k = eOut((local - at) / 0.5);
+    el.style.opacity = k;
+    el.style.transform = sel === ".logo" ? `translateY(${(1 - k) * 24}px) scale(${lerp(0.96, 1, k)})` : `translateY(${(1 - k) * 28}px)`;
+  });
+  // the CTA caption reads above the end card content, so hide the normal caption here
+  $("caption").style.opacity = 0; $("fineprint").style.opacity = 0;
+}
+
+// ---------- slot video (Veo) ----------
+async function renderSlot(sc, t) {
+  const img = $("slotimg"), scrim = $("scrim");
+  if (!sc.slot_video) { img.style.display = scrim.style.display = "none"; return; }
+  const frames = SLOT_FRAMES[sc.slot] || 0;
+  const i = Math.min(frames, Math.max(1, Math.floor((t - sc.start) * TL.fps) + 1));
+  const src = `${SLOTDIR}${sc.slot}/${String(i).padStart(5, "0")}.jpg`;
+  img.style.display = scrim.style.display = "block";
+  if (img.getAttribute("src") !== src) { img.setAttribute("src", src); try { await img.decode(); } catch (e) {} }
+}
+
+window.setSlotDir = d => { SLOTDIR = d; };
+window.renderAt = async function (t) {
+  const sc = TL.scenes.find(s => t >= s.start && t < s.start + s.dur) || TL.scenes[TL.scenes.length - 1];
+  await renderSlot(sc, t);
+  const web = sc.spec && sc.spec.states && !sc.slot_video;
+  renderCard(sc, t, !!web);
+  renderCaption(sc, t);
+  renderStickers(sc, t);
+  renderMotif(sc, t);
+  renderEnd(sc, t);
+  const imgs = [...document.querySelectorAll("#card img")].filter(i => i.style.opacity !== "0" && i.getAttribute("src"));
+  await Promise.all(imgs.map(i => i.decode().catch(() => {})));
+  return sc.id;
+};
+</script>
+</body>
+</html>

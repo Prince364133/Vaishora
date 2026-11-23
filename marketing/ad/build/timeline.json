@@ -1,0 +1,945 @@
+{
+ "duration": 32.139,
+ "fps": 30,
+ "scenes": [
+  {
+   "id": "hook",
+   "slot": "hook",
+   "start": 0.0,
+   "dur": 3.428,
+   "vo_start": 0.06,
+   "vo_dur": 3.128,
+   "split": 1.389,
+   "kind": "catalogue",
+   "chunks": [
+    [
+     [
+      "Mehndi",
+      false
+     ],
+     [
+      "ka",
+      false
+     ],
+     [
+      "rate",
+      false
+     ],
+     [
+      "poocha…",
+      false
+     ]
+    ],
+    [
+     [
+      "reply",
+      false
+     ],
+     [
+      "aaya,",
+      false
+     ],
+     [
+      "“DM",
+      true
+     ],
+     [
+      "karo.”",
+      true
+     ]
+    ]
+   ],
+   "fineprint": "",
+   "sticker": "dm",
+   "spec": {
+    "states": [
+     {
+      "img": "catalogue_full",
+      "at": 0
+     }
+    ],
+    "camera": [
+     {
+      "at": 0,
+      "top": 300,
+      "zoom": 1.0
+     },
+     {
+      "at": 3.7279999999999998,
+      "top": 1180,
+      "zoom": 1.0,
+      "ease": "inout"
+     }
+    ]
+   },
+   "slot_video": null
+  },
+  {
+   "id": "price",
+   "slot": "price_3d",
+   "start": 3.428,
+   "dur": 5.695,
+   "vo_start": 3.548,
+   "vo_dur": 5.335,
+   "split": 3.591,
+   "kind": "studio_prices",
+   "chunks": [
+    [
+     [
+      "Design",
+      false
+     ],
+     [
+      "3D",
+      true
+     ],
+     [
+      "haath",
+      true
+     ],
+     [
+      "pe",
+      false
+     ],
+     [
+      "dekho,",
+      false
+     ],
+     [
+      "price",
+      false
+     ],
+     [
+      "ke",
+      false
+     ],
+     [
+      "saath",
+      false
+     ],
+     [
+      "—",
+      false
+     ]
+    ],
+    [
+     [
+      "₹399",
+      true
+     ],
+     [
+      "se",
+      true
+     ],
+     [
+      "shuru.",
+      true
+     ]
+    ]
+   ],
+   "fineprint": "Price ek haath ka, design jaisa dikhaya. Final quote payment se pehle dikhega.",
+   "sticker": null,
+   "spec": {
+    "states": [
+     {
+      "img": "studio_minimal-dots",
+      "at": 0,
+      "tap": null
+     },
+     {
+      "img": "studio_classic-mandala",
+      "at": 3.047,
+      "tap": "tap"
+     },
+     {
+      "img": "studio_royal-bridal",
+      "at": 5.195,
+      "tap": "tap"
+     }
+    ],
+    "tags": [
+     {
+      "at": 0.15,
+      "label": "Minimal Dots",
+      "price": "₹399"
+     },
+     {
+      "at": 3.1470000000000002,
+      "label": "Classic Mandala",
+      "price": "₹999"
+     },
+     {
+      "at": 5.295,
+      "label": "Royal Bridal",
+      "price": "₹3,999"
+     }
+    ],
+    "camera": [
+     {
+      "at": 0,
+      "top": 70,
+      "zoom": 1.0
+     },
+     {
+      "at": 5.695,
+      "top": 92,
+      "zoom": 1.06,
+      "ease": "inout"
+     }
+    ]
+   },
+   "slot_video": null
+  },
+  {
+   "id": "offer",
+   "slot": "offer",
+   "start": 9.123,
+   "dur": 4.349,
+   "vo_start": 9.243,
+   "vo_dur": 3.989,
+   "split": 2.815,
+   "kind": "summary_price",
+   "chunks": [
+    [
+     [
+      "Bas",
+      false
+     ],
+     [
+      "30%",
+      true
+     ],
+     [
+      "advance",
+      true
+     ],
+     [
+      "do",
+      false
+     ],
+     [
+      "—",
+      false
+     ],
+     [
+      "slot",
+      false
+     ],
+     [
+      "lock.",
+      false
+     ]
+    ],
+    [
+     [
+      "Baaki",
+      true
+     ],
+     [
+      "session",
+      true
+     ],
+     [
+      "ke",
+      true
+     ],
+     [
+      "baad.",
+      true
+     ]
+    ]
+   ],
+   "fineprint": "",
+   "sticker": "advance",
+   "spec": {
+    "states": [
+     {
+      "img": "summary_price",
+      "at": 0
+     }
+    ],
+    "camera": [
+     {
+      "at": 0,
+      "top": 230,
+      "zoom": 1.0
+     },
+     {
+      "at": 0.85,
+      "top": 400,
+      "zoom": 1.25,
+      "ease": "inout"
+     },
+     {
+      "at": 4.349,
+      "top": 400,
+      "zoom": 1.27,
+      "ease": "inout"
+     }
+    ],
+    "highlights": [
+     {
+      "at": 1.0,
+      "img": "summary_price",
+      "box": "advance",
+      "pad": 8
+     },
+     {
+      "at": 2.815,
+      "img": "summary_price",
+      "box": "balance",
+      "pad": 8
+     }
+    ],
+    "advance": {
+     "at": 0.55,
+     "design": "Classic Mandala · ₹999",
+     "value": "₹300",
+     "label": "30% advance"
+    }
+   },
+   "slot_video": null
+  },
+  {
+   "id": "tryon",
+   "slot": "tryon",
+   "start": 13.472,
+   "dur": 2.2,
+   "vo_start": 13.592,
+   "vo_dur": 1.765,
+   "split": 0.96,
+   "kind": "studio_rotate",
+   "chunks": [
+    [
+     [
+      "Palm",
+      false
+     ],
+     [
+      "ya",
+      false
+     ],
+     [
+      "back",
+      false
+     ],
+     [
+      "—",
+      false
+     ]
+    ],
+    [
+     [
+      "ghuma",
+      true
+     ],
+     [
+      "ke",
+      true
+     ],
+     [
+      "dekho.",
+      true
+     ]
+    ]
+   ],
+   "fineprint": "",
+   "sticker": null,
+   "spec": {
+    "states": [
+     {
+      "img": "studio_royal-bridal",
+      "at": 0
+     },
+     {
+      "img": "studio_back",
+      "at": 0.75,
+      "tap": "tap"
+     }
+    ],
+    "camera": [
+     {
+      "at": 0,
+      "top": 64,
+      "zoom": 1.75
+     },
+     {
+      "at": 2.2,
+      "top": 70,
+      "zoom": 1.9,
+      "ease": "inout"
+     }
+    ]
+   },
+   "slot_video": null
+  },
+  {
+   "id": "slot",
+   "slot": "slot",
+   "start": 15.672,
+   "dur": 3.331,
+   "vo_start": 15.792,
+   "vo_dur": 2.971,
+   "split": 1.695,
+   "kind": "slot",
+   "chunks": [
+    [
+     [
+      "Date,",
+      false
+     ],
+     [
+      "time",
+      false
+     ],
+     [
+      "chuno",
+      false
+     ],
+     [
+      "—",
+      false
+     ]
+    ],
+    [
+     [
+      "artist",
+      true
+     ],
+     [
+      "aapke",
+      true
+     ],
+     [
+      "ghar",
+      true
+     ],
+     [
+      "aayenge.",
+      true
+     ]
+    ]
+   ],
+   "fineprint": "",
+   "sticker": "home",
+   "spec": {
+    "states": [
+     {
+      "img": "slot_date",
+      "at": 0
+     },
+     {
+      "img": "slot_time",
+      "at": 1.399,
+      "tap": "tap"
+     }
+    ],
+    "camera": [
+     {
+      "at": 0,
+      "top": 250,
+      "zoom": 1.0
+     },
+     {
+      "at": 3.331,
+      "top": 330,
+      "zoom": 1.12,
+      "ease": "inout"
+     }
+    ],
+    "taps": [
+     {
+      "at": 0.2,
+      "img": "slot_date",
+      "box": "tap"
+     }
+    ]
+   },
+   "slot_video": null
+  },
+  {
+   "id": "refund",
+   "slot": "refund",
+   "start": 19.003,
+   "dur": 5.081,
+   "vo_start": 19.123,
+   "vo_dur": 4.721,
+   "split": 3.539,
+   "kind": "policy",
+   "chunks": [
+    [
+     [
+      "Plan",
+      false
+     ],
+     [
+      "badla?",
+      false
+     ],
+     [
+      "48",
+      true
+     ],
+     [
+      "ghante",
+      true
+     ],
+     [
+      "pehle",
+      true
+     ],
+     [
+      "cancel",
+      false
+     ],
+     [
+      "—",
+      false
+     ]
+    ],
+    [
+     [
+      "poora",
+      true
+     ],
+     [
+      "advance",
+      true
+     ],
+     [
+      "wapas.",
+      true
+     ]
+    ]
+   ],
+   "fineprint": "12–48 ghante pehle: 50% refund · 12 ghante se kam: refund nahi.",
+   "sticker": null,
+   "spec": {
+    "states": [
+     {
+      "img": "policy",
+      "at": 0
+     }
+    ],
+    "camera": [
+     {
+      "at": 0,
+      "top": 120,
+      "zoom": 1.0
+     },
+     {
+      "at": 0.8,
+      "top": 300,
+      "zoom": 1.08,
+      "ease": "inout"
+     },
+     {
+      "at": 5.081,
+      "top": 304,
+      "zoom": 1.1,
+      "ease": "inout"
+     }
+    ],
+    "highlights": [
+     {
+      "at": 0.95,
+      "img": "policy",
+      "box": "full",
+      "pad": 8
+     }
+    ]
+   },
+   "slot_video": null
+  },
+  {
+   "id": "trust",
+   "slot": "artist_home",
+   "start": 24.084,
+   "dur": 2.613,
+   "vo_start": 24.204,
+   "vo_dur": 2.253,
+   "split": 1.588,
+   "kind": "motif",
+   "chunks": [
+    [
+     [
+      "Artists",
+      false
+     ],
+     [
+      "ko",
+      false
+     ],
+     [
+      "hamari",
+      true
+     ],
+     [
+      "team",
+      true
+     ]
+    ],
+    [
+     [
+      "review",
+      true
+     ],
+     [
+      "karti",
+      true
+     ],
+     [
+      "hai.",
+      true
+     ]
+    ]
+   ],
+   "fineprint": "",
+   "sticker": null,
+   "spec": {},
+   "slot_video": null
+  },
+  {
+   "id": "cta",
+   "slot": "endcard",
+   "start": 26.697,
+   "dur": 5.442,
+   "vo_start": 26.817,
+   "vo_dur": 3.822,
+   "split": 2.429,
+   "kind": "endcard",
+   "chunks": [
+    [
+     [
+      "Apna",
+      false
+     ],
+     [
+      "design",
+      false
+     ],
+     [
+      "chuno,",
+      false
+     ],
+     [
+      "slot",
+      false
+     ],
+     [
+      "lock",
+      false
+     ],
+     [
+      "karo",
+      false
+     ],
+     [
+      "—",
+      false
+     ]
+    ],
+    [
+     [
+      "VAISHORA",
+      true
+     ],
+     [
+      "pe",
+      true
+     ],
+     [
+      "abhi",
+      true
+     ],
+     [
+      "book",
+      true
+     ],
+     [
+      "karo.",
+      true
+     ]
+    ]
+   ],
+   "fineprint": "",
+   "sticker": null,
+   "spec": {},
+   "slot_video": null
+  }
+ ],
+ "sfx": [
+  {
+   "t": 1.389,
+   "kind": "pop"
+  },
+  {
+   "t": 3.308,
+   "kind": "whoosh"
+  },
+  {
+   "t": 6.355,
+   "kind": "tap"
+  },
+  {
+   "t": 8.503,
+   "kind": "tap"
+  },
+  {
+   "t": 9.003,
+   "kind": "whoosh"
+  },
+  {
+   "t": 9.673,
+   "kind": "lock"
+  },
+  {
+   "t": 13.352,
+   "kind": "whoosh"
+  },
+  {
+   "t": 14.102,
+   "kind": "tap"
+  },
+  {
+   "t": 15.552,
+   "kind": "whoosh"
+  },
+  {
+   "t": 16.951,
+   "kind": "tap"
+  },
+  {
+   "t": 15.872,
+   "kind": "tap"
+  },
+  {
+   "t": 18.883,
+   "kind": "whoosh"
+  },
+  {
+   "t": 23.964,
+   "kind": "whoosh"
+  },
+  {
+   "t": 26.577,
+   "kind": "whoosh"
+  },
+  {
+   "t": 27.047,
+   "kind": "chime"
+  }
+ ],
+ "cta": {
+  "primary": "Tap “Book Now”",
+  "secondary": "or search “VAISHORA Hyderabad”",
+  "line": "Book on the VAISHORA website — pay a small advance to lock your artist.",
+  "fineprint": "30% advance online · balance to the artist after the session · cancel 48h+ before: full refund of the advance · Hyderabad only"
+ },
+ "manifest": {
+  "studio_minimal-dots": {
+   "file": "studio_minimal-dots.png",
+   "w": 390,
+   "h": 844,
+   "dsf": 3,
+   "boxes": {
+    "stage": [
+     16,
+     84,
+     358,
+     188.7
+    ],
+    "tap": [
+     168.7,
+     489.1,
+     140.4,
+     203.6
+    ]
+   }
+  },
+  "studio_classic-mandala": {
+   "file": "studio_classic-mandala.png",
+   "w": 390,
+   "h": 844,
+   "dsf": 3,
+   "boxes": {
+    "stage": [
+     16,
+     84,
+     358,
+     188.7
+    ],
+    "tap": [
+     168.8,
+     475.1,
+     140.4,
+     203.6
+    ]
+   }
+  },
+  "studio_royal-bridal": {
+   "file": "studio_royal-bridal.png",
+   "w": 390,
+   "h": 844,
+   "dsf": 3,
+   "boxes": {
+    "stage": [
+     16,
+     84,
+     358,
+     188.7
+    ],
+    "tap": [
+     168.6,
+     461.1,
+     140.4,
+     203.6
+    ]
+   }
+  },
+  "studio_back": {
+   "file": "studio_back.png",
+   "w": 390,
+   "h": 844,
+   "dsf": 3,
+   "boxes": {
+    "stage": [
+     16,
+     84,
+     358,
+     188.7
+    ],
+    "tap": [
+     143.3,
+     274.7,
+     64.0,
+     40
+    ]
+   }
+  },
+  "catalogue_full": {
+   "file": "catalogue_full.png",
+   "w": 390,
+   "h": 3004,
+   "dsf": 3,
+   "boxes": {
+    "anchor": [
+     214,
+     1545.3,
+     102.4,
+     24
+    ]
+   }
+  },
+  "slot_date": {
+   "file": "slot_date.png",
+   "w": 390,
+   "h": 844,
+   "dsf": 3,
+   "boxes": {
+    "tap": [
+     144,
+     555.9,
+     60,
+     72
+    ],
+    "grid": [
+     16,
+     655.9,
+     358,
+     496
+    ]
+   }
+  },
+  "slot_time": {
+   "file": "slot_time.png",
+   "w": 390,
+   "h": 844,
+   "dsf": 3,
+   "boxes": {
+    "tap": [
+     260,
+     711.9,
+     114,
+     48
+    ],
+    "date": [
+     144,
+     555.9,
+     60,
+     72
+    ],
+    "grid": [
+     16,
+     655.9,
+     358,
+     496
+    ]
+   }
+  },
+  "summary_price": {
+   "file": "summary_price.png",
+   "w": 390,
+   "h": 844,
+   "dsf": 3,
+   "boxes": {
+    "advance": [
+     50,
+     566.8,
+     290,
+     20
+    ],
+    "balance": [
+     50,
+     588.8,
+     290,
+     20
+    ],
+    "total": [
+     38,
+     505.2,
+     314,
+     41.6
+    ],
+    "pay": [
+     196.4,
+     784,
+     177.6,
+     48
+    ],
+    "tap": [
+     17,
+     256.2,
+     356,
+     52
+    ]
+   }
+  },
+  "policy": {
+   "file": "policy.png",
+   "w": 390,
+   "h": 844,
+   "dsf": 3,
+   "boxes": {
+    "full": [
+     36,
+     351.2,
+     338,
+     56
+    ],
+    "list": [
+     16,
+     351.2,
+     358,
+     168
+    ],
+    "advance": [
+     16,
+     163.6,
+     358,
+     112
+    ]
+   }
+  }
+ }
+}

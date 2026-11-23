@@ -1,0 +1,144 @@
+{
+  "_readme": "Edit this file, then run: python marketing/ad/build/build.py  (add --recapture to re-record the website first). Prices MUST match what the live site shows (admin > designs / settings). Placeholders in captions/VO: {minimal} {mandala} {bridal} {mandala_advance} {advance} {full_hours} {partial_hours} {partial_pct}.",
+  "prices": {
+    "currency": "₹",
+    "designs": {
+      "minimal-dots": {
+        "name": "Minimal Dots",
+        "price": 399
+      },
+      "classic-mandala": {
+        "name": "Classic Mandala",
+        "price": 999
+      },
+      "royal-bridal": {
+        "name": "Royal Bridal",
+        "price": 3999
+      }
+    },
+    "anchor_design": "minimal-dots",
+    "example_design": "classic-mandala",
+    "advance_percent": 30,
+    "full_refund_hours": 48,
+    "partial_refund_hours": 12,
+    "partial_refund_percent": 50
+  },
+  "cta": {
+    "primary": "Tap “Book Now”",
+    "secondary": "or search “VAISHORA Hyderabad”",
+    "line": "Book on the VAISHORA website — pay a small advance to lock your artist.",
+    "fineprint": "{advance}% advance online · balance to the artist after the session · cancel {full_hours}h+ before: full refund of the advance · Hyderabad only"
+  },
+  "voice": {
+    "engine": "edge",
+    "_engines": "edge = edge-tts (free, see ASSETS.md licence note) | azure = Azure AI Speech (set AZURE_SPEECH_KEY and AZURE_SPEECH_REGION) | files = your own recordings in marketing/ad/audio/vo_override/<scene>.wav",
+    "name": "hi-IN-SwaraNeural",
+    "rate": "+14%",
+    "pitch": "+0Hz",
+    "chunk_gap": 0.1
+  },
+  "music": {
+    "enabled": true,
+    "gain_db": -21,
+    "duck_db": -9,
+    "bpm": 96
+  },
+  "sfx": {
+    "enabled": true
+  },
+  "site": {
+    "base_url": "http://localhost:3002",
+    "book_slug": "classic-mandala",
+    "studio_designs": [
+      "minimal-dots",
+      "classic-mandala",
+      "royal-bridal"
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "device_scale": 3
+  },
+  "output": {
+    "fps": 30,
+    "dir": "render",
+    "basename": "vaishora-ad-master",
+    "formats": [
+      "9x16",
+      "4x5"
+    ],
+    "crf": 20
+  },
+  "scenes": [
+    {
+      "id": "hook",
+      "slot": "hook",
+      "min": 2.4,
+      "caption": "Mehndi ka rate poocha… | reply aaya, *“DM karo.”*",
+      "vo": "मेहंदी का रेट पूछा, | रिप्लाई आया: डी-एम करो!",
+      "visual": "studio",
+      "sticker": "dm"
+    },
+    {
+      "id": "price",
+      "slot": "price_3d",
+      "min": 3.4,
+      "caption": "Design *3D haath* pe dekho, price ke saath — | *{minimal} se shuru.*",
+      "vo": "वैशोरा पे डिज़ाइन थ्री-डी हाथ पे देखो, प्राइस के साथ, | {minimal_vo} से शुरू।",
+      "visual": "studio_prices",
+      "fineprint": "Price ek haath ka, design jaisa dikhaya. Final quote payment se pehle dikhega."
+    },
+    {
+      "id": "offer",
+      "slot": "offer",
+      "min": 3.4,
+      "caption": "Bas *{advance}% advance* do — slot lock. | *Baaki session ke baad.*",
+      "vo": "बस {advance} परसेंट एडवांस दो, स्लॉट लॉक। | बाक़ी सेशन के बाद।",
+      "visual": "summary_price",
+      "sticker": "advance"
+    },
+    {
+      "id": "tryon",
+      "slot": "tryon",
+      "min": 2.2,
+      "caption": "Palm ya back — | *ghuma ke dekho.*",
+      "vo": "पाम या बैक — | घुमा के देखो।",
+      "visual": "studio_rotate"
+    },
+    {
+      "id": "slot",
+      "slot": "slot",
+      "min": 2.6,
+      "caption": "Date, time chuno — | *artist aapke ghar aayenge.*",
+      "vo": "डेट, टाइम चुनो — | आर्टिस्ट आपके घर आएँगे।",
+      "visual": "slot",
+      "sticker": "home"
+    },
+    {
+      "id": "refund",
+      "slot": "refund",
+      "min": 3.2,
+      "caption": "Plan badla? *{full_hours} ghante pehle* cancel — | *poora advance wapas.*",
+      "vo": "प्लान बदला? {full_hours} घंटे पहले कैंसल, | पूरा एडवांस वापस।",
+      "visual": "policy",
+      "fineprint": "{partial_hours}–{full_hours} ghante pehle: {partial_pct}% refund · {partial_hours} ghante se kam: refund nahi."
+    },
+    {
+      "id": "trust",
+      "slot": "artist_home",
+      "min": 2.0,
+      "caption": "Artists ko *hamari team* | *review karti hai.*",
+      "vo": "आर्टिस्ट्स को हमारी टीम | रिव्यू करती है।",
+      "visual": "motif"
+    },
+    {
+      "id": "cta",
+      "slot": "endcard",
+      "min": 4.2,
+      "caption": "Apna design chuno, slot lock karo — | *VAISHORA pe abhi book karo.*",
+      "vo": "अपना डिज़ाइन चुनो, स्लॉट लॉक करो — | वैशोरा पे अभी बुक करो!",
+      "visual": "endcard"
+    }
+  ]
+}

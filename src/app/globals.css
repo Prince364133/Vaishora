@@ -1,26 +1,387 @@
 @import "tailwindcss";
 
+/* Phones held sideways (and other short, narrow-ish windows): the studio switches to a
+   side-by-side layout so the 3D stage does not eat the whole screen height. */
+@custom-variant short-land (@media (orientation: landscape) and (max-height: 32.5rem) and (max-width: 1023.98px));
+
+/* VAISHORA design tokens.
+   Palette is fixed by the brand: Royal Plum, Dusty Rose, Champagne Gold, Soft Blush, Ivory.
+   Two derived tints are documented in docs/UI_UX_STRATEGY.md: plum-ink (text on light
+   backgrounds, a darker plum for AA contrast) and line (plum at low opacity for hairlines). */
+
+@theme {
+  --color-plum: #4b1d3f;
+  --color-plum-deep: #3d1734;
+  --color-plum-ink: #2e1228;
+  --color-rose: #d484a6;
+  --color-rose-deep: #a8577b;
+  --color-gold: #d4af7c;
+  --color-blush: #f8e8ec;
+  --color-ivory: #fffaf8;
+  --color-henna: #5b1f0f;
+  --color-line: rgb(75 29 63 / 0.12);
+  --color-muted: rgb(46 18 40 / 0.68);
+  --color-success: #2f6b4f;
+  --color-danger: #a33a3a;
+
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-manrope), "Manrope", system-ui, sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-soft: 0 1px 2px rgb(46 18 40 / 0.06), 0 8px 24px -12px rgb(46 18 40 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(46 18 40 / 0.06), 0 18px 40px -18px rgb(46 18 40 / 0.35);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --header-h: 60px;
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (orientation: landscape) and (max-height: 32.5rem) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --header-h: 52px;
   }
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 12px);
+  -webkit-tap-highlight-color: rgb(212 132 166 / 0.18);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ivory);
+  color: var(--color-plum-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Long booking codes, emails and URLs wrap instead of pushing the page sideways. */
+  overflow-wrap: break-word;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  accent-color: var(--color-plum);
+}
+
+fieldset {
+  min-width: 0;
+}
+
+input[type="file"] {
+  max-width: 100%;
+  font-size: 0.875rem;
+}
+input[type="file"]::file-selector-button {
+  min-height: 44px;
+  margin-right: 0.75rem;
+  padding: 0 1rem;
+  border: 1px solid var(--color-plum);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-plum);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  color: var(--color-plum);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-plum);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--color-rose);
+  color: var(--color-ivory);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+}
+
+@layer components {
+  .container-v {
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 16px;
+  }
+  @media (min-width: 768px) {
+    .container-v {
+      padding-inline: 32px;
+    }
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1.4rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+    white-space: nowrap;
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn[disabled],
+  .btn[aria-disabled="true"] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .btn-primary {
+    background: var(--color-plum);
+    color: var(--color-ivory);
+  }
+  .btn-primary:hover {
+    background: var(--color-plum-deep);
+  }
+  .btn-secondary {
+    border: 1px solid var(--color-plum);
+    color: var(--color-plum);
+    background: transparent;
+  }
+  .btn-secondary:hover {
+    background: var(--color-blush);
+  }
+  .btn-on-plum {
+    background: var(--color-ivory);
+    color: var(--color-plum);
+  }
+  .btn-on-plum:hover {
+    background: var(--color-blush);
+  }
+  .btn-ghost {
+    color: var(--color-plum);
+    min-height: 44px;
+    padding: 0 0.75rem;
+  }
+  .btn-ghost:hover {
+    background: var(--color-blush);
+  }
+  /* Compact button that still meets the 44px touch target. */
+  .btn-sm {
+    min-height: 44px;
+    padding: 0 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Text link given a full 44px touch target (back links, footer and list links). */
+  .tap-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  /* Makes a whole card clickable from one link (card needs position: relative). */
+  .stretched-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .link {
+    color: var(--color-plum);
+    text-decoration: underline;
+    text-decoration-color: var(--color-rose);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .link:hover {
+    text-decoration-color: var(--color-plum);
+  }
+
+  .field {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .field label,
+  .field .label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-plum-ink);
+  }
+  .input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid rgb(75 29 63 / 0.22);
+    border-radius: var(--radius-sm);
+    background: #fff;
+    color: var(--color-plum-ink);
+    font-size: 16px; /* prevents iOS zoom on focus */
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--color-plum);
+    box-shadow: 0 0 0 3px rgb(212 132 166 / 0.28);
+  }
+  .input[aria-invalid="true"] {
+    border-color: var(--color-danger);
+  }
+  .field-error {
+    font-size: 0.8125rem;
+    color: var(--color-danger);
+  }
+  .field-hint {
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    background: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-plum-ink);
+    white-space: nowrap;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .chip[aria-pressed="true"],
+  .chip[aria-checked="true"] {
+    background: var(--color-plum);
+    border-color: var(--color-plum);
+    color: var(--color-ivory);
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+  }
+
+  .hairline {
+    border-color: var(--color-line);
+  }
+
+  .eyebrow {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--color-rose-deep);
+  }
+
+  /* Horizontal scrollers: snap, no visible scrollbar, full-bleed on mobile. */
+  .scroller {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .scroller::-webkit-scrollbar {
+    display: none;
+  }
+  .scroller > * {
+    scroll-snap-align: start;
+    flex: none;
+  }
+  /* Full-bleed scroller on phones: items start on the 16px gutter, snap to it, and the
+     next item peeks past the screen edge with a soft fade as the "more this way" cue. */
+  .scroller-bleed {
+    margin-inline: -16px;
+    padding-inline: 16px;
+    scroll-padding-inline: 16px;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
+  }
+  @media (min-width: 640px) {
+    .scroller-bleed {
+      margin-inline: 0;
+      padding-inline: 0;
+      scroll-padding-inline: 0;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+  }
+
+  /* Mehndi artwork rendered in henna colour from a white/transparent mask image. */
+  .henna-mask {
+    background-color: var(--color-henna);
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+  }
+
+  .wordmark {
+    display: block;
+    background-color: var(--color-plum);
+    -webkit-mask: url(/brand/wordmark.png) center / contain no-repeat;
+    mask: url(/brand/wordmark.png) center / contain no-repeat;
+  }
+
+  /* Jharokha-inspired arch: the single signature frame used for the hero hand. */
+  .arch {
+    border-radius: 999px 999px var(--radius-lg) var(--radius-lg) / 46% 46% var(--radius-lg) var(--radius-lg);
+  }
+
+  .hand-canvas canvas {
+    /* Let the page scroll vertically over the hand; horizontal drags rotate and pinches zoom. */
+    touch-action: pan-y !important;
+  }
+  .hand-canvas.explore canvas {
+    touch-action: none !important;
+  }
+
+  .sample-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: var(--color-blush);
+    color: var(--color-rose-deep);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
 }

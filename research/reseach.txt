@@ -1,0 +1,1553 @@
+ক্রেডিট ফার্মে the business who are doing this thing right now like you know what mehendi? Is there any app or website which connects people who want to get mehendi designs on their hands and the people who knows designing mehendi, mehendi artists, they can come in the house and design the mehendi. Like for any type of events, marriageEvaluate this mehendi artist marketplace opportunity. My intention: invest. Target market: hyderabad. Service scope: beauty. Business model: marketplace. Give me a competitive and commercial assessment.
+Investment assessment: Beauty services marketplace in Hyderabad
+Potential opportunity Needs market validation
+
+My initial verdict: This is worth testing as a small, capital-efficient marketplace, but I would not invest heavily in building a full-fledged app yet.
+
+The opportunity is bigger than mehendi. You're looking at an on-demand beauty-services marketplace connecting customers with independent professionals who travel to homes, hotels, wedding venues and event locations.
+
+Think of it as a specialised combination of Urban Company, WedMeGood and a local beauty-artist network.
+
+However, there is an important distinction:
+
+Urban Company competes on standardised home services.
+
+Wedding directories compete on discovery and leads.
+
+Your opportunity is to compete on fast booking, verified talent, transparent packages and reliable execution, especially for events involving multiple artists.
+
+1. What exactly are we investing in?
+#1 Top Rated SheHe Unisex Beauty Hair Salon , Spa, Facials, Nail salon & Makeup Services in Kondapur | SheHe Beauty Salon & Spa
+Full Hand Mehndi Design For Bride: दुल्हन के प्यारे हाथों के लिए यहां से चुने मेहंदी के डिजाइन, देखने वाले पूछेंगे लगाने वाले का नाम
+Bridal Hairstyling That Matches Your Outfit -… | StyleBuddy
+I would divide the marketplace into four verticals:
+
+Vertical
+
+Services
+
+Commercial potential
+
+Mehendi
+
+Bridal, Arabic, minimal, party, festival
+
+Medium
+
+Makeup
+
+Bridal, engagement, party, HD makeup
+
+High
+
+Hair
+
+Styling, bridal hair, extensions
+
+High
+
+Beauty
+
+Facial, threading, waxing, manicure, pedicure
+
+High, but operationally demanding
+
+My recommendation: Start with mehendi, makeup and hairstyling. Add routine beauty services later.
+
+Why? Event bookings have higher ticket values, more urgency and stronger reasons for customers to book multiple professionals together.
+
+Routine beauty services are more frequent, but competing against established home-salon platforms is difficult.
+
+2. Competitive landscape: Who are you actually competing against?
+There are three different competitive categories. You need to understand the distinction because each has a different business model.
+
+India: Urban Company reports exponential growth during raging Covid-19 pandemic | Khaleej Times
+Urban Company
+
+Strong indirect competitor
+Home-service marketplace with controlled professional onboarding, service standards and dispatch. It competes for routine beauty bookings and customer trust.
+
+Website
+WedMeGood - Wedding Planner for Android - Download the APK from Uptodown
+WedMeGood
+
+Strong direct competitor for wedding discovery
+Has Hyderabad makeup and wedding vendor listings, reviews, portfolios and pricing information. Customers can discover and enquire about artists.
+Hyderabad makeup listings · Website
+
+MakupHub - a beauty services booking app :: Behance
+Sajeya
+
+Direct competitor
+Particularly important because it combines makeup artists, hairstylists and mehendi artists. Its terms describe an independent-professional marketplace, rather than an employed workforce.
+Terms and business model · Website
+
+Fresha reviews | ProductReview.com.au
+Fresha
+
+An international salon discovery and booking platform. More relevant to your salon and recurring beauty-service expansion than to wedding-focused artist dispatch.
+
+Website
+India's Thriving Wedding Economy
+Aayojan
+
+Another wedding marketplace. Its published pricing lists 10% commission on makeup and mehendi advances. This is a useful competitor benchmark, although it does not establish its actual booking volume.
+
+Vendor pricing
+The important competitive insight
+Your biggest competitor isn't necessarily another app.
+
+It's this combination:
+
+Instagram portfolios.
+
+WhatsApp enquiries.
+
+Google Maps searches.
+
+Personal referrals.
+
+Wedding planners and local beauty parlours.
+
+A customer can discover an artist on Instagram, message her on WhatsApp, negotiate a price and book without paying you anything.
+
+An artist can acquire customers without giving you a commission.
+
+Your product must provide enough value to justify staying in the transaction. Simply displaying artist profiles won't do that.
+
+There is also a useful signal in the wedding industry research: discovery, booking and vendor coordination remain problems, while recommendations and social circles are important decision channels. That means trust and distribution are central to this opportunity, not app features. 
+
+Eximius VC
++1
+
+3. Hyderabad: Is there a real market?
+Yes, there is an identifiable supply ecosystem.
+
+The interesting thing about Hyderabad is that it has multiple types of beauty customers:
+
+Traditional weddings and large family events.
+
+Muslim wedding celebrations and Eid occasions.
+
+Telugu weddings and engagement functions.
+
+Corporate parties and social events.
+
+Regular at-home grooming and beauty services.
+
+These are different booking occasions with different price points and customer acquisition channels.
+
+Existing pricing signals
+Here are some actual published market examples, not estimates of your future revenue.
+
+Service
+
+Published Hyderabad price
+
+Bridal makeup
+
+₹10,000–₹40,000+
+
+Bridal mehendi
+
+₹5,000–₹12,000+
+
+Arabic mehendi, both hands
+
+₹900 onwards
+
+Party / non-bridal makeup
+
+Varies by artist and package
+
+Bridal hair styling
+
+Needs local quote validation
+
+Sources: Hyderabad vendor listings on WedMeGood and published rates from Rubaiz Studio. 
+
+Prices & Reviews
++1
+
+One wedding-industry vendor guide also reports bridal mehendi around ₹12,000–₹15,000 and makeup around ₹25,000–₹40,000 per session. These are examples, not citywide averages. 
+
+images.wedmegood.com
+
+Where I would start geographically
+Use two fingers to move the mapUse ctrl + scroll to zoom the map
+These are research starting points, not confirmed marketplace partners:
+
+Ranvitha Beauty Parlour — Meerpet.
+
+Anusha Hair & Beauty — Meerpet.
+
+AH Aesthetic Saloon and Bridal Studio — Saroornagar.
+
+Urban Company Hyderabad — competitor's local operating presence.
+
+I would separately investigate artist clusters around:
+
+Dilsukhnagar and LB Nagar.
+
+Mehdipatnam and Tolichowki.
+
+Ameerpet and Kukatpally.
+
+Madhapur, Kondapur and Gachibowli.
+
+Secunderabad and Banjara Hills.
+
+Do not confuse the existence of salons with the existence of available freelance home-service artists. Those are two different supply pools.
+
+4. Business model and revenue economics
+This is where the opportunity becomes interesting, but also where marketplace founders frequently fool themselves.
+
+Let's create a hypothetical model.
+
+Illustrative booking economics
+
+Assumptions for a blended event-beauty booking, not verified market averages
+
+Average booking value
+
+₹3,500
+Marketplace commission
+
+15%
+Revenue per booking
+
+₹525
+Payment cost (assumed)
+
+₹70
+Expense
+
+Per booking
+
+Payment processing
+
+₹70
+
+Customer support / operations
+
+₹100
+
+Discounts / refunds provision
+
+₹50
+
+Contribution before acquisition
+
+₹305
+
+The ₹305 excludes salaries, fixed costs, taxes and customer acquisition. Actual payment costs and refund rates need validation.
+
+What happens at different booking volumes?
+Using the same assumptions:
+
+Illustrative monthly contribution before customer acquisition and fixed costs.
+
+₹0
+₹85K
+₹170K
+₹255K
+₹340K
+50
+100
+300
+500
+1000
+50: Monthly contribution ₹15.3K
+100: Monthly contribution ₹30.5K
+300: Monthly contribution ₹91.5K
+500: Monthly contribution ₹152.5K
+1000: Monthly contribution ₹305K
+The uncomfortable reality:
+
+50 bookings/month is a small side business.
+
+100 bookings/month is still not enough to support a serious operating team.
+
+300–500 bookings/month could support a lean local operation, depending on acquisition costs.
+
+1,000 bookings/month starts to become an interesting city-level business.
+
+But these numbers are not profit. They are contribution before customer acquisition and fixed overheads.
+
+My recommended commission structure
+Service
+
+Initial commission hypothesis
+
+Mehendi
+
+10–12%
+
+Bridal makeup
+
+10–12%
+
+Party makeup
+
+12–15%
+
+Hairstyling
+
+12–15%
+
+Multi-artist event booking
+
+10–12%
+
+Why not charge 20–30% immediately?
+
+Because independent artists already have their own customers. If your platform sends them only occasional leads, a high commission gives them a reason to move customers to WhatsApp.
+
+Aayojan's published 10% makeup/mehendi advance commission is a useful indication of the competitive pricing environment. 
+
+Aayojan Wedding Marketplace
+
+5. The real opportunity: What should differentiate your business?
+I would not position this as another beauty-service listing application.
+
+I would position it as:
+
+The booking and fulfilment infrastructure for independent beauty professionals.
+
+Here are the features I believe could create a meaningful competitive advantage.
+
+Top Mehndi Artists For Your Wedding Guests: Expert Tips
+A. Group booking engine
+
+Suppose a customer has a wedding with 30 guests who need mehendi.
+
+They can request 3–5 artists, specify the venue and time, and receive one consolidated quote.
+
+This is more interesting commercially than individual ₹500 bookings.
+
+Anusha Ramakrishna Makeup Artist Services, Review and Info - Olready
+B. Visual portfolio discovery
+
+Artists upload their actual work, organised by style:
+
+Arabic
+
+Rajasthani
+
+Bridal
+
+Minimal
+
+HD makeup
+
+Traditional
+
+Contemporary
+
+Customers should be able to filter by actual work, not just artist names.
+
+Beauty Service Booking Mobile App UI by Nixtio on Dribbble
+C. Real-time availability
+
+Artists set their working calendar, service radius, travel charges and availability.
+
+A customer sees whether the artist can actually accept the booking rather than submitting an enquiry and waiting.
+
+Bridal & Party Makeup in Burhanpur | Radiance by Radhika
+D. Event packages
+
+Example:
+
+Bridal makeup + hair + saree draping.
+
+Bridal mehendi + guest mehendi.
+
+Makeup for bride + 4 family members.
+
+Complete engagement beauty package.
+
+This increases average booking value and makes your platform more difficult to replace with a simple Instagram search.
+
+Henna Art by Shabina | Dubai’s Premium Bridal & Home Henna Artist
+E. Artist business management
+
+Give artists a free professional dashboard:
+
+Leads and bookings.
+
+Earnings and payouts.
+
+Calendar and availability.
+
+Customer management.
+
+Portfolio management.
+
+Reviews and reputation.
+
+Repeat customer tracking.
+
+This creates a reason for artists to keep using your platform even when they aren't receiving a new customer lead.
+
+6. The biggest risks you need to understand
+Risk
+
+Severity
+
+How to address it
+
+Customer and artist bypass your platform
+
+Very high
+
+Deposits, booking protection, repeat-booking benefits
+
+Inconsistent service quality
+
+Very high
+
+Portfolio verification, reviews, complaints process
+
+Artist cancellation
+
+Very high
+
+Backup artists, confirmation deposits, penalties
+
+Expensive customer acquisition
+
+High
+
+SEO, referrals, wedding partnerships
+
+Seasonal demand
+
+High
+
+Festival, party and regular beauty bookings
+
+Low booking frequency
+
+High
+
+Multiple beauty categories
+
+Geographic fragmentation
+
+High
+
+Launch in concentrated service zones
+
+One particular risk deserves attention: disintermediation.
+
+Imagine you introduce a bride to a makeup artist. They complete the first booking. The bride gets the artist's number and books her again directly.
+
+You have acquired the customer, paid to acquire her, and then lost the future transaction.
+
+This is a documented structural challenge for service marketplaces, including Urban Company's repeat-user business. 
+
+bsmedia.business-standard.com
+
+Do not assume an app can solve this. You need to provide continued value through scheduling, customer protection, reliable replacements, payments and loyalty benefits.
+
+7. Investment strategy: How much money should you put in?
+My advice is to separate market validation from technology investment.
+
+Phase 1 — Market validation
+
+₹15,000–₹25,000
+Proposed experimental budget · 30 days
+
+Interview 50 potential customers.
+
+Interview 30 beauty professionals.
+
+Onboard 15–20 artists.
+
+Create a landing page and WhatsApp booking channel.
+
+Run a small local advertising experiment.
+
+Complete 10–20 paid bookings.
+
+Phase 2 — Operational pilot
+
+₹40,000–₹75,000
+Additional experimental budget · 30–45 days
+
+Build artist onboarding and booking workflows.
+
+Introduce booking deposits.
+
+Build customer and artist dashboards.
+
+Run referral campaigns.
+
+Test service quality and fulfilment.
+
+Reach 50–100 cumulative paid bookings.
+
+Phase 3 — Marketplace MVP
+
+₹75,000–₹1.5 lakh
+Conditional additional investment
+
+Customer-facing marketplace.
+
+Artist mobile experience.
+
+Admin operations dashboard.
+
+Payment and refund integration.
+
+Availability and booking engine.
+
+Review and verification system.
+
+These are proposed lean founder-led budgets, not vendor quotations. They assume you handle product development yourself or use your existing development resources.
+
+Total initial capital envelope: approximately ₹1.3–2.5 lakh, but you should not commit it upfront.
+
+Release money only when the previous stage produces evidence.
+
+8. The 45-day validation experiment
+This is how I would actually test it.
+
+Days 1–7: Supply acquisition
+
+Find and speak with 30 independent artists.
+
+Ask:
+
+How many bookings do you get per month?
+
+Where do customers find you?
+
+How much do you spend on Instagram promotions?
+
+How many enquiries become actual bookings?
+
+Would you pay a commission for a confirmed customer?
+
+Do you travel to customers' homes?
+
+Days 8–14: Customer discovery
+
+Interview 50 potential customers.
+
+Speak to brides, recently married couples, wedding planners and people who organise events.
+
+Don't ask whether they like your idea. Ask about their last actual booking, how they found the artist, what went wrong and how much they paid.
+
+Days 15–25: Concierge marketplace
+
+Build a simple website with artist portfolios, pricing and a booking request form.
+
+Handle the matching and booking manually through WhatsApp.
+
+Do not build a full application.
+
+Days 26–35: Paid acquisition
+
+Test Instagram ads, local SEO and referral partnerships.
+
+Get actual paying customers, not free sign-ups or people saying they are interested.
+
+Days 36–45: Unit economics
+
+Calculate:
+
+Customer acquisition cost.
+
+Booking conversion rate.
+
+Average booking value.
+
+Marketplace commission.
+
+Artist acceptance rate.
+
+Cancellation rate.
+
+Contribution per booking.
+
+Repeat and referral booking rate.
+
+My proposed investment decision gates
+These are targets I would set for the pilot, not industry benchmarks.
+
+Metric
+
+Minimum target
+
+Verified artists
+
+20
+
+Paid bookings
+
+30
+
+Booking completion rate
+
+85%+
+
+Artist acceptance rate
+
+70%+
+
+Average commission
+
+10%+
+
+Customer satisfaction
+
+4.5/5
+
+Positive contribution before CAC
+
+Required
+
+If you cannot generate 30 paid bookings with manual operations, building a sophisticated app won't fix the problem.
+
+9. What could this business become?
+There are two possible directions.
+
+My preferred direction
+Beauty marketplace
+
+Beauty-first
+Start with:
+
+Mehendi.
+
+Bridal makeup.
+
+Party makeup.
+
+Hairstyling.
+
+Expand into event teams, wedding packages and at-home beauty services.
+
+This provides a clear positioning and multiple revenue opportunities.
+
+Avoid initially
+Everything marketplace
+
+Don't immediately add:
+
+Wedding photographers.
+
+Caterers.
+
+Wedding venues.
+
+Decorators.
+
+Event management.
+
+Clothing and jewellery.
+
+This turns a focused marketplace into another generic wedding directory.
+
+10. Final investment verdict
+6.5 / 10
+My provisional opportunity score
+
+Strategic assessment, not a measured market score
+
+Factor
+
+Score
+
+Customer problem
+
+8/10
+
+Market accessibility
+
+8/10
+
+Competitive differentiation
+
+5/10
+
+Revenue potential
+
+7/10
+
+Operational simplicity
+
+4/10
+
+Scalability
+
+7/10
+
+Proceed with a pilot
+Investment decision: Conditional GO
+
+Invest in customer and artist acquisition first. Do not invest in a full application until the transaction economics are demonstrated.
+
+What I would personally do
+I would build a Hyderabad-first brand, recruit 20–30 independent beauty professionals and start with three categories.
+
+I would not hire employees, rent an office or spend months developing applications.
+
+I would spend the first 45 days proving that people will pay us to find, book and manage beauty professionals.
+
+There is one more interesting opportunity: building a network of independent women professionals who currently rely on Instagram, personal referrals and local connections for their income. If you become their customer-acquisition and business-management infrastructure, you have a stronger business than simply selling beauty appointments.
+
+11. Five questions before I would approve the investment
+I want to challenge the business model further, because your answers will change the investment strategy substantially.
+
+1. How much are you genuinely willing to invest initially?
+
+
+Under ₹25,000
+
+₹25,000–₹50,000
+
+₹1–2 lakh
+
+₹3–5 lakh
+
+₹5 lakh+
+2. What is your investment role?
+
+
+I want to own and operate this startup.
+
+I want to find an operating partner.
+
+I want to invest and hire a team to run it.
+3. Which customer segment should we target?
+
+
+Finalize my investment strategy for the Hyderabad beauty marketplace. Initial capital: Under ₹25,000. My role: own. Customer segment: both. Operations: managed. Ambition: city. Give me a realistic investment plan, business structure, MVP scope and go/no-go recommendation.Final investment strategy: Hyderabad Beauty Marketplace
+GO — 45-day validation pilot
+ NO-GO — full app development for now
+
+
+My recommendation is to launch a small, managed beauty-booking business in Hyderabad with a maximum initial investment of ₹25,000.
+
+Do not start by building an app. Start by building a network of beauty professionals, acquiring paying customers and managing bookings manually.
+
+Your first objective is not to become the next Urban Company. It is to prove that customers will pay your business to find and coordinate reliable beauty professionals.
+1. The business I recommend
+Beauty Marketplace
+Working business concept — brand name to be decided
+
+
+
+
+
+
+
+
+weddingwire.in
+
+
+Positioning
+
+One platform to discover, compare and book verified beauty professionals at home or at event venues.
+
+Customers
+- Brides and families.
+- Women booking party makeup.
+- People organising engagements and festivals.
+- Customers looking for affordable home beauty services.
+Supply
+- Independent mehendi artists.
+- Freelance makeup artists.
+- Hairstylists.
+- Home beauty professionals.
+
+Your launch categories
+I would not launch every beauty service simultaneously.
+Priority	Category	Why
+1	Mehendi	Easy to showcase visually, relatively simple operations
+2	Party makeup	Higher ticket potential
+3	Bridal makeup	High-value bookings
+4	Hairstyling	Natural add-on to makeup
+5	Home salon services	Add after operational validation
+
+Important: You have two customer segments, but that doesn't mean you should operate two businesses from day one.
+
+Use bridal and event bookings as your initial revenue engine. Introduce affordable everyday beauty services once you have sufficient supply and repeat demand.
+2. Choose one launch zone, not all of Hyderabad
+This is an important correction to your original ambition.
+
+You want a city-level business eventually, but you have less than ₹25,000. You cannot reliably manage artists across Gachibowli, Secunderabad, Old City and LB Nagar with a small manual operation.
+
+I recommend starting with:
+Recommended pilot zone
+Meerpet → LB Nagar → Dilsukhnagar
+
+Why this area?
+- You can recruit local salons and independent professionals.
+- Travel distances and operational costs can be controlled.
+- You can personally manage early artist onboarding.
+- You can test home-service demand without expensive citywide advertising.
+I found several existing beauty businesses in the Meerpet area. These are potential supply-recruitment leads, not confirmed partners.
+
+5.0
+
+
+
+4.3
+
+
+
+5.0
+
+
+
+5.0
+
+
+
+5.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Use two fingers to move the map
+Use ctrl + scroll to zoom the map
+
+
+
+
+
+Ranvitha Beauty Parlour5.0•Beauty salonClosed
+
+
+Anusha Hair & Beauty- Family Salon & Academy4.3•Beauty salonClosed
+
+
+Sri Lakshmi Beauty Saloon & Makeup Studio5.0•Beauty salonClosed
+
+
+Isha natural professional beauty saloon5.0•Beauty salonOpen
+
+
+Rupa Makeup & hair styles5.0•Make-up artistOpen
+
+
+
+
+
+
+
+
+
+
+
+Potential businesses to approach:
+- Ranvitha Beauty Parlour — 171 reviews listed.
+- Anusha Hair & Beauty — salon and academy.
+- Sri Lakshmi Beauty Saloon & Makeup Studio.
+- Isha Natural Professional Beauty Saloon.
+- Rupa Makeup & hair styles — makeup and hairstyling.
+The first job is to find out which of these providers actually offer home visits, which have freelance artists and which are willing to join a marketplace.
+Competitor reality check
+You are not entering an empty market.
+- Urban Company already provides at-home beauty services.
+- Wedviha lists Hyderabad bridal makeup and mehendi artists. Browse vendor listings.
+- MakeMyGlow allows customers to discover providers offering home services, including Hyderabad. Explore its home services.
+- MyGlamHer advertises home beauty services in Hyderabad. View services.
+- Glamigo has advertised a Hyderabad launch. View its Hyderabad page.
+This changes the positioning.
+
+Don't sell yourself as simply an app where customers find beauty professionals. That proposition is already occupied.
+
+Sell managed event bookings with dependable artist coordination, initially in one compact area.
+3. Exact ₹25,000 investment allocation
+I would divide the money like this:
+₹25,000
+Maximum authorised pilot budget · 45 days
+
+
+Advertising
+
+Artist acquisition
+
+Operations
+
+Photography and content
+
+Referrals
+
+Reserve
+
+Website and tools
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Artist acquisition and onboarding
+
+₹4,000
+
+Portfolio photography and content
+
+₹2,500
+
+Landing page, domain and tools
+
+₹2,000
+
+Instagram and local advertising
+
+₹6,000
+
+Referral and partnership incentives
+
+₹2,500
+
+Travel and operational expenses
+
+₹2,000
+
+Refund and emergency reserve
+
+₹6,000
+
+
+Total allocation
+₹25,000
+
+
+A few strict rules:
+1. Don't spend ₹10,000 on branding.
+2. Don't hire developers.
+3. Don't rent an office.
+4. Don't hire customer support staff.
+5. Don't purchase beauty products or equipment for artists.
+6. Don't burn the entire advertising budget in the first week.
+Release the advertising budget in small experiments. Keep the reserve untouched unless refunds, cancellations or genuine operational problems require it.
+4. Business structure
+I would operate this as a managed marketplace under an existing corporate entity rather than create another company.
+
+Since you already have Simplicion Private Limited, it is worth using that entity, subject to checking its business objects, tax treatment and applicable registrations with your CA. Keep this as a separate consumer-facing brand and maintain separate financial reporting for it. 
+
+Suggested structure:
+SIMPLICION PRIVATE LIMITED
+
+Legal entity / contracting and invoicing entity
+
+BEAUTY MARKETPLACE
+
+Consumer-facing brand
+
+Customers
+
+Discover and book
+
+
+Artists
+
+Register and fulfil
+
+
+
+Marketplace operations
+
+Booking · Payments · Support · Quality · Reviews
+
+
+Your legal and operational checklist
+Before accepting bookings:
+- Check company objects and appropriate business activity classification with your CA.
+- Prepare independent service-provider agreements.
+- Define commission, cancellation and payout terms.
+- Publish customer terms, privacy policy and refund policy.
+- Verify artist identity, contact details, references and portfolio ownership.
+- Maintain a complaint and refund process.
+- Clarify GST invoicing and any applicable e-commerce operator obligations, including TCS treatment where relevant.
+- Confirm payment aggregator rules for marketplace collections and provider settlements.
+Important payment rule: Do not advertise your deposit system as escrow or hold customer funds in a self-created wallet. Use an appropriate payment provider and a documented settlement arrangement. Get the tax and payment flow reviewed before launching.
+
+5. Your MVP: What to build and what NOT to build
+I would use a website, WhatsApp Business and a lightweight admin dashboard.
+
+No Android application. No iOS application. No complex artist app.
+Customer booking website
+Build
+
+
+
+
+
+
+
+
+
+dribbble.com
+
+
+Features:
+- Browse services.
+- View artist portfolios.
+- Select occasion and location.
+- Select date and time.
+- Submit booking request.
+- Receive booking confirmation through WhatsApp.
+- See package pricing and travel charges.
+  
+  Artist onboarding portal
+  Build
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  capterra.ca
+  
+  
+  Features:
+- Registration form.
+- Services and price list.
+- Portfolio upload.
+- Service radius.
+- Availability.
+- Bank/UPI payout details.
+- Identity verification.
+  
+  Admin dashboard
+  Essential
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  clearbook.app
+  
+  
+  Features:
+- Booking management.
+- Customer records.
+- Artist records.
+- Assign and reassign professionals.
+- Payment tracking.
+- Cancellation management.
+- Commission calculation.
+- Customer feedback.
+
+Recommended technology
+Since you can handle the development, use a low-cost stack:
+Layer	Technology
+Frontend	Next.js
+Backend	Next.js API / Node.js
+Database	Supabase PostgreSQL
+Authentication	Supabase Auth
+Storage	Supabase Storage
+Hosting	Vercel
+Communication	WhatsApp Business
+CRM	Google Sheets initially
+Payments	Payment links / approved payment gateway
+Analytics	Google Analytics + basic event tracking
+
+Your first version could be built in approximately 5–7 days of focused development.
+
+But I would delay even those five days until the first artist interviews are complete.
+MVP booking workflow
+#chatgpt-mermaid-_r_2fe_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-_r_2fe_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_2fe_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_2fe_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-_r_2fe_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-_r_2fe_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-_r_2fe_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-_r_2fe_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-_r_2fe_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-_r_2fe_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-_r_2fe_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-_r_2fe_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-_r_2fe_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-_r_2fe_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-_r_2fe_ p{margin:0;}#chatgpt-mermaid-_r_2fe_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-_r_2fe_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-_r_2fe_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-_r_2fe_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-_r_2fe_ .label text,#chatgpt-mermaid-_r_2fe_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-_r_2fe_ .node rect,#chatgpt-mermaid-_r_2fe_ .node circle,#chatgpt-mermaid-_r_2fe_ .node ellipse,#chatgpt-mermaid-_r_2fe_ .node polygon,#chatgpt-mermaid-_r_2fe_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-_r_2fe_ .rough-node .label text,#chatgpt-mermaid-_r_2fe_ .node .label text,#chatgpt-mermaid-_r_2fe_ .image-shape .label,#chatgpt-mermaid-_r_2fe_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-_r_2fe_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-_r_2fe_ .rough-node .label,#chatgpt-mermaid-_r_2fe_ .node .label,#chatgpt-mermaid-_r_2fe_ .image-shape .label,#chatgpt-mermaid-_r_2fe_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-_r_2fe_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-_r_2fe_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-_r_2fe_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-_r_2fe_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-_r_2fe_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-_r_2fe_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-_r_2fe_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-_r_2fe_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-_r_2fe_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-_r_2fe_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-_r_2fe_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-_r_2fe_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-_r_2fe_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-_r_2fe_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-_r_2fe_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-_r_2fe_ .icon-shape,#chatgpt-mermaid-_r_2fe_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-_r_2fe_ .icon-shape p,#chatgpt-mermaid-_r_2fe_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-_r_2fe_ .icon-shape .label rect,#chatgpt-mermaid-_r_2fe_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-_r_2fe_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-_r_2fe_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-_r_2fe_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-_r_2fe_ [data-look="neo"].node rect,#chatgpt-mermaid-_r_2fe_ [data-look="neo"].cluster rect,#chatgpt-mermaid-_r_2fe_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-_r_2fe_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_2fe_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-_r_2fe_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-_r_2fe_-gradient);stroke-width:1px;}#chatgpt-mermaid-_r_2fe_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_2fe_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-_r_2fe_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-_r_2fe_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_2fe_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-_r_2fe_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-_r_2fe_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_2fe_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-_r_2fe_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_2fe_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_2fe_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_2fe_ .node tspan[font-weight="normal"],#chatgpt-mermaid-_r_2fe_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-_r_2fe_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-_r_2fe_ .node rect,#chatgpt-mermaid-_r_2fe_ .node circle,#chatgpt-mermaid-_r_2fe_ .node ellipse,#chatgpt-mermaid-_r_2fe_ .node polygon,#chatgpt-mermaid-_r_2fe_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-_r_2fe_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-_r_2fe_ .mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-_r_2fe_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-_r_2fe_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-_r_2fe_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}Customer visits websiteSelects beauty serviceViews portfolios and packagesSubmits booking requestAdmin checks availabilityArtist confirmsCustomer confirms and paysdepositBooking confirmedArtist completes servicePayment reconciliationCustomer reviewArtist payout and commission
+
+
+
+
+
+Your managed marketplace means you are responsible for coordinating the transaction. The customer should not have to chase three artists to find out who is available.
+6. Pricing and commission strategy
+Don't compete by being the cheapest. Compete by being dependable.
+
+I would use a two-tier pricing structure.
+Everyday
+Affordable beauty
+- Party mehendi
+- Guest makeup
+- Hairstyling
+- Festival bookings
+10–15%
+Proposed artist commission
+
+
+Occasion
+Premium beauty
+- Bridal makeup
+- Bridal mehendi
+- Engagement
+- Wedding packages
+10–12%
+Proposed artist commission
+
+
+
+For the initial 10 bookings, you could offer an introductory 8% commission to attract quality artists. Make it clear that this is a launch incentive, not permanent pricing.
+
+A local pricing reference from Rubaiz Studio in Hyderabad lists:
+- Party makeup from ₹3,500.
+- Party makeup with hairstyling from ₹5,000.
+- Bridal HD makeup with hair and draping from ₹15,000.
+- Group mehendi bookings from ₹2,500 onwards. 
+  Rubaiz Studio
+These are individual provider prices, not guaranteed market averages. Collect 15–20 actual artist quotations before publishing your own packages.
+Illustrative booking economics
+Suppose you generate a booking worth ₹4,000.
+Item	Amount
+Customer booking value	₹4,000
+Your 12% commission	₹480
+Payment and transaction costs (assumption)	₹80
+Operational cost	₹100
+Customer acquisition cost	₹200
+Contribution	₹100
+
+This is not an attractive mature business yet. It's a validation model.
+
+At ₹200 acquisition cost, you have very little room for error. Your long-term goal should be to acquire more customers through referrals, local SEO and wedding partnerships.
+
+Also, the payment cost above is an assumption; the actual cost depends on the collection and settlement structure.
+7. How to acquire the first customers
+I would use four channels.
+Channel	Strategy
+Instagram	Artist portfolios, bridal transformations, reels
+Wedding planners	Referral partnerships and event packages
+Local SEO	Pages for mehendi artists and makeup at home in target areas
+Referrals	Customer and artist referral incentives
+
+The most important marketing strategy
+Don't run generic advertisements saying:
+
+"Download our beauty app."
+
+You don't have an established app or brand yet.
+
+Instead, run advertisements with specific purchase intent:
+- Need a mehendi artist at home in Hyderabad?
+- Looking for a bridal makeup artist for your wedding?
+- Need makeup and hairstyling for your engagement?
+- Need 5 mehendi artists for a wedding function?
+Your advertising should generate booking enquiries, not app downloads.
+Your first partnership strategy
+Contact 10 wedding planners and small event organisers.
+
+Offer them a referral commission for completed bookings.
+
+For example:
+- Customer booking: ₹10,000.
+- Marketplace commission: 12%.
+- Marketplace revenue: ₹1,200.
+- Referral partner reward: ₹200.
+- Remaining marketplace revenue: ₹1,000 before other expenses.
+This can become an alternative to expensive Instagram advertising.
+
+8. Your 45-day execution plan
+45-day launch roadmap
+1. Week 1 — Research
+   Days 1–7
+   - Interview 20 artists.
+   - Interview 30 potential customers.
+   - Collect competitor pricing.
+   - Understand travel and service availability.
+   - Identify your first 10 potential artist partners.
+   Deliverable: Validated service catalogue and artist database.
+2. Week 2 — Supply acquisition
+   Days 8–14
+   - Onboard 10–15 artists.
+   - Verify portfolios.
+   - Record prices and service locations.
+   - Obtain signed provider agreements.
+   - Create your brand identity and booking website.
+   Deliverable: Working supply network.
+3. Week 3 — Soft launch
+   Days 15–21
+   - Publish service listings.
+   - Start Instagram marketing.
+   - Approach wedding planners.
+   - Start accepting booking requests.
+   - Manually match customers and artists.
+   Deliverable: First 3–5 paid bookings.
+4. Week 4 — Commercial testing
+   Days 22–30
+   - Test advertising.
+   - Introduce referral campaigns.
+   - Track conversion rates.
+   - Test cancellation policies.
+   - Collect customer reviews.
+   Deliverable: First evidence of repeatable acquisition.
+5. Days 31–45 — Investment decision
+   - Reach 15 completed paid bookings.
+   - Track actual commission revenue.
+   - Identify profitable service categories.
+   - Remove unreliable artists.
+   - Calculate contribution after acquisition costs.
+   Deliverable: GO / PIVOT / STOP decision.
+
+9. The KPIs that decide whether you continue
+Do not measure success by Instagram followers, registered artists or website visitors.
+
+Measure actual transactions.
+Metric	Pilot target
+Artist interviews	20+
+Verified artists onboarded	15–20
+Qualified customer enquiries	50+
+Completed paid bookings	15+
+Artist acceptance rate	70%+
+Successful fulfilment	85%+
+Average customer rating	4.5/5
+Commission	10–12%
+CAC	₹250 or lower
+Contribution after variable costs and CAC	Positive
+
+These are founder-set thresholds. They are not published industry benchmarks.
+
+My decision rules:
+- GO
+   If you reach 15 paid bookings, have reliable artists and positive contribution economics, invest in the MVP.
+- PIVOT
+   If customers enquire but don't pay, investigate pricing, trust and booking friction.
+- STOP
+   If you cannot secure sufficient supply or get at least 8 genuine paid bookings after 45 days of active outreach and marketing, don't pour more money into the same model.
+One important distinction: 15 bookings validate initial demand, not product-market fit. You need repeated acquisition and positive economics over several months before scaling.
+10. Operational rules you cannot compromise on
+Since this is a managed home-service business, your reputation depends on the person who arrives at the customer's home.
+
+Create these rules from day one:
+
+Artist verification
+- Identity verification.
+- Phone verification.
+- Portfolio authenticity.
+- Reference checks.
+- Skill assessment or trial.
+- Clear service and travel pricing.
+Booking reliability
+- Artist confirmation before customer payment.
+- Booking deposit and written cancellation terms.
+- Backup artist for high-value events.
+- Clear arrival and completion confirmation.
+Customer safety
+- Verified artist details shared before arrival.
+- Consent before taking or publishing customer photographs.
+- Hygiene and product standards.
+- Complaint escalation and refunds.
+- Appropriate home-visit safety procedures.
+Payment management
+- Maintain a booking ledger.
+- Record the full transaction amount, commission and artist payout.
+- Reconcile every booking.
+- Don't let cash bookings disappear from your records.
+
+11. What I would build after the pilot
+Only if the numbers work, I would release the next investment.
+Conditional next phase
+Version 1 — Actual marketplace
+₹50,000–₹1 lakh
+Illustrative next-stage budget, not an immediate commitment
+- Customer registration and booking.
+- Artist registration and dashboard.
+- Portfolio and service catalogue.
+- Location-based artist discovery.
+- Availability management.
+- Booking deposits and payment integration.
+- Admin booking and payout management.
+- Reviews and cancellation workflows.
+
+Version 2 — City expansion
+- Additional Hyderabad service zones.
+- Dedicated wedding packages.
+- Group artist allocation.
+- Artist performance scoring.
+- Automated booking assignment.
+- Customer loyalty and referrals.
+- Improved artist earnings management.
+
+Don't build an algorithm to assign 100 artists when you haven't successfully coordinated 10.
+
+12. My final recommendation
+I would approve the ₹25,000 experiment, with one condition: you personally own sales and operations during the pilot.
+
+Your biggest risk is not whether you can develop the application. It's whether you can build enough local supply and customer trust to make the transaction happen.
+
+Your competitive advantage must eventually become:
+1. Better artist availability.
+2. Reliable group bookings.
+3. Transparent pricing.
+4. Quality assurance.
+5. Faster booking confirmation.
+6. Repeat customer relationships.
+Don't attempt to beat Urban Company across all beauty services. Own a narrower segment of event beauty and independent artist coordination first.
+13. Your immediate execution checklist
+Founder launch checklist
+0/10 completed
+
+
+
+[ ] Interview 20 independent beauty professionals
+[ ] Interview 30 potential customers
+[ ] Collect pricing from 15 local providers
+[ ] Create artist onboarding form
+[ ] Create customer booking form
+[ ] Prepare artist service-provider agreement
+[ ] Prepare refund and cancellation policy
+[ ] Create Instagram business profile
+[ ] Launch one-page booking website
+[ ] Complete first 5 paid bookings
+ Copy checklist
+One decision I want you to make before spending money:
+
+Do you want to start with the Meerpet–LB Nagar–Dilsukhnagar micro-market as recommended, or target the premium wedding market in Madhapur–Gachibowli–Jubilee Hills from day one?
+
+Those are two very different businesses in terms of customers, artist acquisition, ticket size and operations. Don't try to do both with ₹25,000.Something with vaishali apple bekar doraemon
+Ahh, now I understand. You want something more personal, quirky and memorable — perhaps inspired by Vaishali, Apple, Bekar and Doraemon, rather than another artificial luxury-sounding beauty name.
+
+Let's experiment with combining these words into a brand identity.
+
+20 creative name ideas
+Name
+
+Inspiration
+
+Brand feel
+
+Vaishora
+
+Vaishali + Aura
+
+Premium
+
+Vaishova
+
+Vaishali + Nova
+
+Modern
+
+Vaishé
+
+Vaishali
+
+Minimal luxury
+
+Vaibella
+
+Vaishali + Bella
+
+Feminine
+
+Vaishorae
+
+Vaishali + Aura
+
+Boutique
+
+Appora
+
+Apple + Aura
+
+Modern
+
+Applora
+
+Apple + Flora
+
+Elegant
+
+Apliva
+
+Apple + Vaishali
+
+Startup-style
+
+Bekora
+
+Bekar + Aura
+
+Quirky
+
+Bekova
+
+Bekar + Nova
+
+Playful
+
+Doriva
+
+Doraemon + Vaishali
+
+Cute
+
+Doreva
+
+Doraemon + Eva
+
+Elegant
+
+Dorora
+
+Doraemon + Aura
+
+Memorable
+
+Vaido
+
+Vaishali + Doraemon
+
+Short
+
+Vaishmo
+
+Vaishali + Doraemon
+
+Playful
+
+Aivora
+
+Apple + Aura
+
+Premium
+
+Vadora
+
+Vaishali + Doraemon
+
+Brandable-sounding
+
+Vaishlet
+
+Vaishali + Apple
+
+Modern
+
+Bellora
+
+Bella + Aura
+
+Beauty-focused
+
+Dorielle
+
+Doraemon + Elle
+
+Boutique
+
+My top 5
+VAISHORA
+My favourite
+
+Beauty, made personal.
+
+VADORA
+Most distinctive
+
+Beauty meets artistry.
+
+DORIVA
+Most playful
+
+Your beauty, your moment.
+
+APPLORA
+Most modern
+
+A new way to discover beauty.
+
+VAISHOVA
+Most premium
+
+Every occasion, beautifully.
+
+One thing I want to clarify
+Are these words connected to a particular person or memory? For example, is Vaishali someone's name, Apple a nickname, Bekar an inside joke, and Doraemon a favourite character?
+
+If so, I can create much more meaningful combinations instead of randomly mixing syllables.
+
+My current pick is VAISHORA. It's personal-sounding without making the business name too literal.
+
+VAISHORA let's fix this
+Selected brand name
+VAISHORA
+Let's lock VAISHORA as the working brand name for your beauty-services marketplace.
+
+Brand positioning: A premium-yet-accessible platform connecting customers with verified independent beauty professionals.
+
+Suggested tagline: Beauty, made personal.
+
+Brand foundation
+Brand: VAISHORA
+
+Category: Beauty & Artist Marketplace
+
+Initial services: Mehendi, makeup, bridal makeup and hairstyling
+
+Experience: Discover, compare, book and get your beauty professional coordinated.
+
+Personality: Elegant, trustworthy, modern and approachable.
+
+One important thing before spending on branding
+The name is selected creatively, but it is not legally cleared yet. Before printing, advertising or launching, check:
+
+Trademark availability in relevant Indian classes.
+
+Domain availability (especially vaishora.com).
+
+Instagram and other social handles.
+
+Similar-sounding beauty brands.
+
+I would not spend money on a logo or marketing until those checks are done.
+
+Next, we should build VAISHORA's visual identity: logo direction, colors, typography and brand voice.VAISHORA color palette
+My recommended direction
+ Royal Plum + Dusty Rose + Champagne Gold
+Color	Hex	Purpose
+Royal Plum	#4B1D3F	Primary brand color
+Dusty Rose	#D484A6	Secondary color
+Champagne Gold	#D4AF7C	Premium accents
+Soft Blush	#F8E8EC	Backgrounds
+Ivory	#FFFAF8	Neutral surfaces
+
+How to use the colors
+- 60% Ivory / Soft Blush: clean backgrounds.
+- 25% Royal Plum: headers, navigation, primary buttons.
+- 10% Dusty Rose: highlights, cards, secondary elements.
+- 5% Champagne Gold: small premium details.
+My design rules
+1. No gold text on every component. It becomes tacky.
+2. No random gradients.
+3. Use plum for important actions and strong contrast.
+4. Use gold sparingly for borders, icons and decorative details.
+5. Keep the booking experience clean and modern, not like a traditional parlour flyer.
+One important distinction: VAISHORA should look premium, but the product should feel accessible. Don't make affordable customers feel the platform isn't meant for them.
+
+I'd use this palette as the starting brand system, then validate the actual HEX colors and contrast in the website and mobile UI before finalizing.

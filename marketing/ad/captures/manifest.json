@@ -1,0 +1,206 @@
+{
+ "studio_minimal-dots": {
+  "file": "studio_minimal-dots.png",
+  "w": 390,
+  "h": 844,
+  "dsf": 3,
+  "boxes": {
+   "stage": [
+    16,
+    84,
+    358,
+    188.7
+   ],
+   "tap": [
+    168.7,
+    489.1,
+    140.4,
+    203.6
+   ]
+  }
+ },
+ "studio_classic-mandala": {
+  "file": "studio_classic-mandala.png",
+  "w": 390,
+  "h": 844,
+  "dsf": 3,
+  "boxes": {
+   "stage": [
+    16,
+    84,
+    358,
+    188.7
+   ],
+   "tap": [
+    168.8,
+    475.1,
+    140.4,
+    203.6
+   ]
+  }
+ },
+ "studio_royal-bridal": {
+  "file": "studio_royal-bridal.png",
+  "w": 390,
+  "h": 844,
+  "dsf": 3,
+  "boxes": {
+   "stage": [
+    16,
+    84,
+    358,
+    188.7
+   ],
+   "tap": [
+    168.6,
+    461.1,
+    140.4,
+    203.6
+   ]
+  }
+ },
+ "studio_back": {
+  "file": "studio_back.png",
+  "w": 390,
+  "h": 844,
+  "dsf": 3,
+  "boxes": {
+   "stage": [
+    16,
+    84,
+    358,
+    188.7
+   ],
+   "tap": [
+    143.3,
+    274.7,
+    64.0,
+    40
+   ]
+  }
+ },
+ "catalogue_full": {
+  "file": "catalogue_full.png",
+  "w": 390,
+  "h": 3004,
+  "dsf": 3,
+  "boxes": {
+   "anchor": [
+    214,
+    1545.3,
+    102.4,
+    24
+   ]
+  }
+ },
+ "slot_date": {
+  "file": "slot_date.png",
+  "w": 390,
+  "h": 844,
+  "dsf": 3,
+  "boxes": {
+   "tap": [
+    144,
+    555.9,
+    60,
+    72
+   ],
+   "grid": [
+    16,
+    655.9,
+    358,
+    496
+   ]
+  }
+ },
+ "slot_time": {
+  "file": "slot_time.png",
+  "w": 390,
+  "h": 844,
+  "dsf": 3,
+  "boxes": {
+   "tap": [
+    260,
+    711.9,
+    114,
+    48
+   ],
+   "date": [
+    144,
+    555.9,
+    60,
+    72
+   ],
+   "grid": [
+    16,
+    655.9,
+    358,
+    496
+   ]
+  }
+ },
+ "summary_price": {
+  "file": "summary_price.png",
+  "w": 390,
+  "h": 844,
+  "dsf": 3,
+  "boxes": {
+   "advance": [
+    50,
+    566.8,
+    290,
+    20
+   ],
+   "balance": [
+    50,
+    588.8,
+    290,
+    20
+   ],
+   "total": [
+    38,
+    505.2,
+    314,
+    41.6
+   ],
+   "pay": [
+    196.4,
+    784,
+    177.6,
+    48
+   ],
+   "tap": [
+    17,
+    256.2,
+    356,
+    52
+   ]
+  }
+ },
+ "policy": {
+  "file": "policy.png",
+  "w": 390,
+  "h": 844,
+  "dsf": 3,
+  "boxes": {
+   "full": [
+    36,
+    351.2,
+    338,
+    56
+   ],
+   "list": [
+    16,
+    351.2,
+    358,
+    168
+   ],
+   "advance": [
+    16,
+    163.6,
+    358,
+    112
+   ]
+  }
+ }
+}

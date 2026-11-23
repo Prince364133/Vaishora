@@ -1,0 +1,31 @@
+  duration 32.14s | price anchor @7.0s | offer @9.6s | CTA card @26.7s
+  $ ffmpeg -y -v error -i C:\Users\saavi\Desktop\Vaishora\marketing\ad\audio\mix_raw.wav -af loudnorm=I=-14:TP=-1.5:LRA=9 -ar 48000 -ac 2 C:\Users\saavi\Desktop\Vaishora\marketing\ad\audio\mix.wav
+  wrote C:\Users\saavi\Desktop\Vaishora\marketing\ad\audio\mix.wav
+  9x16: frame 0/964
+  9x16: frame 150/964
+  9x16: frame 300/964
+  9x16: frame 450/964
+  9x16: frame 600/964
+  9x16: frame 750/964
+  9x16: frame 900/964
+  $ ffmpeg -y -v error -i C:\Users\saavi\Desktop\Vaishora\marketing\ad\.cache\video_9x16.mp4 -i C:\Users\saavi\Desktop\Vaishora\marketing\ad\audio\mix.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -a
+  wrote C:\Users\saavi\Desktop\Vaishora\marketing\ad\render\vaishora-ad-master-9x16.mp4
+  4x5: frame 0/964
+  4x5: frame 150/964
+  4x5: frame 300/964
+  4x5: frame 450/964
+  4x5: frame 600/964
+  4x5: frame 750/964
+  4x5: frame 900/964
+  $ ffmpeg -y -v error -i C:\Users\saavi\Desktop\Vaishora\marketing\ad\.cache\video_4x5.mp4 -i C:\Users\saavi\Desktop\Vaishora\marketing\ad\audio\mix.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -ar
+  wrote C:\Users\saavi\Desktop\Vaishora\marketing\ad\render\vaishora-ad-master-4x5.mp4
+
+== timeline.py
+
+== make_audio.py
+
+== render.py
+
+== outputs
+  C:\Users\saavi\Desktop\Vaishora\marketing\ad\render\vaishora-ad-master-4x5.mp4  32.13s  7.0 MB
+  C:\Users\saavi\Desktop\Vaishora\marketing\ad\render\vaishora-ad-master-9x16.mp4  32.13s  8.0 MB

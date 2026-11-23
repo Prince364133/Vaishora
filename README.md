@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VAISHORA
 
-## Getting Started
-
-First, run the development server:
+Mehndi designs on an interactive 3D hand, transparent pricing, and real-time booking of mehndi artists in Hyderabad.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env.local
+pnpm db:seed -- --demo     # local embedded Postgres + catalogue + admin (password printed) + demo artists
+pnpm dev                   # http://localhost:3000  ·  admin: /admin/login
+pnpm test                  # unit + integration tests
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Doc | Contents |
+|---|---|
+| [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) | What is done, partial, pending; credentials and assets needed |
+| [docs/RESEARCH.md](docs/RESEARCH.md) | Skills, 3D assets, techniques and payment research with sources |
+| [docs/TECH_STACK.md](docs/TECH_STACK.md) | Stack and the reasons behind each choice |
+| [docs/3D_IMPLEMENTATION.md](docs/3D_IMPLEMENTATION.md) | Hand pipeline, mehndi projection shader, performance, upgrade path |
+| [docs/UI_UX_STRATEGY.md](docs/UI_UX_STRATEGY.md) | Design plan, tokens, mobile-first and accessibility decisions |
+| [docs/PROJECT_ARCHITECTURE.md](docs/PROJECT_ARCHITECTURE.md) | Data model, booking state machine, availability, payments, security |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Local setup, tests, Vercel + Supabase + Razorpay production setup |
+| [docs/QA_REPORT.md](docs/QA_REPORT.md) | Test results, performance numbers, bugs fixed, gaps |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Project skills used during development live in `.claude/skills/` (see each `SOURCE.md` for origin and licence).
+3D model attribution: `public/models/LICENSE.md`.

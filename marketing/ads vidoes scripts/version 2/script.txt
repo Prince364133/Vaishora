@@ -1,0 +1,638 @@
+# VAISHORA — FINAL TELUGU ADVERTISING CAMPAIGN
+## Veo 3 Professional Video Generation Prompts
+
+**Brand:** VAISHORA  
+**Business:** Mehndi Artist Discovery & Booking Marketplace  
+**Target audience:** College girls and young women  
+**Primary market:** Hyderabad, Telangana  
+**Language:** Natural conversational Telugu  
+**Voice:** Young female Telugu voice-over  
+**Video format:** Vertical 9:16  
+**Duration:** Approximately 24 seconds per advertisement  
+**Campaign objective:** Generate website visits, booking enquiries and completed mehndi bookings.
+
+---
+
+# GLOBAL CREATIVE DIRECTION
+
+Use these instructions across all three advertisements.
+
+## Brand identity
+
+VAISHORA is a premium, modern and approachable beauty marketplace.
+
+Official colors:
+
+- Royal Plum: #4B1D3F
+- Dusty Rose: #D484A6
+- Champagne Gold: #D4AF7C
+- Soft Blush: #F8E8EC
+- Ivory: #FFFAF8
+
+Visual personality:
+
+- Young.
+- Stylish.
+- Elegant.
+- Contemporary.
+- Feminine.
+- Premium but accessible.
+- Social-media friendly.
+
+## Cinematography
+
+Use high-quality Indian beauty-commercial cinematography.
+
+- Photorealistic visuals.
+- Natural human expressions.
+- Realistic Indian skin tones.
+- Beautiful close-up shots of mehndi.
+- Smooth camera movements.
+- Premium natural lighting.
+- Detailed henna patterns.
+- Authentic Hyderabad/Indian environments.
+- Professional commercial color grading.
+
+Avoid:
+
+- Cartoon visuals.
+- Artificial-looking faces.
+- Distorted hands.
+- Extra fingers.
+- Incorrect anatomy.
+- Blurry mehndi.
+- Random text.
+- Fake logos.
+- Random watermarks.
+- Excessive transitions.
+- Overly dramatic acting.
+- Cheap-looking salon advertisements.
+
+## Telugu voice-over direction
+
+Use a young female Telugu voice, approximately 20–26 years old.
+
+Voice characteristics:
+
+- Friendly.
+- Energetic.
+- Modern.
+- Confident.
+- Natural Telangana/Hyderabad conversational Telugu.
+- Clear pronunciation.
+- Warm and relatable.
+- Not overly dramatic.
+- Not like a formal television news presenter.
+
+Use natural conversational Telugu rather than formal literary Telugu.
+
+Pronounce VAISHORA consistently as "వైషోరా".
+
+## Audio direction
+
+Use modern, cheerful Indian instrumental music.
+
+The music should combine subtle contemporary beats with light Indian musical elements.
+
+Dialogue must remain clearly audible.
+
+Use gentle sound effects for:
+
+- Smartphone interactions.
+- Design transitions.
+- Mehndi application.
+- Booking confirmation.
+
+## Video generation workflow
+
+Generate each advertisement as three connected clips of approximately eight seconds each.
+
+Use the same character reference, wardrobe, hairstyle, lighting and visual references across connected clips.
+
+Do not depend on Veo to generate accurate website text, pricing, logos or interface details. Composite the actual VAISHORA assets during editing.
+
+---
+
+# ADVERTISEMENT 01 — COLLEGE FEST READY
+
+**Campaign theme:** Your college look is incomplete without beautiful mehndi.
+
+**Target:** College girls and young women.
+
+**Objective:** Generate individual mehndi bookings for college events, cultural festivals, celebrations, parties and special occasions.
+
+**Emotional trigger:** Self-expression, beauty, excitement and getting ready with friends.
+
+**Duration:** 24 seconds.
+
+## CLIP 1 — THE HOOK (0–8 SECONDS)
+
+### Veo 3 generation prompt
+
+Create a photorealistic premium Indian youth beauty commercial in vertical 9:16 format.
+
+Scene:
+
+A stylish 21-year-old Indian college girl is getting ready in a beautiful modern bedroom in Hyderabad.
+
+She wears a fashionable dusty-rose kurti with subtle accessories. Her room has a clean, youthful aesthetic with a mirror, books, handbags and college accessories.
+
+She is preparing for an upcoming college cultural event.
+
+Action:
+
+She looks at her outfit in the mirror, adjusts her accessories and then looks at her bare hands.
+
+She picks up her phone and starts searching for beautiful mehndi designs.
+
+Her expression changes from ordinary preparation to excitement.
+
+Camera:
+
+- Start with a medium shot of her getting ready.
+- Cut to a close-up of her outfit and accessories.
+- Slowly move towards her hands.
+- Finish with a close-up of her face as she searches for mehndi inspiration.
+
+Lighting: Soft natural morning light, premium lifestyle photography.
+
+Voice-over:
+
+Young female Telugu voice, natural conversational delivery.
+
+Exact Telugu dialogue:
+
+"కాలేజ్ ఫెస్ట్‌కి లుక్ అంతా రెడీ... మరి మెహందీ సంగతేంటి?"
+
+Audio:
+
+Cheerful modern Indian instrumental music begins softly. Add subtle room ambience and smartphone interaction sounds.
+
+Performance:
+
+Natural expressions, youthful energy, no exaggerated acting.
+
+## CLIP 2 — DISCOVER VAISHORA (8–16 SECONDS)
+
+### Veo 3 generation prompt
+
+Continue the same premium Indian youth beauty advertisement.
+
+Maintain exactly the same young Indian woman, hairstyle, outfit, accessories and bedroom environment.
+
+Action:
+
+She discovers a premium mehndi design browsing website on her smartphone.
+
+Show a sophisticated mobile browsing experience featuring beautiful mehndi designs.
+
+Show multiple design styles:
+
+- Minimal floral mehndi.
+- Arabic mehndi.
+- Mandala designs.
+- Modern back-hand mehndi.
+- Delicate finger patterns.
+
+She scrolls through the designs and smiles when she discovers a beautiful pattern.
+
+Camera:
+
+- Over-the-shoulder smartphone shot.
+- Close-up of beautiful mehndi artwork.
+- Close-up of her excited expression.
+
+The interface should use an elegant ivory and royal plum visual aesthetic.
+
+Do not generate readable text, random brand names or incorrect logos. The real VAISHORA website interface will be composited during editing.
+
+Voice-over:
+
+"నీ స్టైల్‌కి నచ్చిన మెహందీ డిజైన్‌ను వైషోరాలో సెలెక్ట్ చేసుకో!"
+
+Audio:
+
+The music becomes more energetic and playful. Add subtle scrolling and selection sounds.
+
+Visual style:
+
+Premium youth beauty advertisement with natural expressions and refined cinematography.
+
+## CLIP 3 — THE RESULT AND CTA (16–24 SECONDS)
+
+### Veo 3 generation prompt
+
+Continue the same advertisement with the same young Indian woman.
+
+Scene:
+
+A professional Indian mehndi artist is carefully applying a beautiful minimal floral mehndi design to the girl's hand.
+
+The girl is smiling and enjoying the experience.
+
+Show:
+
+- Extreme macro shot of the mehndi cone.
+- Intricate floral patterns being applied.
+- Beautifully decorated fingers.
+- The young woman admiring her finished mehndi.
+- A confident final shot of her showing her decorated hand.
+
+Mehndi must look authentic, detailed and naturally applied to the skin.
+
+Camera:
+
+Smooth close-up transitions followed by a medium shot of the girl smiling.
+
+Voice-over:
+
+"నీ స్పెషల్ లుక్‌కి పర్ఫెక్ట్ మెహందీ... వైషోరాలోనే బుక్ చేసుకో!"
+
+Audio:
+
+Cheerful music reaches its peak with a subtle celebratory sound effect.
+
+End with a premium ivory and royal plum composition, leaving clear space for the actual VAISHORA logo and booking CTA.
+
+Final mood:
+
+Confidence, excitement, beauty and youthful self-expression.
+
+---
+
+# ADVERTISEMENT 02 — CHOOSE YOUR MEHNDI BEFORE YOU BOOK
+
+**Campaign theme:** See your favourite mehndi design on an interactive 3D hand before booking.
+
+**Target:** College girls and young women who love exploring beauty trends and personalized designs.
+
+**Objective:** Drive visits to the VAISHORA interactive design studio.
+
+**Emotional trigger:** Curiosity, personalization, control and visual satisfaction.
+
+**Duration:** 24 seconds.
+
+IMPORTANT:
+
+This advertisement must only be launched once the real 3D hand preview feature is available on the website.
+
+## CLIP 1 — VISUAL HOOK (0–8 SECONDS)
+
+### Veo 3 generation prompt
+
+Create a stunning, photorealistic premium beauty technology commercial in vertical 9:16 format.
+
+Scene:
+
+An elegant realistic female hand is positioned against a luxurious warm ivory studio background.
+
+The hand has natural Indian skin texture, anatomically accurate fingers, realistic fingernails and beautiful soft lighting.
+
+Camera:
+
+Begin with an extreme macro shot of the bare hand.
+
+A sophisticated visual transition reveals an intricate floral mehndi pattern appearing naturally on the skin.
+
+Slowly rotate the camera to show the artwork from different angles.
+
+The mehndi must appear attached to the skin, not floating above it.
+
+The visual should feel like a premium 3D product visualization combined with real beauty photography.
+
+Voice-over:
+
+"మెహందీ వేయించుకునే ముందు... నీకు నచ్చిన డిజైన్ ఎలా ఉంటుందో చూడాలనుందా?"
+
+Audio:
+
+Use a subtle magical transition sound, followed by stylish modern Indian instrumental music.
+
+Color palette:
+
+Royal plum, dusty rose, champagne gold and ivory.
+
+## CLIP 2 — THE 3D EXPERIENCE (8–16 SECONDS)
+
+### Veo 3 generation prompt
+
+Continue the same premium beauty technology advertisement.
+
+Scene:
+
+A stylish young Indian college girl is holding a modern smartphone.
+
+The screen shows a premium mehndi design browsing experience.
+
+Show the following actions:
+
+1. A realistic 3D female hand appears on the phone screen.
+2. The girl rotates the hand using her finger.
+3. She explores different mehndi design thumbnails.
+4. She selects a beautiful floral design.
+5. The mehndi artwork updates on the 3D hand.
+6. She selects a different design and the artwork changes again.
+
+Make the interaction smooth, realistic and satisfying.
+
+Camera:
+
+- Over-the-shoulder smartphone shot.
+- Extreme close-up of the 3D hand.
+- Close-up of the girl's excited expression.
+
+The interface must look minimal, elegant and premium.
+
+Do not generate readable text, incorrect logos or fake website details.
+
+The actual VAISHORA website screenshots will be composited during editing.
+
+Voice-over:
+
+"డిజైన్స్ చూసుకో... నీ హ్యాండ్‌పై ప్రివ్యూ చేసుకో... నీకు నచ్చినదే సెలెక్ట్ చేసుకో!"
+
+Audio:
+
+Subtle touchscreen sounds, smooth transition effects and upbeat modern Indian music.
+
+## CLIP 3 — PRICE AND BOOKING (16–24 SECONDS)
+
+### Veo 3 generation prompt
+
+Create the final scene of the same premium beauty-tech advertisement.
+
+Scene:
+
+The same young Indian woman has selected her favourite mehndi design on her smartphone.
+
+Show a premium mobile booking experience with:
+
+- Selected mehndi design preview.
+- Clearly visible price area.
+- Date selection.
+- Time-slot selection.
+- Booking confirmation visual.
+
+Do not generate readable words or numerical prices. Actual VAISHORA interface screenshots will be inserted during post-production.
+
+Transition to a real-life close-up of a professional mehndi artist applying the selected pattern to the girl's hand.
+
+The final hand must match the selected design.
+
+Voice-over:
+
+"ధర చూసి, నీకు నచ్చిన టైమ్ ఎంచుకుని... వైషోరాలో బుక్ చేసుకో!"
+
+Audio:
+
+A satisfying booking confirmation sound and elegant uplifting music.
+
+End with a premium hero shot showing the decorated hand beside a smartphone displaying the real VAISHORA website.
+
+Leave clear space for the real VAISHORA logo, website address and CTA.
+
+Final mood:
+
+Modern, intelligent, beautiful and convenient.
+
+---
+
+# ADVERTISEMENT 03 — BESTIES MEHNDI DAY
+
+**Campaign theme:** A fun mehndi experience with your best friends.
+
+**Target:** College girls, young women, friend groups and birthday or festive gatherings.
+
+**Objective:** Generate multiple-person and group mehndi bookings.
+
+**Emotional trigger:** Friendship, belonging, fun, shared experiences and convenience.
+
+**Duration:** 24 seconds.
+
+## CLIP 1 — THE FRIENDSHIP HOOK (0–8 SECONDS)
+
+### Veo 3 generation prompt
+
+Create a photorealistic premium Indian youth lifestyle advertisement in vertical 9:16 format.
+
+Scene:
+
+Three stylish young Indian college friends, approximately 20–23 years old, are sitting together in a beautifully decorated modern apartment in Hyderabad.
+
+They are wearing fashionable Indian fusion outfits in soft blush, ivory and dusty rose colors.
+
+They are laughing, taking selfies and discussing their upcoming college event.
+
+One girl notices that another friend has beautiful mehndi on her hand.
+
+She excitedly shows her own bare hand.
+
+Action:
+
+All three girls look at each other and laugh.
+
+One friend gestures towards their hands, suggesting that all of them should get mehndi.
+
+Camera:
+
+- Smooth cinematic tracking shot of the three friends.
+- Close-up of their laughing faces.
+- Close-up of their hands.
+- Natural interaction and expressions.
+
+Voice-over:
+
+"ఫ్రెండ్స్‌తో ప్లాన్ ఉందా? అయితే మెహందీ కూడా స్పెషల్‌గా ఉండాలి కదా!"
+
+Audio:
+
+Natural laughter, cheerful modern Indian music and subtle room ambience.
+
+Visual style:
+
+Youthful, authentic, stylish and premium.
+
+## CLIP 2 — EVERYONE CHOOSES A DESIGN (8–16 SECONDS)
+
+### Veo 3 generation prompt
+
+Continue the same Indian youth lifestyle commercial.
+
+Maintain the same three girls, faces, hairstyles, outfits and apartment environment.
+
+Action:
+
+The three friends sit together and explore different mehndi designs on a smartphone.
+
+Show them choosing different patterns.
+
+One selects a minimal floral design.
+
+Another selects an Arabic design.
+
+The third selects a delicate mandala design.
+
+Show a professional Indian mehndi artist preparing her mehndi cones and arranging her kit.
+
+The girls are excitedly comparing their selected patterns.
+
+Camera:
+
+- Over-the-shoulder smartphone shot.
+- Close-up of the different designs.
+- Medium shot of the girls smiling.
+- Macro shot of the mehndi artist preparing the cone.
+
+Voice-over:
+
+"ఒక్కొక్కరికీ ఒక్కో స్టైల్... అందరికీ నచ్చిన డిజైన్, ఒకే ప్లాట్‌ఫామ్‌లో!"
+
+Audio:
+
+Cheerful instrumental music, soft laughter and natural interaction sounds.
+
+The patterns should look authentic and detailed.
+
+## CLIP 3 — THE GROUP EXPERIENCE AND CTA (16–24 SECONDS)
+
+### Veo 3 generation prompt
+
+Create the final emotional scene of the same premium Indian youth lifestyle advertisement.
+
+Scene:
+
+All three friends have beautiful mehndi applied to their hands.
+
+They sit together and proudly compare their different patterns.
+
+One girl takes a selfie showing all three decorated hands.
+
+The friends laugh naturally.
+
+Camera:
+
+- Extreme close-up of all three mehndi designs.
+- Beautiful macro details of floral, Arabic and mandala patterns.
+- Medium shot of the friends enjoying their moment.
+- Final cinematic shot of the decorated hands arranged together.
+
+Voice-over:
+
+"నీ బెస్టీస్‌తో మెహందీ డే ప్లాన్ చేసుకో... వైషోరాతో బుక్ చేసుకో!"
+
+Audio:
+
+Uplifting celebratory music reaches its peak.
+
+End with a clean, beautiful ivory and dusty rose background and clear negative space for the VAISHORA logo and CTA.
+
+Final mood:
+
+Friendship, fun, confidence and celebration.
+
+---
+
+# FINAL EDITING AND POST-PRODUCTION REQUIREMENTS
+
+Apply these requirements to all three advertisements.
+
+## 1. Brand integration
+
+Insert the actual VAISHORA logo.
+
+Use the official colors:
+
+- Royal Plum #4B1D3F
+- Dusty Rose #D484A6
+- Champagne Gold #D4AF7C
+- Soft Blush #F8E8EC
+- Ivory #FFFAF8
+
+Do not allow AI-generated logos to replace the real logo.
+
+## 2. Telugu subtitles
+
+Add accurate Telugu subtitles.
+
+Use a clean Telugu typeface.
+
+Subtitles must:
+
+- Be correctly spelled.
+- Be easy to read on mobile.
+- Have sufficient contrast.
+- Stay within safe screen margins.
+- Follow the female voice-over precisely.
+
+## 3. Voice-over
+
+If Veo produces inaccurate Telugu pronunciation, generate the visuals without dialogue and add a separately recorded professional female Telugu voice-over.
+
+Maintain one consistent voice throughout all three campaigns.
+
+Do not allow music to overpower the voice.
+
+## 4. Website integration
+
+Use actual VAISHORA website screenshots for:
+
+- Design browsing.
+- 3D hand interaction.
+- Design selection.
+- Price display.
+- Scheduling.
+- Booking confirmation.
+
+Do not fabricate features that are not yet available.
+
+## 5. Final CTA
+
+Use the following brand message:
+
+"నీ స్టైల్... నీ మెహందీ... నీ వైషోరా!"
+
+Primary CTA:
+
+"నీ డిజైన్‌ను ఎంచుకో — ఇప్పుడే బుక్ చేసుకో!"
+
+English support line:
+
+"Explore Designs. Find Your Artist. Book with VAISHORA."
+
+Add the real website URL after launch.
+
+## 6. Export
+
+Export each campaign in:
+
+- 9:16 vertical format.
+- 1080 × 1920 pixels or highest supported resolution.
+- High-quality MP4.
+- Clear Telugu audio.
+- Mobile-friendly bitrate.
+
+Create separate versions for Instagram Reels, Facebook Reels and WhatsApp Status where appropriate.
+
+## 7. Quality assurance
+
+Before publishing:
+
+- Check all faces for consistency.
+- Inspect fingers and hands frame by frame.
+- Check mehndi pattern realism.
+- Verify Telugu pronunciation.
+- Verify subtitle spelling.
+- Check logo placement.
+- Check that website screenshots are real.
+- Verify the advertised booking functionality.
+- Watch the final export on an actual mobile phone.
+
+Never publish fabricated reviews, fake artists, fake availability or unsupported booking claims.
+
+# CAMPAIGN FINAL MESSAGE
+
+VAISHORA is not just a place to find mehndi artists.
+
+It is a place where young women can explore their style, discover beautiful designs and book the mehndi experience they want.
+
+**VAISHORA — నీ స్టైల్... నీ మెహందీ... నీ వైషోరా!**

@@ -1,0 +1,348 @@
+# VAISHORA — VEO 3 ADVERTISEMENT PRODUCTION PROMPTS
+
+# ADVERTIGLOBAL BRAND AND VIDEO RULES
+
+Brand: VAISHORA
+Business: Mehndi artist discovery and booking marketplace
+Market: Hyderabad, India
+Brand colors:
+
+- Royal Plum: #4B1D3F
+- Dusty Rose: #D484A6
+- Champagne Gold: #D4AF7C
+- Soft Blush: #F8E8EC
+- Ivory: #FFFAF8
+
+Visual identity:
+Premium Indian beauty advertising, elegant bridal styling, authentic Indian environments, natural human expressions, sophisticated cinematography, realistic skin texture and highly detailed mehndi artwork.
+
+Video format:
+
+- Vertical 9:16.
+- 1080p or highest available quality.
+- Photorealistic.
+- Premium commercial cinematography.
+- Natural human movement.
+- Accurate Indian wedding styling.
+- Realistic hands and fingers.
+- Natural Hindi/Hinglish dialogue.
+- Synchronized sound effects and dialogue.
+
+Do not:
+
+- Generate gibberish text.
+- Generate fake website URLs.
+- Generate fake app interfaces.
+- Generate incorrect logos.
+- Generate distorted hands or extra fingers.
+- Generate malformed mehndi patterns.
+- Generate artificial-looking skin.
+- Generate cartoon-style visuals.
+- Use random neon colors.
+- Add random brand names or watermarks.
+
+IMPORTANT:
+Do not ask Veo to generate precise marketing text or a perfect VAISHORA logo. Leave clean space for professionally added text, logo and CTA during final editing.
+
+---
+
+# ADVERTISEMENT 01 — THE LAST-MINUTE BRIDE
+
+Objective: Generate bookings from women preparing for weddings, engagements and special occasions.
+
+Duration: Approximately 24 seconds.
+
+Emotion: Relatable stress transforming into relief and excitement.
+
+Style: Premium Indian wedding commercial with natural performances and cinematic close-ups.
+
+## CLIP 1 — THE PROBLEM (0–8 SECONDS)
+
+Veo 3 prompt:
+
+Create an ultra-realistic premium Indian wedding commercial in vertical 9:16 format.
+
+Scene: A beautiful young Indian bride-to-be, approximately 25 years old, sitting in an elegantly decorated bedroom in Hyderabad. She wears a beautiful pastel pink traditional Indian outfit, subtle jewellery and natural bridal makeup. Her room contains wedding preparation items, jewellery boxes, invitation cards and flowers.
+
+Camera: Begin with a close-up of a wedding calendar and wedding accessories. Slowly move towards the bride's face using a smooth cinematic dolly-in.
+
+Action: The bride looks at her phone, scrolling through different mehndi artist profiles on social media. She appears slightly confused and stressed. She looks at the wedding calendar, then back at her phone.
+
+Her facial expression should communicate that she has many wedding arrangements completed but has not found the right mehndi artist.
+
+Dialogue, spoken naturally by the bride in Hindi:
+
+"Shaadi ki date bhi fix ho gayi... lekin mehndi artist abhi tak nahi mila!"
+
+Audio: Soft wedding-preparation ambience, subtle jewellery movement, quiet phone interaction sounds. A gentle cinematic Indian instrumental score begins.
+
+Lighting: Warm natural window light, premium bridal photography, soft shadows, realistic skin texture.
+
+Performance: Authentic, understated acting. No exaggerated expressions.
+
+End the clip with the bride looking at her phone as if she is searching for a solution.
+
+## CLIP 2 — THE SOLUTION (8–16 SECONDS)
+
+Veo 3 prompt:
+
+Create the next scene of the same premium Indian bridal advertisement.
+
+Maintain visual continuity with the previous clip: the same young Indian bride-to-be, same pastel pink outfit, same bedroom, same hairstyle, same jewellery and same lighting.
+
+Camera: Start with an over-the-shoulder close-up of her smartphone, then transition to a medium close-up of her face.
+
+Action: The bride discovers VAISHORA, a premium mehndi artist booking service. Show a beautifully designed, realistic mobile browsing experience with elegant ivory and royal plum visual styling. Show attractive mehndi artwork thumbnails and professional artist portfolio imagery.
+
+Do not generate readable text on the phone screen. The actual VAISHORA interface and logo will be composited during editing.
+
+The bride smiles as she explores beautiful mehndi designs.
+
+Dialogue, spoken naturally in Hindi:
+
+"Phir mujhe mila VAISHORA... jahan apni pasand ka mehndi design aur artist choose kar sakte ho!"
+
+Audio: Elegant, uplifting Indian instrumental music gradually becomes more cheerful. Subtle phone interaction sounds.
+
+Camera: Smooth close-up transitions, shallow depth of field, realistic smartphone reflections.
+
+Visual style: Premium beauty commercial, sophisticated and natural.
+
+## CLIP 3 — THE EMOTIONAL PAYOFF AND CTA (16–24 SECONDS)
+
+Veo 3 prompt:
+
+Create the final scene of the same premium Indian bridal commercial.
+
+Maintain the same bride, appearance, outfit and overall visual identity.
+
+Scene: A professional Indian mehndi artist is carefully applying intricate, beautifully detailed bridal mehndi to the bride's hands. Show extremely realistic henna application with a fine cone. The bride looks happy and relaxed.
+
+Camera sequence:
+
+- Extreme macro shot of the mehndi artist applying detailed floral patterns.
+- Close-up of the bride admiring her decorated hands.
+- Slow cinematic pullback showing the bride smiling in a beautifully decorated wedding preparation environment.
+
+The mehndi artwork must be anatomically correct, detailed, symmetrical where appropriate and realistically applied to the skin.
+
+Dialogue, spoken naturally by the bride:
+
+"Ab meri mehndi ki preparation bhi sorted hai. Aap bhi VAISHORA par apna artist book karo!"
+
+Audio: Warm uplifting Indian instrumental music, delicate wedding ambience and natural room sound.
+
+End with a clean, elegant composition featuring the bride's decorated hands in the foreground and uncluttered negative space in the centre for a professionally added VAISHORA logo and booking CTA.
+
+Final mood: Emotional relief, happiness, confidence and excitement.
+
+---
+
+# SEMENT 02 — SEE IT BEFORE YOU BOOK
+
+Objective: Promote VAISHORA's distinctive interactive mehndi design browsing and preview experience.
+
+IMPORTANT PRODUCT REQUIREMENT:
+Only run this advertisement after the 3D hand preview feature is genuinely implemented and available to customers. Do not advertise a feature that is not live.
+
+Duration: Approximately 24 seconds.
+
+Emotion: Curiosity, fascination and confidence in choosing a design.
+
+Style: Premium interactive beauty-tech commercial.
+
+## CLIP 1 — THE HOOK (0–8 SECONDS)
+
+Veo 3 prompt:
+
+Create a visually stunning, photorealistic premium beauty technology advertisement in vertical 9:16 format.
+
+Scene: An elegant Indian woman's hand against a luxurious warm ivory studio background. Her hand is beautifully illuminated by soft diffused light.
+
+Camera: Begin with an extreme close-up of a realistic hand with natural skin texture and anatomically accurate fingers.
+
+Action: A sophisticated transition reveals a beautiful, intricate floral mehndi pattern appearing on the hand.
+
+The camera slowly rotates around the hand, revealing the detail and beauty of the mehndi design.
+
+A female voice-over in natural Hindi says:
+
+"Mehndi design choose karna ab aur bhi interesting ho gaya!"
+
+Visual style: High-end beauty technology advertisement, realistic 3D rendering, elegant lighting, luxurious minimalism.
+
+Color palette: Royal plum, dusty rose, champagne gold and ivory.
+
+Audio: A subtle magical transition sound followed by refined modern Indian instrumental music.
+
+## CLIP 2 — INTERACTIVE EXPERIENCE (8–16 SECONDS)
+
+Veo 3 prompt:
+
+Continue the same premium beauty-tech advertisement.
+
+Scene: An elegant modern smartphone held by a young Indian woman. The screen displays a premium mehndi design browsing experience.
+
+Show the following sequence:
+
+- A beautifully rendered realistic 3D hand.
+- The woman gently rotates the hand using her finger.
+- She browses a row of different mehndi design thumbnails.
+- She selects a detailed floral mehndi design.
+- The artwork on the 3D hand changes naturally and immediately.
+- She selects another design and the pattern updates again.
+
+The screen interface should feel premium, minimal and realistic, using an ivory and royal plum aesthetic.
+
+Do not generate readable text or fake brand logos. Actual product screenshots can be inserted during editing.
+
+Camera: Smooth over-the-shoulder smartphone shot, followed by a close-up of the hand on the display.
+
+Voice-over in Hindi:
+
+"Design dekho, hand par preview karo, aur apni favourite mehndi choose karo!"
+
+Audio: Soft touchscreen interaction sounds, elegant transition sounds and upbeat sophisticated instrumental music.
+
+The hand model must look realistic, with correct anatomy and consistent fingers. Mehndi patterns must appear attached to the skin rather than floating above it.
+
+## CLIP 3 — PRICE AND BOOKING (16–24 SECONDS)
+
+Veo 3 prompt:
+
+Create the final scene of the premium VAISHORA beauty-tech commercial.
+
+Scene: The same young Indian woman has selected her favourite mehndi design on her smartphone.
+
+Show a clean mobile booking interface with:
+
+- A selected mehndi design preview.
+- A visible price area.
+- A date selection interaction.
+- A time slot selection interaction.
+- A booking confirmation visual.
+
+Do not generate readable words or numerical prices. Actual VAISHORA screenshots and interface elements will be composited during editing.
+
+Cut to a beautiful real-life close-up of the selected mehndi design being applied by a professional Indian mehndi artist.
+
+Voice-over in Hindi:
+
+"Apna design choose karo, price dekho aur VAISHORA par booking complete karo!"
+
+Audio: A satisfying confirmation sound, elegant uplifting music and gentle ambient sound.
+
+End with a luxurious hero shot of a decorated hand beside a smartphone showing the actual VAISHORA website.
+
+Leave clear negative space for the real VAISHORA logo, website URL and CTA to be added in post-production.
+
+Mood: Smart, beautiful, confident and convenient.
+
+---
+
+# ADVERTISEMENT 03 — EVERYONE GETS THEIR MEHNDI
+
+Objective: Generate group bookings for brides, sisters, friends and family members.
+
+Duration: Approximately 24 seconds.
+
+Emotion: Celebration, friendship, togetherness and convenience.
+
+Style: Warm, premium Indian wedding celebration commercial.
+
+## CLIP 1 — THE CELEBRATION (0–8 SECONDS)
+
+Veo 3 prompt:
+
+Create a photorealistic premium Indian wedding celebration advertisement in vertical 9:16 format.
+
+Scene: A lively but elegant mehndi celebration at a beautiful Indian home in Hyderabad.
+
+A bride sits comfortably in the centre, wearing a dusty rose traditional outfit. Her sisters and friends sit around her, laughing and enjoying the celebration.
+
+Beautiful flowers, subtle traditional decorations and warm natural lighting create an authentic Indian wedding atmosphere.
+
+Camera: A graceful tracking shot moving through the celebration, followed by a close-up of the bride's decorated hands.
+
+Action: One of the bride's friends looks at her own hands and says playfully:
+
+"Arre, sirf dulhan ki mehndi nahi... hum sabki bhi honi chahiye!"
+
+Everyone laughs naturally.
+
+Audio: Genuine laughter, subtle wedding celebration ambience, soft dholak and modern Indian wedding instrumental music.
+
+Visual style: Premium Indian wedding photography, realistic skin, authentic expressions and natural movement.
+
+## CLIP 2 — THE GROUP EXPERIENCE (8–16 SECONDS)
+
+Veo 3 prompt:
+
+Continue the same wedding celebration scene with the same bride, friends, outfits, decorations and lighting.
+
+Scene: A professional Indian mehndi artist arrives with a neatly arranged professional mehndi kit.
+
+Action: She begins applying intricate mehndi to the bride's hands while another artist works on a bridesmaid's hand.
+
+Show beautiful macro details of the mehndi cones, flowing henna patterns, floral motifs and the friends happily comparing their designs.
+
+Camera: Alternate between macro close-ups of mehndi application, genuine smiling expressions and a medium shot of the group enjoying the experience.
+
+Voice-over in Hindi:
+
+"Bridal ho, sisters ho ya friends... sabki mehndi ke liye ek hi jagah!"
+
+Audio: Natural conversation, gentle laughter, subtle mehndi cone sounds and uplifting celebratory music.
+
+The henna must be realistic, finely detailed and naturally applied to anatomically correct hands.
+
+## CLIP 3 — THE BOOKING AND CTA (16–24 SECONDS)
+
+Veo 3 prompt:
+
+Create the final emotional scene of the same premium Indian wedding advertisement.
+
+Scene: The bride and her friends proudly show their beautifully decorated hands to the camera.
+
+Camera: Begin with a synchronized close-up of several hands displaying different mehndi patterns. Slowly pull back to reveal the entire group laughing and celebrating together.
+
+Action: The bride looks directly at the camera with a joyful smile.
+
+Dialogue, spoken naturally in Hindi:
+
+"Apni next mehndi celebration VAISHORA ke saath plan karo!"
+
+Audio: Uplifting Indian wedding music reaches its emotional peak. Genuine laughter and a subtle celebratory sound effect.
+
+End with a beautiful cinematic shot of the decorated hands arranged together against an elegant ivory and dusty rose background.
+
+Leave clean space for the VAISHORA logo and booking CTA to be added during editing.
+
+Final mood: Happiness, friendship, celebration and trust.
+
+---
+
+# FINAL POST-PRODUCTION INSTRUCTIONS
+
+For all three advertisements:
+
+1. Use the actual VAISHORA logo.
+2. Add the official VAISHORA color palette.
+3. Add real website screenshots where the product is shown.
+4. Add accurate captions and Hindi subtitles.
+5. Use a professional Hindi voice-over if generated dialogue is unclear.
+6. Add the final booking CTA as a professionally designed graphic.
+7. Ensure music does not overpower dialogue.
+8. Check all hands, fingers, faces and mehndi patterns frame by frame.
+9. Do not publish fake customer testimonials, fake reviews or fabricated artist credentials.
+10. Verify that every advertised booking feature is actually available.
+
+Suggested final CTA:
+
+"Apni favourite mehndi. Apna perfect artist. Book with VAISHORA."
+
+Secondary CTA:
+
+"Explore Designs | Book Now"
+
+Website: Insert the actual official VAISHORA website address after launch.
