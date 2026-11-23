@@ -49,13 +49,13 @@ Exact sources and licences: `public/models/LICENSE.md`.
 
 | Asset | Desktop (high) | Mobile (low) |
 |---|---|---|
-| Mesh | `hand-hq.glb` 981 KB, 55k tris | `hand-lq.glb` 276 KB, 13.7k tris |
-| Albedo | 2048² JPEG 190 KB | 1024² JPEG 77 KB |
-| Normal | 2048² JPEG 189 KB | 1024² JPEG 54 KB |
-| Detail | 1024² JPEG 116 KB | same |
-| **Total 3D payload** (+ artwork SVG, 17–330 KB) | **≈ 1.48 MB** | **≈ 0.52 MB** |
+| Mesh | `hand-hq.glb` 986 KB, 55k tris | `hand-lq.glb` 279 KB, 13.7k tris |
+| Albedo | 2048² JPEG 194 KB | 1024² JPEG 72 KB |
+| Normal | 2048² JPEG 111 KB | 1024² JPEG 44 KB |
+| Detail (nail mask, cavity, nail free edge) | 1024² JPEG 108 KB | same |
+| **Total 3D payload** (+ artwork SVG, 17–330 KB) | **≈ 1.40 MB** | **≈ 0.50 MB** |
 
-2D stills: `palm.webp`, `back.webp` 34 KB each; stain fields < 1 KB.
+2D stills: `palm.webp` 40 KB, `back.webp` 39 KB; stain fields < 1 KB.
 
 ## 3. How real mehndi looks — photo study
 
@@ -105,7 +105,46 @@ normal map, nail gloss from the detail map, wrap-style subsurface bleed, forearm
 *artwork ∩ hand alpha*: a blurred light-orange bleed and the stain colour field (deeper at fingertips and palm centre,
 lighter towards the wrist, lighter on the back). Works for any artwork URL, including uploaded PNG/WebP.
 
-## 5. Honest gaps / what would make it better
+## 5. Beauty pass — what makes a hand look beautiful (Nov 2026)
+
+Owner feedback on v2: *"make the girl's hand beautiful … the texture is too black and not good."* The v2 back of hand
+was dark red-brown and blotchy (the CC0 texture's painted patches), nails were muddy, fingers thick, the pose stiff,
+and the realtime key light only lit the palm side.
+
+**Research (hand-model casting criteria, beauty / jewellery / bridal-mehndi photography, anthropometry):**
+- *Skin:* clear, **even tone**, no visible redness, scars, blotches or prominent veins; tendons may show only subtly;
+  low-contrast pores. Smooth, **non-prominent knuckles** without deep wrinkles or dark patches (agency requirements:
+  "no lumpy knuckles, lines or scars", "even skin tone is key").
+- *Fingers:* long, straight, **slender and tapering** towards the tips; female hands have a relatively longer index
+  finger (2D:4D ratio ≈ 0.97–1.0, vs lower in men); fingers ≈ 0.8–0.9 × palm length in well-proportioned hands.
+- *Nails:* **long oval nail beds**, natural pink bed, white/translucent free edge, glossy surface, clean cuticles, no
+  dark rim.
+- *Colour (medium Indian / wheatish complexion, golden-honey undertone; albedo targets in sRGB):* back of hand
+  **#C9956F**, palm lighter and pinker **#E3AF92** (thick stratum corneum, little melanin), rosy fingertip/knuckle-top
+  flush **#D99A86** (very soft), nail bed **#E9AFA3**, free edge **#F6EADF**.
+- *Light:* soft key + warm fill + gentle rim; light bleeding through finger edges (subsurface glow) is the signature
+  of living skin; no hard, muddy shadows.
+- *Pose:* relaxed and elegant — a gentle cascade of curl from index to pinky, fingers softly fanned, thumb relaxed.
+
+**What changed:**
+- `build_hand.py`: slimmer and longer fingers (`r-hand-fingers-diameter-decr 0.45`, `length-incr 0.35`, `scale-decr
+  0.1`), knobby-knuckle target removed, an extra **radial taper** (1.0 at the base → 0.89 at the tip of each finger),
+  elegant pose (curl cascade, fan, relaxed thumb); new bakes: object-space normal (palm/back mask) and nail
+  **free-edge** mask.
+- `postprocess.py`: the albedo is now **composed** — target tones above blended by the baked palm/back mask, soft
+  fingertip flush, designed nail colours with a soft cuticle edge; from the photo only fine, low-contrast luminance
+  detail is kept (pores, fine lines; palm creases stronger than on the back). All large-scale mottling, red/brown
+  patches and dark knuckles are gone by construction. Normal map: creases strong on the palm, faint on the back.
+- Shader: neutral tone (balance is in the albedo), **glossy clear-coat nails** (per-pixel clearcoat on the nail mask),
+  light through the nail free edge, warm **edge translucency** term plus the existing subsurface bleed, softer
+  normals, slightly stronger sheen. `HandScene`: **symmetric** soft warm key lights for palm and back, warm low fill,
+  higher warm ambient, mirrored environment light box — the back is no longer in shadow.
+- Stills (`render_stills.py`): neutral tone, glossy nails, Standard view transform so the stills match the realtime
+  colours.
+
+Screenshots: `scripts/out/hand/beauty/` (`before-*`, `after-*`, `compare-1366.jpg`).
+
+## 6. Honest gaps / what would make it better
 
 - **Texture resolution**: the CC0 skin is a 2048² *full-body* atlas, so the hand had ~400 px of real photo data; it is
   baked to 2048² and sharpened with procedural pores and photo-derived normals, but extreme close-ups look soft
@@ -113,8 +152,8 @@ lighter towards the wrist, lighter on the back). Works for any artwork URL, incl
   (landmarks → artwork → shader) works with any GLB in the same orientation.
 - The MakeHuman hand is a sculpted average, not a scan: knuckle/vein detail is moderate, nails are part of the skin
   surface (no separate translucent nail plate geometry).
-- Skin tone is graded towards a warm medium South-Asian complexion from a CC0 texture labelled "Indian female"; one tone
-  only (no tone selector).
+- Skin colour is now designed (target tones) with only fine detail from the CC0 photo texture; one complexion only
+  (no tone selector). Very close up the back of the hand can read slightly smooth (retouched-advert look).
 - Subsurface scattering in real time is an approximation (wrap/terminator bleed), not true SSS.
 - Feet remain an illustration (no CC0 photoreal foot built yet; MakeHuman has feet, so the same pipeline could do it).
 - Uploaded artwork must be aligned to the new templates (`/hand/palm.webp`, `/hand/back.webp`); artwork aligned to the

@@ -65,7 +65,7 @@ for name, w in [
         TargetService.load_target(human, str(p), weight=w, name=name)
     else:
         print("WARN missing target", p)
-# Slim, long fingers (hand-model proportions; see docs/HAND_REALISM.md §6). Extra tip taper is applied below.
+# Slim, long fingers (hand-model proportions; see docs/HAND_REALISM.md §5). Extra tip taper is applied below.
 for name, w in [("r-hand-fingers-diameter-decr", 0.45), ("r-hand-fingers-length-incr", 0.35), ("r-hand-scale-decr", 0.1)]:
     p = MPFB_ROOT / "data" / "targets" / "hands" / f"{name}.target.gz"
     TargetService.load_target(human, str(p), weight=w, name=name)

@@ -61,7 +61,7 @@ def img(name, colorspace):
 alb = img("hand-albedo-2k.jpg", "sRGB")
 nrm = img("hand-normal-2k.jpg", "Non-Color")
 det = img("hand-detail-1k.jpg", "Non-Color")
-# palm/back tone balance (same as the realtime shader): back of the hand slightly lighter, less red
+# palm/back tone balance is baked into the composed albedo (postprocess.py); kept neutral here
 geo = N.new("ShaderNodeNewGeometry")
 sep = N.new("ShaderNodeSeparateXYZ")
 L.new(geo.outputs["Normal"], sep.inputs[0])
@@ -71,8 +71,8 @@ rng.inputs["From Max"].default_value = 0.2
 L.new(sep.outputs["X"], rng.inputs["Value"])
 tone = N.new("ShaderNodeMix")
 tone.data_type = "RGBA"
-tone.inputs["A"].default_value = (1.0, 0.95, 0.92, 1)
-tone.inputs["B"].default_value = (0.95, 0.9, 0.86, 1)
+tone.inputs["A"].default_value = (1.0, 1.0, 1.0, 1)
+tone.inputs["B"].default_value = (1.0, 1.0, 1.0, 1)
 L.new(rng.outputs["Result"], tone.inputs["Factor"])
 mul = N.new("ShaderNodeMix")
 mul.data_type = "RGBA"
@@ -82,7 +82,7 @@ L.new(alb.outputs["Color"], mul.inputs["A"])
 L.new(tone.outputs["Result"], mul.inputs["B"])
 hsv = N.new("ShaderNodeHueSaturation")
 hsv.inputs["Saturation"].default_value = 1.0
-hsv.inputs["Value"].default_value = 0.86
+hsv.inputs["Value"].default_value = 1.0
 L.new(mul.outputs["Result"], hsv.inputs["Color"])
 L.new(hsv.outputs["Color"], bsdf.inputs["Base Color"])
 nmap = N.new("ShaderNodeNormalMap")
@@ -93,7 +93,7 @@ dsep = N.new("ShaderNodeSeparateColor")
 L.new(det.outputs["Color"], dsep.inputs[0])
 rough = N.new("ShaderNodeMapRange")
 rough.inputs["To Min"].default_value = 0.5
-rough.inputs["To Max"].default_value = 0.22
+rough.inputs["To Max"].default_value = 0.12
 L.new(dsep.outputs["Red"], rough.inputs["Value"])
 L.new(rough.outputs["Result"], bsdf.inputs["Roughness"])
 bsdf.inputs["Subsurface Weight"].default_value = 0.22
@@ -101,7 +101,8 @@ bsdf.inputs["Subsurface Radius"].default_value = (1.0, 0.35, 0.2)
 bsdf.inputs["Subsurface Scale"].default_value = 0.004
 bsdf.inputs["Specular IOR Level"].default_value = 0.45
 bsdf.inputs["Coat Weight"].default_value = 0.05
-bsdf.inputs["Coat Roughness"].default_value = 0.4
+L.new(dsep.outputs["Red"], bsdf.inputs["Coat Weight"])  # glossy nails
+bsdf.inputs["Coat Roughness"].default_value = 0.08
 bsdf.inputs["Sheen Weight"].default_value = 0.15
 # forearm cut: fade the last few centimetres to transparent
 pos = N.new("ShaderNodeNewGeometry")
@@ -128,8 +129,9 @@ scene.render.film_transparent = True
 scene.render.resolution_x = scene.render.resolution_y = SIZE
 scene.render.image_settings.file_format = "PNG"
 scene.render.image_settings.color_mode = "RGBA"
-scene.view_settings.view_transform = "AgX"
-scene.view_settings.look = "AgX - Base Contrast"
+scene.view_settings.view_transform = "Standard"  # matches the realtime sRGB look of the albedo targets
+scene.view_settings.look = "None"
+scene.view_settings.exposure = -0.35
 scene.world = bpy.data.worlds.new("w")
 scene.world.use_nodes = True
 scene.world.node_tree.nodes["Background"].inputs[0].default_value = (0.42, 0.33, 0.36, 1)

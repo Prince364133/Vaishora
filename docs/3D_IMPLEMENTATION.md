@@ -85,7 +85,7 @@ Details (`mehndiMaterial.ts`):
   static illustration paint first.
 - Quality tier: `low` (LQ mesh, 1K skin maps, 1024² artwork, dpr ≤ 1.5) for phones, ≤ 4 cores, ≤ 3 GB memory or
   Save-Data; otherwise `high` (HQ mesh, 2K skin maps, 2048² artwork, dpr ≤ 2).
-- Payload: mobile ≈ 0.52 MB, desktop ≈ 1.48 MB (+ the design SVG, 17–330 KB, gzip-friendly).
+- Payload: mobile ≈ 0.50 MB, desktop ≈ 1.40 MB (+ the design SVG, 17–330 KB, gzip-friendly).
 - Environment lighting is baked once from local `Lightformer`s (no HDR download).
 - Artwork textures are cached (LRU of 8) and disposed on eviction; material and skin maps are disposed on unmount.
 
@@ -103,4 +103,4 @@ Any GLB in the same convention (metres, palm −X, fingers −Y, WebXR-named joi
 
 ## Known limitations
 
-See `HAND_REALISM.md` §5. Mobile GPU testing was done with desktop Chromium device emulation, not on physical phones.
+See `HAND_REALISM.md` §6. Mobile GPU testing was done with desktop Chromium device emulation, not on physical phones.

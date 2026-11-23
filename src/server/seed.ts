@@ -1,6 +1,6 @@
 import "server-only";
 import type { Db } from "./db";
-import { hashPassword, randomToken } from "./crypto";
+import { hashPassword } from "./crypto";
 
 export const categories = [
   ["arabic", "Arabic", "Flowing diagonal trails with bold florals and open skin."],

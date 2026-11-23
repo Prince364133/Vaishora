@@ -259,16 +259,20 @@ const HandScene = forwardRef<HandSceneHandle, Props>(function HandScene(props, r
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.05;
+        gl.toneMappingExposure = 1.12;
       }}
       aria-hidden
     >
-      <ambientLight intensity={0.25} />
-      <directionalLight position={[0.6, 0.8, 1]} intensity={1.6} color="#fff4ec" />
-      <directionalLight position={[-1, 0.3, -0.6]} intensity={0.9} color="#f7d5e2" />
+      {/* Flattering beauty lighting, symmetric so palm and back are both well lit: a soft warm key for each side,
+          a warm low fill, and gentle ambient so the shadow side never goes muddy on the plum stage. */}
+      <ambientLight intensity={0.42} color="#fff0e6" />
+      <directionalLight position={[0.55, 0.8, 1]} intensity={1.35} color="#fff3ea" />
+      <directionalLight position={[-0.55, 0.8, -1]} intensity={1.35} color="#fff3ea" />
+      <directionalLight position={[-0.9, -0.4, 0.2]} intensity={0.45} color="#ffd8c4" />
       <Suspense fallback={null}>
         <Environment resolution={128} frames={1}>
           <Lightformer form="rect" intensity={1.6} color="#fff6f0" position={[0, 2, 3]} scale={[4, 2, 1]} />
+          <Lightformer form="rect" intensity={1.6} color="#fff6f0" position={[0, 2, -3]} scale={[4, 2, 1]} />
           <Lightformer form="rect" intensity={0.8} color="#f8e8ec" position={[-3, 0, 1]} scale={[2, 4, 1]} />
           <Lightformer form="rect" intensity={0.7} color="#d4af7c" position={[3, -1, -2]} scale={[2, 3, 1]} />
           <Lightformer form="circle" intensity={0.5} color="#ffffff" position={[0, -3, 0]} scale={2} />
