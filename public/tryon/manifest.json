@@ -1,0 +1,103 @@
+{
+ "geo": {
+  "geo": {
+   "x0": 150,
+   "x1": 1400,
+   "y0": -700,
+   "y1": 1960,
+   "d": 4,
+   "w": 312,
+   "h": 665,
+   "hmax": 220.0
+  },
+  "tex": {
+   "x0": 150,
+   "x1": 1400,
+   "y0": -300,
+   "y1": 1940
+  }
+ },
+ "bgFrame": {
+  "x0": -760,
+  "x1": 2296,
+  "y0": -900,
+  "y1": 2820
+ },
+ "presets": [
+  {
+   "id": "royal",
+   "name": "Royal Bridal",
+   "tag": "Your reference design",
+   "stain": true
+  },
+  {
+   "id": "bridal",
+   "name": "Full Bridal",
+   "tag": "Domes, peacocks & mesh",
+   "stain": true
+  },
+  {
+   "id": "arabic",
+   "name": "Bold Arabic",
+   "tag": "Shaded fern leaves",
+   "stain": true
+  },
+  {
+   "id": "trail",
+   "name": "Peacock Trail",
+   "tag": "Flower with tassels",
+   "stain": true
+  },
+  {
+   "id": "floral",
+   "name": "Rose Lattice",
+   "tag": "Roses & finger nets",
+   "stain": true
+  },
+  {
+   "id": "minimal",
+   "name": "Minimal Mandala",
+   "tag": "Light & modern",
+   "stain": true
+  },
+  {
+   "id": "bare",
+   "name": "Bare hands",
+   "tag": "No mehndi",
+   "stain": false
+  }
+ ],
+ "atlas": {
+  "royal": "/tryon/atlas-royal.jpg",
+  "royal_stain": "/tryon/atlas-royal_stain.jpg",
+  "bridal": "/tryon/atlas-bridal.jpg",
+  "bridal_stain": "/tryon/atlas-bridal_stain.jpg",
+  "arabic": "/tryon/atlas-arabic.jpg",
+  "arabic_stain": "/tryon/atlas-arabic_stain.jpg",
+  "trail": "/tryon/atlas-trail.jpg",
+  "trail_stain": "/tryon/atlas-trail_stain.jpg",
+  "floral": "/tryon/atlas-floral.jpg",
+  "floral_stain": "/tryon/atlas-floral_stain.jpg",
+  "minimal": "/tryon/atlas-minimal.jpg",
+  "minimal_stain": "/tryon/atlas-minimal_stain.jpg",
+  "bare": "/tryon/atlas-bare.jpg"
+ },
+ "thumb": {
+  "royal": "/tryon/thumb-royal.jpg",
+  "royal_stain": "/tryon/thumb-royal_stain.jpg",
+  "bridal": "/tryon/thumb-bridal.jpg",
+  "bridal_stain": "/tryon/thumb-bridal_stain.jpg",
+  "arabic": "/tryon/thumb-arabic.jpg",
+  "arabic_stain": "/tryon/thumb-arabic_stain.jpg",
+  "trail": "/tryon/thumb-trail.jpg",
+  "trail_stain": "/tryon/thumb-trail_stain.jpg",
+  "floral": "/tryon/thumb-floral.jpg",
+  "floral_stain": "/tryon/thumb-floral_stain.jpg",
+  "minimal": "/tryon/thumb-minimal.jpg",
+  "minimal_stain": "/tryon/thumb-minimal_stain.jpg",
+  "bare": "/tryon/thumb-bare.jpg"
+ },
+ "hmap": "/tryon/hmap.png",
+ "mask": "/tryon/mask.png",
+ "background": "/tryon/background.jpg"
+}

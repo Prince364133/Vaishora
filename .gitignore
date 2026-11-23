@@ -53,3 +53,7 @@ marketing/ad/audio/
 # Local uploads in development
 public/uploads/
 marketing/ad/.cache/
+
+.vercel
+.env*
+!.env.example

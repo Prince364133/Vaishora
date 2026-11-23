@@ -101,6 +101,7 @@ export function DesignStudio({ designs, categories, initialSlug }: Props) {
               backArt={backArt}
               region={selected.region}
               designName={selected.name}
+              designSlug={selected.slug}
               className="absolute inset-0 pt-6"
             />
           </div>

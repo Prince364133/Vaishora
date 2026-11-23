@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { HandSceneHandle, HandView } from "./HandScene";
 import { HandIllustration } from "./HandIllustration";
+import { PhotoHandViewer } from "./PhotoHandViewer";
+import { getViewerMode, setViewerMode, subscribeViewerMode, ViewerMode } from "@/lib/photo-tryon";
 
 const HandScene = dynamic(() => import("./HandScene"), { ssr: false });
 
@@ -37,9 +39,57 @@ interface Props {
   className?: string;
   /** Visual variant: "stage" sits on plum, "light" on ivory. */
   tone?: "stage" | "light";
+  /** Catalogue slug, used to pick the closest look in the Photo 3D viewer. */
+  designSlug?: string;
 }
 
-export function HandViewer3D({ palmArt, backArt, region, designName, className = "", tone = "stage" }: Props) {
+/**
+ * Hand stage with a viewer switch: "Sculpted" (the CC0 3D hand with projected mehndi) or "Photo"
+ * (mehndi-3d-tryon: photographed hands rebuilt as relief). The choice is shared by every stage and
+ * remembered on the device, so the two can be compared before deciding which to keep.
+ */
+export function HandViewer3D(props: Props) {
+  const mode = useSyncExternalStore<ViewerMode>(subscribeViewerMode, getViewerMode, () => "sculpted");
+  const onStage = (props.tone ?? "stage") === "stage";
+  const feet = props.region === "feet";
+  return (
+    <div className={`flex flex-col ${props.className || "relative"}`}>
+      {!feet && (
+        <div className="absolute inset-x-0 top-3 z-20 flex justify-center pointer-events-none">
+          <div
+            className={`pointer-events-auto inline-flex rounded-full p-0.5 text-xs font-semibold shadow-sm ${onStage ? "bg-plum-deep/80 ring-1 ring-gold/40" : "bg-blush ring-1 ring-[var(--color-line)]"}`}
+            role="radiogroup"
+            aria-label="3D viewer"
+          >
+            {(["sculpted", "photo"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="radio"
+                aria-checked={mode === m}
+                onClick={() => setViewerMode(m)}
+                className={`min-h-9 rounded-full px-3.5 transition-colors ${
+                  mode === m ? (onStage ? "bg-ivory text-plum" : "bg-plum text-ivory") : onStage ? "text-blush" : "text-plum"
+                }`}
+              >
+                {m === "sculpted" ? "3D model" : "Photo 3D"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {mode === "photo" && !feet ? (
+        <div className="relative min-h-0 flex-1">
+          <PhotoHandViewer designSlug={props.designSlug} onStage={onStage} />
+        </div>
+      ) : (
+        <SculptedHandViewer {...props} className="relative min-h-0 flex-1" />
+      )}
+    </div>
+  );
+}
+
+function SculptedHandViewer({ palmArt, backArt, region, designName, className = "", tone = "stage" }: Props) {
   const [mode, setMode] = useState<Mode>("checking");
   const [quality, setQuality] = useState<"high" | "low">("low");
   const [ready, setReady] = useState(false);

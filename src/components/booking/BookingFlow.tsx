@@ -355,6 +355,7 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
                   backArt={isFeet ? null : design.assets.back ?? null}
                   region={design.region}
                   designName={design.name}
+                  designSlug={design.slug}
                   className="absolute inset-0 pt-6"
                 />
               </div>
