@@ -35,6 +35,19 @@ export interface MehndiUniforms {
   uPhotoBackA: { value: THREE.Texture };
   uPhotoBackB: { value: THREE.Texture };
   uStrength: { value: number };
+  /** Skin tone multiplier (Natural / Fair / Tan / Deep), applied to skin before the henna so the stain stays true. */
+  uTone: { value: THREE.Color };
+  /** Height (model Y) where the forearm dissolves; default = top of the artwork frame, higher shows more forearm. */
+  uCutY: { value: number };
+  /** Skin evenness: 0.18 = subtle (default); higher pulls the sculpted skin to one clean hue and smooths patches. */
+  uEven: { value: number };
+  /** Final colour grade (linear multiplier) — used to match the Photo 3D viewer's skin. */
+  uGrade: { value: THREE.Color };
+  /** Stain colour (multiplier on skin) for thin lines and dense fills. */
+  uHennaThin: { value: THREE.Color };
+  uHennaDeep: { value: THREE.Color };
+  /** 0 = photo henna darkened to maroon (default); 1 = remapped to the Photo 3D viewer's red-brown stain. */
+  uPhotoHennaRemap: { value: number };
 }
 
 const empty = (() => {
@@ -67,6 +80,13 @@ export function createMehndiMaterial(maps: SkinMaps) {
     uPhotoBackA: { value: empty },
     uPhotoBackB: { value: empty },
     uStrength: { value: 1 },
+    uTone: { value: new THREE.Color(1, 1, 1) },
+    uCutY: { value: frame.maxY },
+    uEven: { value: 0.18 },
+    uGrade: { value: new THREE.Color(1, 1, 1) },
+    uHennaThin: { value: new THREE.Color(0.5, 0.2, 0.11) },
+    uHennaDeep: { value: new THREE.Color(0.27, 0.085, 0.055) },
+    uPhotoHennaRemap: { value: 0 },
   };
 
   const mat = new THREE.MeshPhysicalMaterial({
@@ -92,14 +112,17 @@ export function createMehndiMaterial(maps: SkinMaps) {
       .replace(
         "#include <common>",
         `#include <common>
+        // rest (unposed) surface: the artwork/photo projection frame; equals position/normal unless the hand is posed
+        attribute vec3 restPosition;
+        attribute vec3 restNormal;
         varying vec3 vBindPos;
         varying vec3 vBindNormal;`,
       )
       .replace(
         "#include <begin_vertex>",
         `#include <begin_vertex>
-        vBindPos = position;
-        vBindNormal = normal;`,
+        vBindPos = restPosition;
+        vBindNormal = restNormal;`,
       );
 
     shader.fragmentShader = shader.fragmentShader
@@ -121,6 +144,13 @@ export function createMehndiMaterial(maps: SkinMaps) {
         uniform sampler2D uPhotoBackA;
         uniform sampler2D uPhotoBackB;
         uniform float uStrength;
+        uniform vec3 uTone;
+        uniform float uCutY;
+        uniform float uEven;
+        uniform vec3 uGrade;
+        uniform vec3 uHennaThin;
+        uniform vec3 uHennaDeep;
+        uniform float uPhotoHennaRemap;
         const float FRAME_CU = ${frame.centerU.toFixed(6)};
         const float FRAME_CV = ${frame.centerV.toFixed(6)};
         const float FRAME_S = ${frame.size.toFixed(6)};
@@ -180,11 +210,27 @@ export function createMehndiMaterial(maps: SkinMaps) {
         float freeEdge = skinDetail.b * nailM;
         float cavity = skinDetail.g;
         float photoW = 0.0;
+        float photoHenna = 0.0;
         {
+          // Forearm cut: dissolve the last few centimetres into the stage. Only front faces of the forearm are
+          // in this band, so plain alpha blending needs no sorting.
+          diffuseColor.a *= smoothstep(uCutY - 0.002, uCutY - 0.05, vBindPos.y);
           // (palm/back tone balance is baked into the composed albedo — see scripts/hand-real/postprocess.py)
           // Very gentle micro-tonal variation without blotchy low-frequency patches.
           float tone = vnoise(vBindPos * 320.0);
           diffuseColor.rgb *= 0.995 + tone * 0.01;
+          // Clean, even skin: pull the albedo's blotchy mid-tones a little towards one warm skin hue
+          // (same brightness), then apply the chosen skin tone.
+          {
+            const vec3 SKIN_HUE = vec3(0.79, 0.43, 0.29);
+            const vec3 LUM = vec3(0.299, 0.587, 0.114);
+            float l = dot(diffuseColor.rgb, LUM);
+            // uEven > default also evens out brightness patches / texture seams (wide mip of the albedo)
+            float lWide = dot(texture2D(map, vMapUv, 3.5).rgb, LUM);
+            float lS = mix(l, lWide, clamp((uEven - 0.18) * 1.4, 0.0, 0.75));
+            vec3 even = SKIN_HUE * (lS / dot(SKIN_HUE, LUM));
+            diffuseColor.rgb = mix(diffuseColor.rgb, even, uEven * (1.0 - nailM));
+          }
 
           // ---- photo albedo: real skin and real henna from a photograph, in the artwork projection frame.
           // Palm photo on palm-facing surfaces, back photo on the back; alpha feathers into our skin, and finger
@@ -200,8 +246,24 @@ export function createMehndiMaterial(maps: SkinMaps) {
             vec4 pk = mix(texture2D(uPhotoBackA, uvB), texture2D(uPhotoBackB, uvB), uMix) * smoothstep(0.04, 0.4, nB.x) * inF;
             vec4 ph = pp + pk;
             photoW = clamp(ph.a, 0.0, 1.0);
-            diffuseColor.rgb = mix(diffuseColor.rgb, ph.rgb / max(ph.a, 1e-4), photoW);
+            vec3 pc = ph.rgb / max(ph.a, 1e-4);
+            // Photo henna depth: the warm beauty lights + ACES lift dark tones ~1.7× (deep maroon would read orange),
+            // while skin highlights are compressed. Pull henna (much higher linear chroma than skin) back down so
+            // the stain renders the deep maroon / chocolate of the photograph.
+            float pSat = (max(pc.r, max(pc.g, pc.b)) - min(pc.r, min(pc.g, pc.b))) / max(pc.r, 1e-3);
+            float hK = smoothstep(0.84, 0.93, pSat);
+            photoHenna = hK * photoW;
+            if (uPhotoHennaRemap > 0.0) {
+              // match the Photo 3D viewer's dried stain: remap by brightness onto its red-brown palette
+              float lumH = dot(pc, vec3(0.299, 0.587, 0.114));
+              vec3 tgt = mix(vec3(0.32, 0.042, 0.026), vec3(0.56, 0.115, 0.05), smoothstep(0.012, 0.14, lumH));
+              pc = mix(pc, tgt, hK * uPhotoHennaRemap);
+            } else {
+              pc *= mix(vec3(1.0), vec3(0.56, 0.5, 0.5), hK);
+            }
+            diffuseColor.rgb = mix(diffuseColor.rgb, pc, photoW);
           }
+          diffuseColor.rgb *= mix(uTone, vec3(1.0), nailM * 0.5);
           // Nails: lighter, pinker, translucent-looking plate.
           // (nail bed / free-edge colours are in the albedo; gloss and translucency are handled below)
 
@@ -270,15 +332,16 @@ export function createMehndiMaterial(maps: SkinMaps) {
           // Subsurface approximation: warm, golden-red light bleeding into the shadowed side and the terminator.
           float l = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722));
           vec3 sss = diffuseColor.rgb * vec3(1.0, 0.38, 0.24) * (0.03 + 0.05 * (1.0 - smoothstep(0.0, 0.45, l)));
-          outgoingLight += sss * (1.0 - nailM * 0.5) * (1.0 - cavity * 0.8);
+          outgoingLight += sss * (1.0 - nailM * 0.5) * (1.0 - cavity * 0.8) * (1.0 - photoHenna * 0.7);
           // translucency at thin silhouette edges (finger sides, web of the hand): warm glow, strongest at grazing view
           float edge = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 2.2);
-          outgoingLight += diffuseColor.rgb * vec3(1.0, 0.5, 0.34) * edge * 0.07;
+          outgoingLight += diffuseColor.rgb * vec3(1.0, 0.5, 0.34) * edge * 0.07 * (1.0 - photoHenna * 0.7);
+          outgoingLight *= uGrade;
         }
         #include <opaque_fragment>`,
       );
   };
-  mat.customProgramCacheKey = () => "vaishora-mehndi-skin-v5";
+  mat.customProgramCacheKey = () => "vaishora-mehndi-skin-v13";
   return { material: mat, uniforms };
 }
 

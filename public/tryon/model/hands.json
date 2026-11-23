@@ -1,0 +1,49 @@
+{
+ "parts": [
+  {
+   "hand": 0,
+   "side": "front",
+   "count": 29312,
+   "tris": 57390,
+   "idx32": false,
+   "pos": 0,
+   "nor": 351744,
+   "uv": 439680,
+   "idx": 556928
+  },
+  {
+   "hand": 0,
+   "side": "back",
+   "count": 29312,
+   "tris": 57390,
+   "idx32": false,
+   "pos": 901268,
+   "nor": 1253012,
+   "uv": 1340948,
+   "idx": 1458196
+  },
+  {
+   "hand": 1,
+   "side": "front",
+   "count": 29139,
+   "tris": 57062,
+   "idx32": false,
+   "pos": 1802536,
+   "nor": 2152204,
+   "uv": 2239624,
+   "idx": 2356180
+  },
+  {
+   "hand": 1,
+   "side": "back",
+   "count": 29139,
+   "tris": 57062,
+   "idx32": false,
+   "pos": 2698552,
+   "nor": 3048220,
+   "uv": 3135640,
+   "idx": 3252196
+  }
+ ],
+ "bytes": 3594568
+}
