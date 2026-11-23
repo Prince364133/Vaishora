@@ -76,7 +76,7 @@ export function AccountAuthCard() {
       </div>
 
       <div className="mt-6 border-t hairline pt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted">
-        <span>Don't have a booking yet?</span>
+        <span>Don&rsquo;t have a booking yet?</span>
         <Link href="/designs" className="link text-plum font-medium">
           Browse designs & book an artist →
         </Link>

@@ -264,7 +264,7 @@ shade_ref = float(np.median(shade[mask > 0]))
 shade = np.clip(shade / shade_ref, 0.55, 1.6)
 
 # colour target: the sculpted hand's palm albedo (sRGB) — same constants as scripts/hand-real/postprocess.py
-PALM = np.array([0xE3, 0xAF, 0x92], np.float32)
+PALM = np.array([0xDE, 0xA9, 0x8B], np.float32)
 bare_skin = np.median(bare[mask > 0].astype(np.float32) / shade[mask > 0][:, None], axis=0)
 gain = PALM / bare_skin
 print("bare skin", bare_skin.round(1), "gain", gain.round(3))
@@ -284,6 +284,13 @@ for pid, look, fn in jobs:
     lum = px @ np.array([0.2126, 0.7152, 0.0722], np.float32)
     skin_i = np.median(px[lum >= np.percentile(lum, 75)], axis=0)
     alb = dl * (PALM / skin_i)[None, None]
+    # AI photos run hot: pull the most saturated (henna) pixels ~12% towards their own luminance and deepen them a
+    # touch, so the stain reads as a dye in skin rather than an orange glow. Skin pixels are left untouched.
+    lum3 = (alb @ np.array([0.2126, 0.7152, 0.0722], np.float32))[..., None]
+    sat = np.clip((alb.max(axis=-1) - alb.min(axis=-1)) / np.maximum(alb.max(axis=-1), 1e-3), 0, 1)[..., None]
+    hen = np.clip((sat - 0.42) / 0.3, 0, 1)
+    alb = alb + (lum3 - alb) * 0.12 * hen
+    alb = alb * (1 - 0.08 * hen)
     # fill outside the hand with nearby hand colour so Lanczos/mip filtering never pulls in silk at the edges
     inv = (mask == 0).astype(np.uint8)
     filled = cv2.inpaint(np.clip(alb, 0, 255).astype(np.uint8), inv, 5, cv2.INPAINT_TELEA) if inv.any() else alb.astype(np.uint8)

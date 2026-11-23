@@ -212,3 +212,39 @@ If the pose changes, `hand.json` must be re-traced (Photo 3D pipeline stage 1–
 
 **Gaps:** the back of the hand has no photo (bare sculpted skin or the procedural back design); the photos are AI
 edits of one reference photo, so all designs share one hand shape; finger sides beyond ~65° from the palm use our skin.
+
+## 8. Production audit pass (Nov 2026) — iterations in `scripts/out/hand/production/iter-0..3/`
+
+Audit (lead): photo palm over-exposed/orange and flat; procedural henna looked printed; skin smooth/mannequin;
+forearm faded to a haze; flat lighting; zoom quality. What changed:
+
+1. **Lighting / tone** — Poly Haven *Studio Small 09* (CC0, Sergej Majboroda) down-sampled to a 256×128 RGBE HDRI
+   (`public/models/studio-256.hdr`, 103 KB) for image-based fill and reflections; one soft key per side, warm fill, cool
+   pink rim; **Khronos PBR Neutral** tone mapping at exposure 0.88 (AgX greyed the skin in iteration 1; ACES pushed it
+   orange). Additive SSS/edge-glow terms reduced so nothing glows.
+2. **Photo palm** — every design photo is now white-balanced and exposed from *its own* skin pixels (the AI-edited
+   photos differ in exposure/WB), after dividing out the bare photo's low-frequency shading; the most saturated (henna)
+   pixels are pulled 12 % towards their luminance and deepened 8 %, so the stain reads as dye, not an orange glow.
+   Our lights then shade it; crease normals are only partly flattened under the photo.
+3. **Procedural henna as stain** — colour ramp measured from the owner's stain photos (linear multipliers of skin:
+   light 0.66/0.34/0.20 → mid 0.44/0.12/0.06 → dense 0.21/0.048/0.024); soft bled edge (two-octave domain warp, low
+   frequency dominant), pooled darker outlines, ~2.5 mm along-line paste variation, 0.3 mm grain, blotchy take-up,
+   breaks in creases, lighter/browner on the back; dipped fingertips are SVG alpha gradients (darkest at the tip) with
+   an irregular, hand-made edge; checker cells jittered in size/position/angle (no machine-perfect lattice).
+4. **Skin detail** — tileable micro-normal (pores + criss-cross micro-relief, `skin-micro-normal.jpg`, generated, CC0)
+   at ≈1.4 cm repeat on top of the photo-derived normal map, with matching micro-roughness; palm creases restored in
+   albedo and normals (the interim "silky" smoothing was reverted); baked ambient occlusion between the fingers and in
+   the palm hollow; dual-lobe specular (base lobe + thin clear-coat "oil" lobe).
+5. **No fade/cut** — the forearm now runs ~19 cm past the wrist and is closed with a cap; camera max distance 0.78 m and
+   polar limits 0.30π–0.62π keep its end out of frame at any allowed rotation/zoom. The projection frame stays on the
+   hand region (UVs: hand unwrapped separately, forearm islands shrunk) so texel density did not drop.
+6. **Zoom** — photo palms 2048² (≈1,160 effective source px across the frame), mipmapped, anisotropy up to 16; micro
+   detail carries the close-ups.
+
+Payload: mobile ≈ 0.98 MB (LQ mesh 288 KB, 1K maps 245 KB, micro 79 KB, HDRI 103 KB, one photo palm ≈ 250 KB);
+desktop ≈ 1.7 MB.
+
+**Limits:** the photo palms are only ~260 px wide in the current 1121×1403 sources — 2–4K re-generated photos (same
+framing, §7) are the single biggest remaining upgrade; the back of the hand has no photo; the sculpted skin texture is a
+2K atlas from a CC0 full-body texture — a commercial scanned hand (8K, e.g. V-ARM 03) would add true pore-level
+skin and real knuckle/vein detail beyond what procedural micro detail can give.

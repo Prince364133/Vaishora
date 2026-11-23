@@ -3,7 +3,7 @@
 // reused. Lines are cone-drawn (variable width, blob starts, tapered ends, slight tremor; see cone.ts) so the result
 // reads like real henna rather than vector clip-art.
 
-import { dot, fillShape, inkLine, net, checker, seedInk } from "./cone";
+import { dot, inkLine, net, checker, seedInk } from "./cone";
 import { add, along, lerp, mul, norm, P, perp, Pt, sub } from "./geometry";
 import { FINGERS, Finger, Hand2D, hand2d, Side } from "./hand2d";
 import * as M from "./motifs";
@@ -25,6 +25,13 @@ type BandStyle = Parameters<typeof M.band>[4];
 const at = (f: Finger, t: number) => along(f.pts, t);
 
 /** Filled fingertip ("dipped" tip) from `from` (0..1 along the finger) to the end, with a slightly wavy edge. */
+let capId = 0;
+
+/**
+ * Dipped fingertip from `from` (0..1 along the finger) to the end. Real dipped tips are darkest at the very tip and
+ * fade slightly towards an irregular edge where the paste ended, so the cap gets a wavy, jittered base edge and an
+ * alpha gradient (alpha = stain depth in the shader / 2D composite).
+ */
 function tipCap(f: Finger, from = 0.84, edge: "straight" | "scallop" | "arch" = "straight") {
   const { p } = at(f, from);
   const d = f.dir;
@@ -36,14 +43,25 @@ function tipCap(f: Finger, from = 0.84, edge: "straight" | "scallop" | "arch" = 
   const lt = add(c, mul(n, -w));
   const rt = add(c, mul(n, w));
   const k = 0.56;
-  let base = `L${P(l0)}`;
-  if (edge === "scallop") {
-    base = `Q${P(add(lerp(r0, p, 0.5), mul(d, -6)))} ${P(p)}Q${P(add(lerp(p, l0, 0.5), mul(d, -6)))} ${P(l0)}`;
-  } else if (edge === "arch") {
-    base = `Q${P(add(p, mul(d, -w * 0.9)))} ${P(l0)}`;
+  // base edge from r0 to l0: profile (straight / scallop / arch) plus a hand-made wobble
+  const seed = f.base[0] * 0.37 + f.base[1] * 0.11 + from * 10;
+  const wob = (i: number) => Math.sin(seed + i * 2.3) * 2.6 + Math.sin(seed * 1.7 + i * 5.1) * 1.6;
+  const N = 12;
+  let base = "";
+  for (let i = 1; i <= N; i++) {
+    const t = i / N;
+    const prof = edge === "arch" ? -w * 0.9 * Math.sin(Math.PI * t) : edge === "scallop" ? -6 * Math.abs(Math.sin(2 * Math.PI * t)) : 0;
+    const q = add(lerp(r0, l0, t), mul(d, prof + (i < N ? wob(i) : 0)));
+    base += `L${P(q)}`;
   }
   const dd = `M${P(r0)}${base}L${P(lt)}C${P(add(lt, mul(d, w * k)))} ${P(add(f.tipEnd, mul(n, -w * k)))} ${P(f.tipEnd)}C${P(add(f.tipEnd, mul(n, w * k)))} ${P(add(rt, mul(d, w * k)))} ${P(rt)}Z`;
-  return fillShape(dd, 0.98, 2.2);
+  const id = `tip${capId++}`;
+  const g0 = add(p, mul(d, edge === "arch" ? -w * 0.5 : 0));
+  return (
+    `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${P(g0).split(",")[0]}" y1="${P(g0).split(",")[1]}" x2="${P(f.tipEnd).split(",")[0]}" y2="${P(f.tipEnd).split(",")[1]}">` +
+    `<stop offset="0" stop-color="currentColor" stop-opacity="0.18"/><stop offset="0.16" stop-color="currentColor" stop-opacity="0.62"/><stop offset="0.45" stop-color="currentColor" stop-opacity="0.9"/><stop offset="1" stop-color="currentColor" stop-opacity="1"/></linearGradient></defs>` +
+    `<path d="${dd}" fill="url(#${id})"/>`
+  );
 }
 
 function fingerBands(f: Finger, ts: number[], styles: BandStyle[], thick = 16) {
@@ -174,6 +192,7 @@ function diagonalTrail(h: Hand2D, opts: { bold?: boolean; density?: number }) {
 }
 
 function bake(side: Side, style: ArtStyle): string {
+  capId = 0;
   const h = hand2d(side);
   seedInk(style.length * 977 + (side === "palm" ? 1 : 2) + style.charCodeAt(0) * 31);
   const { fingers: F } = h;

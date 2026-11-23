@@ -67,5 +67,5 @@ strength = 0.35
 n = np.dstack([-gx * strength, gy * strength, np.ones_like(gx)])
 n /= np.linalg.norm(n, axis=2, keepdims=True)
 img = ((n * 0.5 + 0.5) * 255 + 0.5).clip(0, 255).astype(np.uint8)
-cv2.imwrite(str(out / "skin-micro-normal.jpg"), cv2.cvtColor(img, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 90])
+cv2.imwrite(str(out / "skin-micro-normal.jpg"), cv2.cvtColor(img, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 80])
 print("skin-micro-normal.jpg", (out / "skin-micro-normal.jpg").stat().st_size // 1024, "KB")

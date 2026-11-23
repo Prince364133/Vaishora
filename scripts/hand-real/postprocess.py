@@ -70,8 +70,8 @@ free = fill_empty(free, valid)
 srgb = lambda h: np.array([int(h[i : i + 2], 16) for i in (1, 3, 5)], dtype=np.float32) / 255.0  # noqa: E731
 
 # ------------------------------------------------------------------ target tones (warm Indian female complexion)
-BACK = srgb("#CCA080")      # back of hand: luminous warm golden-honey / warm wheatish complexion
-PALM = srgb("#E8C2AC")      # palm: soft warm peachy ivory
+BACK = srgb("#C79471")      # back of hand: warm golden-honey medium Indian complexion
+PALM = srgb("#DEA98B")      # palm: lighter, pinker, still warm (not ivory)
 FLUSH = srgb("#DF9C8B")     # delicate rosy warmth at fingertips and knuckle curves
 NAILBED = srgb("#DB9D92")   # healthy, soft manicured natural pink nail bed
 FREEEDGE = srgb("#EDE3DA")  # soft natural ivory edge (not harsh chalky white)
@@ -86,18 +86,14 @@ base = BACK[None, None] * (1 - palm_w[..., None]) + PALM[None, None] * palm_w[..
 near_nail = np.clip(blurf(nails, 24) * 2.5, 0, 1)
 base = base + (FLUSH[None, None] - base) * (near_nail * 0.28)[..., None]
 
-# ------------------------------------------------------------------ micro-detail: smooth & clean
+# ------------------------------------------------------------------ fine photo detail (luminance only)
+# Production audit: skin must show pores and creases at zoom, not mannequin-smooth. Palm creases clearly visible,
+# back of hand with soft knuckle folds; no large-scale blotches (those were removed by composing the tone above).
 L = photo @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
-fine = L / np.maximum(blurf(L, 3), 1e-3)
-mid = blurf(L, 3) / np.maximum(blurf(L, 14), 1e-3)
-
-# Keep fine micro-structure subtle so skin looks silky, not noisy
-fine = np.clip(fine, 0.88, 1.12)
-mid = np.clip(mid, 0.75, 1.25)
-
-# Palm lines remain defined; back of hand is kept smooth without muddy splotches
-detail = fine ** 0.35 * mid ** np.where(palm_w > 0.5, 0.28, 0.04)
-pores = 1 - 0.015 * blurf((rng.random((H, W)) > 0.985).astype(np.float32), 1) * 2
+fine = np.clip(L / np.maximum(blurf(L, 3), 1e-3), 0.72, 1.3)
+mid = np.clip(blurf(L, 3) / np.maximum(blurf(L, 14), 1e-3), 0.6, 1.4)
+detail = fine ** 0.55 * mid ** np.where(palm_w > 0.5, 0.5, 0.22)
+pores = 1 - 0.03 * blurf((rng.random((H, W)) > 0.982).astype(np.float32), 1) * 4
 skin = np.clip(base * (detail * pores)[..., None], 0, 1)
 
 # ------------------------------------------------------------------ clean manicured nails
@@ -113,22 +109,22 @@ albedo = skin * (1 - nm[..., None]) + nail_col * nm[..., None]
 ao_path = src / "ao.png"
 if ao_path.exists():
     ao = fill_empty(load("ao.png", "L"), valid)
-    ao = blurf(ao, 4)
-    albedo = albedo * (0.88 + 0.12 * ao)[..., None]
+    ao = blurf(ao, 2)
+    albedo = albedo * ((0.45 + 0.55 * ao) ** 0.8)[..., None]  # contact shading between fingers / palm hollow
 
-# ------------------------------------------------------------------ refined normal map (smooth, delicate skin)
-crease = np.log(np.clip(mid, 0.75, 1.25))
-finel = np.log(np.clip(fine, 0.88, 1.12))
-# Palm keeps natural creases; back of hand has gentle knuckle folds, not coarse roughness
-height = finel * 0.3 + crease * np.where(palm_w > 0.5, 0.75, 0.22)
+# ------------------------------------------------------------------ normal map
+crease = np.log(np.clip(mid, 0.6, 1.4))
+finel = np.log(np.clip(fine, 0.72, 1.3))
+height = finel * 0.6 + crease * np.where(palm_w > 0.5, 1.35, 0.48)
 height = blurf(height, 1)
+height -= blurf((rng.random((H, W)) > 0.985).astype(np.float32), 1) * 0.03  # pores
 height *= 1 - nm
 gy, gx = np.gradient(height)
-strength = 3.5 * (W / 2048)  # soft, elegant relief
+strength = 6.0 * (W / 2048)
 n3 = np.stack([-gx * strength, gy * strength, np.ones_like(gx)], axis=-1)
 n3 /= np.linalg.norm(n3, axis=-1, keepdims=True)
 normal = n3 * 0.5 + 0.5
-cavity = np.clip(-blurf(crease, 1) * 4.0, 0, 1) * np.where(palm_w > 0.5, 1.0, 0.3)
+cavity = np.clip(-blurf(crease, 1) * 5.0, 0, 1) * np.where(palm_w > 0.5, 1.0, 0.4)
 
 
 def save(arr, name, size, q=88):
