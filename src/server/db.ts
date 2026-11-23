@@ -35,7 +35,8 @@ async function migrate(db: Db) {
   }
 }
 
-async function createPostgres(url: string): Promise<Db> {
+async function createPostgres(rawUrl: string): Promise<Db> {
+  const url = rawUrl.trim().replace(/^\uFEFF/, "");
   const { Pool } = await import("pg");
   const pool = new Pool({
     connectionString: url,
@@ -114,7 +115,8 @@ export function getDb(): Promise<Db> {
   }
   if (!g.__vaishoraDb) {
     g.__vaishoraDb = (async () => {
-      const url = process.env.DATABASE_URL;
+      const raw = process.env.DATABASE_URL;
+      const url = raw ? raw.trim().replace(/^\uFEFF/, "") : undefined;
       const db = url ? await createPostgres(url) : await createPglite();
       if (!url || process.env.DATABASE_AUTO_MIGRATE === "true") await migrate(db);
       if (!url && process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
