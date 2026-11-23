@@ -10,7 +10,9 @@ import { Environment, Lightformer, OrbitControls, useGLTF, useTexture } from "@r
 import { forwardRef, Suspense, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { ensureRestAttributes } from "./handPose";
 import { createMehndiMaterial, EMPTY_TEXTURE, loadArtTexture, loadPhotoTexture } from "./mehndiMaterial";
+import { PHOTO_TONES, PhotoTone } from "@/lib/photo-tryon";
 
 // Realistic female hand built from CC0 MakeHuman assets (scripts/hand-real, docs/HAND_REALISM.md).
 export const HAND_HQ_URL = "/models/hand-hq.glb";
@@ -35,6 +37,8 @@ interface Props {
   palmPhoto?: string | null;
   backPhoto?: string | null;
   quality: "high" | "low";
+  /** Skin tone (shared with the Photo 3D viewer). */
+  tone?: PhotoTone;
   onReady?: () => void;
   onError?: (e: Error) => void;
   onViewChange?: (view: HandView) => void;
@@ -42,10 +46,19 @@ interface Props {
 }
 
 const DEFAULT_DISTANCE = 0.55;
+/** Skin look matched to Photo 3D (no tone mapping, like the photo viewer). */
+export const PHOTO_MATCH_SKIN = {
+  even: 0.7,
+  normal: 0.3,
+  grade: [1.46, 1.5, 1.27] as [number, number, number],
+  // stain colours relative to skin, measured on the Photo 3D dried stain (mid lines / dense fills)
+  hennaThin: [0.69, 0.3, 0.2] as [number, number, number],
+  hennaDeep: [0.47, 0.14, 0.1] as [number, number, number],
+};
 const MIN_DISTANCE = 0.28;
 const MAX_DISTANCE = 0.9;
 
-function useHandAssets(quality: "high" | "low") {
+export function useHandAssets(quality: "high" | "low") {
   const gltf = useGLTF(quality === "high" ? HAND_HQ_URL : HAND_LQ_URL, false);
   const [albedo, normal, detail] = useTexture([...SKIN_MAPS[quality]]);
   const gl = useThree((s) => s.gl);
@@ -57,6 +70,7 @@ function useHandAssets(quality: "high" | "low") {
     if (!mesh) throw new Error("Hand mesh not found in model");
     const geo = (mesh as THREE.Mesh).geometry;
     geo.computeBoundingBox();
+    ensureRestAttributes(geo);
     const aniso = Math.min(8, gl.capabilities.getMaxAnisotropy());
     for (const t of [albedo, normal, detail]) {
       t.flipY = false; // glTF UV convention
@@ -66,11 +80,11 @@ function useHandAssets(quality: "high" | "low") {
     albedo.colorSpace = THREE.SRGBColorSpace;
     normal.colorSpace = THREE.NoColorSpace;
     detail.colorSpace = THREE.NoColorSpace;
-    return { geo, maps: { albedo, normal, detail } };
+    return { geo, scene: gltf.scene, maps: { albedo, normal, detail } };
   }, [gltf, albedo, normal, detail, gl]);
 }
 
-function Hand({ palmArt, backArt, palmPhoto = null, backPhoto = null, quality, onReady, onError }: Props) {
+function Hand({ palmArt, backArt, palmPhoto = null, backPhoto = null, quality, tone = "natural", onReady, onError }: Props) {
   const { geo, maps } = useHandAssets(quality);
   const { material, uniforms } = useMemo(() => createMehndiMaterial(maps), [maps]);
   const invalidate = useThree((s) => s.invalidate);
@@ -79,6 +93,23 @@ function Hand({ palmArt, backArt, palmPhoto = null, backPhoto = null, quality, o
   const readyRef = useRef(false);
 
   useEffect(() => () => material.dispose(), [material]);
+  useEffect(() => {
+    const m = PHOTO_TONES[tone].mul;
+    uniforms.uTone.value.setRGB(m[0], m[1], m[2]);
+    invalidate();
+  }, [tone, uniforms, invalidate]);
+
+  // Same skin as the Photo 3D viewer: one even warm hue without albedo patches, a smoother surface, and a colour
+  // grade measured against the photo skin (scripts/out/shot-sculpted.mjs vs shot-photo3d.mjs).
+  useEffect(() => {
+    uniforms.uEven.value = PHOTO_MATCH_SKIN.even;
+    uniforms.uGrade.value.setRGB(...PHOTO_MATCH_SKIN.grade);
+    uniforms.uHennaThin.value.setRGB(...PHOTO_MATCH_SKIN.hennaThin);
+    uniforms.uHennaDeep.value.setRGB(...PHOTO_MATCH_SKIN.hennaDeep);
+    uniforms.uPhotoHennaRemap.value = 1;
+    material.normalScale.set(PHOTO_MATCH_SKIN.normal, PHOTO_MATCH_SKIN.normal);
+    invalidate();
+  }, [uniforms, material, invalidate]);
   // Skin maps belong to this quality tier only; free GPU memory when the tier/scene goes away.
   useEffect(() => () => Object.values(maps).forEach((t) => t.dispose()), [maps]);
 
@@ -264,24 +295,29 @@ const CameraRig = forwardRef<HandSceneHandle, { onViewChange?: (v: HandView) => 
   },
 );
 
-const HandScene = forwardRef<HandSceneHandle, Props>(function HandScene(props, ref) {
-  const { quality, interactive = true } = props;
+/** Flattering beauty lighting, symmetric so palm and back are both well lit: a soft warm key for each side,
+ *  a warm low fill, gentle ambient, and a baked Lightformer environment (no HDR download). */
+export function StudioLights({ shadows = false }: { shadows?: boolean }) {
   return (
-    <Canvas
-      frameloop="demand"
-      dpr={quality === "high" ? [1, 2] : [1, 1.5]}
-      camera={{ position: [0, 0, DEFAULT_DISTANCE], fov: 28, near: 0.01, far: 10 }}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-      onCreated={({ gl }) => {
-        gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.12;
-      }}
-      aria-hidden
-    >
-      {/* Flattering beauty lighting, symmetric so palm and back are both well lit: a soft warm key for each side,
-          a warm low fill, and gentle ambient so the shadow side never goes muddy on the plum stage. */}
+    <>
       <ambientLight intensity={0.42} color="#fff0e6" />
-      <directionalLight position={[0.55, 0.8, 1]} intensity={1.35} color="#fff3ea" />
+      <directionalLight
+        position={[0.55, 0.8, 1]}
+        intensity={1.35}
+        color="#fff3ea"
+        castShadow={shadows}
+        // soft contact shadows between fingers, under the bangles and from the thumb onto the palm
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.0002}
+        shadow-normalBias={0.0015}
+        shadow-radius={5}
+        shadow-camera-left={-0.25}
+        shadow-camera-right={0.25}
+        shadow-camera-top={0.25}
+        shadow-camera-bottom={-0.25}
+        shadow-camera-near={0.3}
+        shadow-camera-far={3}
+      />
       <directionalLight position={[-0.55, 0.8, -1]} intensity={1.35} color="#fff3ea" />
       <directionalLight position={[-0.9, -0.4, 0.2]} intensity={0.45} color="#ffd8c4" />
       <Suspense fallback={null}>
@@ -292,6 +328,26 @@ const HandScene = forwardRef<HandSceneHandle, Props>(function HandScene(props, r
           <Lightformer form="rect" intensity={0.7} color="#d4af7c" position={[3, -1, -2]} scale={[2, 3, 1]} />
           <Lightformer form="circle" intensity={0.5} color="#ffffff" position={[0, -3, 0]} scale={2} />
         </Environment>
+      </Suspense>
+    </>
+  );
+}
+
+const HandScene = forwardRef<HandSceneHandle, Props>(function HandScene(props, ref) {
+  const { quality, interactive = true } = props;
+  return (
+    <Canvas
+      frameloop="demand"
+      dpr={quality === "high" ? [1, 2] : [1, 1.5]}
+      camera={{ position: [0, 0, DEFAULT_DISTANCE], fov: 28, near: 0.01, far: 10 }}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      onCreated={({ gl }) => {
+        gl.toneMapping = THREE.NoToneMapping; // like Photo 3D: true photo colours, no filmic desaturation
+      }}
+      aria-hidden
+    >
+      <StudioLights />
+      <Suspense fallback={null}>
         <Hand {...props} />
       </Suspense>
       <CameraRig ref={ref} onViewChange={props.onViewChange} interactive={interactive} />

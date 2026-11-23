@@ -1,6 +1,6 @@
-// "Photo 3D" try-on (mehndi-3d-tryon): photographed hands turned into a relief mesh with a height map,
-// with photo atlases per design (fresh paste and dried stain). Assets: public/tryon/ (extracted from
-// mehndi-3d-tryon/index.html). This viewer is offered side by side with the sculpted 3D hand via a switch.
+// "Photo 3D" try-on: the mehndi-3d-tryon viewer — both hands as one 3D mesh shaped from the bare-hands photo itself
+// (height map), with each design photo (fresh paste / dried stain) and the photo's own backdrop. Assets in
+// public/tryon/ (same files as mehndi-3d-tryon/data). The default viewer; the sculpted hand stays as "3D model".
 
 export type ViewerMode = "sculpted" | "photo";
 export type PhotoLook = "paste" | "stain";
@@ -38,15 +38,48 @@ export const PHOTO_TONES: Record<PhotoTone, { name: string; mul: [number, number
   deep: { name: "Deep", mul: [0.68, 0.58, 0.52], sw: "#8e5a3e" },
 };
 
+export const TONE_ORDER: PhotoTone[] = ["natural", "fair", "tan", "deep"];
+
+// ---------------------------------------------------------------- shared skin tone (both viewers, all stages)
+const TONE_KEY = "vaishora.tone";
+const TONE_EVT = "vaishora:tone";
+
+export function getSkinTone(): PhotoTone {
+  try {
+    const v = localStorage.getItem(TONE_KEY) as PhotoTone | null;
+    return v && v in PHOTO_TONES ? v : "natural";
+  } catch {
+    return "natural";
+  }
+}
+
+export function setSkinTone(t: PhotoTone) {
+  try {
+    localStorage.setItem(TONE_KEY, t);
+  } catch {
+    /* private mode */
+  }
+  window.dispatchEvent(new CustomEvent(TONE_EVT, { detail: t }));
+}
+
+export function subscribeSkinTone(cb: () => void) {
+  window.addEventListener(TONE_EVT, cb);
+  window.addEventListener("storage", cb);
+  return () => {
+    window.removeEventListener(TONE_EVT, cb);
+    window.removeEventListener("storage", cb);
+  };
+}
+
 // ---------------------------------------------------------------- shared viewer mode (all stages stay in sync)
 const KEY = "vaishora.viewer";
 const EVT = "vaishora:viewer";
 
 export function getViewerMode(): ViewerMode {
   try {
-    return localStorage.getItem(KEY) === "photo" ? "photo" : "sculpted";
+    return localStorage.getItem(KEY) === "sculpted" ? "sculpted" : "photo";
   } catch {
-    return "sculpted";
+    return "photo";
   }
 }
 

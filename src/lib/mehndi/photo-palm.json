@@ -58,5 +58,33 @@
    "desktop": "/designs/photo/minimal-palm-stain.webp",
    "mobile": "/designs/photo/minimal-palm-stain.webp"
   }
+ },
+ "back": {
+  "trail-stain": "/designs/photo/trail-back-stain.webp",
+  "trail-paste": "/designs/photo/trail-back.webp",
+  "royal-stain": "/designs/photo/royal-back-stain.webp",
+  "royal-paste": "/designs/photo/royal-back.webp",
+  "bridal-stain": "/designs/photo/bridal-back-stain.webp",
+  "bridal-paste": "/designs/photo/bridal-back.webp",
+  "arabic-stain": "/designs/photo/arabic-back-stain.webp",
+  "arabic-paste": "/designs/photo/arabic-back.webp",
+  "floral-stain": "/designs/photo/floral-back-stain.webp",
+  "floral-paste": "/designs/photo/floral-back.webp",
+  "minimal-stain": "/designs/photo/minimal-back-stain.webp",
+  "minimal-paste": "/designs/photo/minimal-back.webp"
+ },
+ "palmCodex": {
+  "trail-stain": "/designs/photo/trail-palm-cx-stain.webp",
+  "trail-paste": "/designs/photo/trail-palm-cx.webp",
+  "royal-stain": "/designs/photo/royal-palm-cx-stain.webp",
+  "royal-paste": "/designs/photo/royal-palm-cx.webp",
+  "bridal-stain": "/designs/photo/bridal-palm-cx-stain.webp",
+  "bridal-paste": "/designs/photo/bridal-palm-cx.webp",
+  "arabic-stain": "/designs/photo/arabic-palm-cx-stain.webp",
+  "arabic-paste": "/designs/photo/arabic-palm-cx.webp",
+  "floral-stain": "/designs/photo/floral-palm-cx-stain.webp",
+  "floral-paste": "/designs/photo/floral-palm-cx.webp",
+  "minimal-stain": "/designs/photo/minimal-palm-cx-stain.webp",
+  "minimal-paste": "/designs/photo/minimal-palm-cx.webp"
  }
 }

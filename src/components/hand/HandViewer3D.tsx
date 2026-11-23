@@ -5,8 +5,9 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import type { HandSceneHandle, HandView } from "./HandScene";
 import { HandIllustration } from "./HandIllustration";
 import { PhotoHandViewer } from "./PhotoHandViewer";
-import { getViewerMode, setViewerMode, subscribeViewerMode, ViewerMode } from "@/lib/photo-tryon";
-import { catalogHasStain, catalogPhotoPalm, PhotoPalmLook } from "@/lib/mehndi/photo-palm";
+import { PhotoBackdrop } from "./PhotoBackdrop";
+import { getSkinTone, getViewerMode, PHOTO_TONES, PhotoTone, setSkinTone, setViewerMode, subscribeSkinTone, subscribeViewerMode, TONE_ORDER, ViewerMode } from "@/lib/photo-tryon";
+import { catalogHasStain, catalogPhotoBack, catalogPhotoPalm, PhotoPalmLook } from "@/lib/mehndi/photo-palm";
 
 const HandScene = dynamic(() => import("./HandScene"), { ssr: false });
 
@@ -53,7 +54,7 @@ interface Props {
  * remembered on the device, so the two can be compared before deciding which to keep.
  */
 export function HandViewer3D(props: Props) {
-  const mode = useSyncExternalStore<ViewerMode>(subscribeViewerMode, getViewerMode, () => "sculpted");
+  const mode = useSyncExternalStore<ViewerMode>(subscribeViewerMode, getViewerMode, () => "photo");
   const onStage = (props.tone ?? "stage") === "stage";
   const feet = props.region === "feet";
   return (
@@ -82,12 +83,15 @@ export function HandViewer3D(props: Props) {
           </div>
         </div>
       )}
-      {mode === "photo" && !feet ? (
-        <div className="relative min-h-0 flex-1">
-          <PhotoHandViewer designSlug={props.designSlug} onStage={onStage} />
+      {!feet ? (
+        // Both tabs show the hands rebuilt in 3D from the photograph (same skin, henna and smoothness), full
+        // frame over the fixed silk backdrop; "3D model" swaps showcase/download for zoom controls.
+        <div className="absolute inset-0 z-[1]">
+          <PhotoHandViewer key={mode} designSlug={props.designSlug} onStage={onStage} variant={mode === "sculpted" ? "model" : "photo"} />
         </div>
       ) : (
-        <SculptedHandViewer {...props} className="relative min-h-0 flex-1" />
+        // same full frame as Photo 3D: fixed silk backdrop over the whole arch, controls floating on top
+        <SculptedHandViewer {...props} className="absolute inset-0 z-[1]" />
       )}
     </div>
   );
@@ -95,6 +99,7 @@ export function HandViewer3D(props: Props) {
 
 function SculptedHandViewer({ palmArt, backArt, region, designName, className = "", tone = "stage", designSlug, palmPhoto, backPhoto }: Props) {
   const [look, setLook] = useState<PhotoPalmLook>("stain");
+  const skinTone = useSyncExternalStore<PhotoTone>(subscribeSkinTone, getSkinTone, () => "natural");
   const [mode, setMode] = useState<Mode>("checking");
   const [quality, setQuality] = useState<"high" | "low">("low");
   const [ready, setReady] = useState(false);
@@ -136,7 +141,7 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
   // Real photographed palm (skin + henna) for designs that have one; the procedural mask otherwise.
   const builtInPhoto = palmPhoto ? null : catalogPhotoPalm(designSlug, look, quality);
   const photoPalm = region === "feet" ? null : palmPhoto ?? builtInPhoto;
-  const photoBack = region === "feet" ? null : backPhoto ?? null;
+  const photoBack = region === "feet" ? null : backPhoto ?? (palmPhoto ? null : catalogPhotoBack(designSlug, look));
   const showLook = mode === "3d" && !!builtInPhoto && catalogHasStain(designSlug) && region !== "feet";
 
   // Compact 44px icon buttons so the whole bar stays on one row down to 320px wide screens.
@@ -146,8 +151,9 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
   const icon = { width: 18, height: 18, viewBox: "0 0 18 18", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
 
   return (
-    <div ref={root} className={`flex flex-col ${className || "relative"}`}>
-      <div className={`hand-canvas relative flex-1 min-h-0 ${explore ? "explore" : ""}`}>
+    <div ref={root} className={className || "relative"}>
+      <PhotoBackdrop />
+      <div className={`hand-canvas absolute inset-x-0 top-12 bottom-[72px] ${explore ? "explore" : ""}`}>
         {(mode !== "3d" || !ready || showFeetNote) && (
           <div className="absolute inset-0 flex items-center justify-center p-6">
             <HandIllustration
@@ -160,11 +166,11 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
         )}
         {mode === "3d" && !showFeetNote && (
           <div className={`absolute inset-0 transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}>
-            <HandScene ref={scene} palmArt={palmArt} backArt={backArt} palmPhoto={photoPalm} backPhoto={photoBack} quality={quality} onReady={onReady} onError={onError} onViewChange={setView} />
+            <HandScene ref={scene} palmArt={palmArt} backArt={backArt} palmPhoto={photoPalm} backPhoto={photoBack} quality={quality} tone={skinTone} onReady={onReady} onError={onError} onViewChange={setView} />
           </div>
         )}
         {mode === "3d" && !ready && !showFeetNote && (
-          <p className={`absolute bottom-3 inset-x-0 text-center text-xs ${onStage ? "text-blush/70" : "text-muted"}`} role="status">
+          <p className="absolute bottom-3 inset-x-0 text-center text-xs text-plum/70" role="status">
             Loading 3D hand…
           </p>
         )}
@@ -193,9 +199,10 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
       </div>
 
       {showFeetNote ? (
-        <p className={`px-4 pb-3 text-center text-sm ${onStage ? "text-blush/80" : "text-muted"}`}>Feet designs are shown as an illustration. The 3D preview is for hands.</p>
+        <p className="absolute inset-x-0 bottom-3 mx-auto w-fit max-w-[90%] rounded-full bg-plum-deep/75 px-4 py-2 text-center text-sm text-ivory backdrop-blur-md">Feet designs are shown as an illustration. The 3D preview is for hands.</p>
       ) : (
-        <div className="relative z-10 flex flex-nowrap items-center justify-center gap-1 px-2 pb-3 sm:gap-1.5" role="toolbar" aria-label="3D hand controls">
+        <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center px-2 pb-3">
+        <div className="flex flex-nowrap items-center justify-center gap-1 rounded-[calc(var(--radius-sm)+4px)] bg-plum-deep/75 p-1 shadow-lg backdrop-blur-md sm:gap-1.5" role="toolbar" aria-label="3D hand controls">
           <div className={`inline-flex shrink-0 rounded-[var(--radius-sm)] p-0.5 ${onStage ? "bg-white/10" : "bg-blush"}`} role="radiogroup" aria-label="Hand side">
             {(["palm", "back"] as const).map((v) => (
               <button
@@ -218,12 +225,21 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
           </div>
           {mode === "3d" && (
             <>
-              {/* Below 360px the stage is too narrow for six 44px controls; pinch-zoom covers zooming there. */}
-              <button type="button" className={`${btn} max-[359px]:hidden`} onClick={() => scene.current?.zoom(0.8)} aria-label="Zoom in" title="Zoom in">
+              {/* Below 420px the stage is too narrow for seven 44px controls; pinch-zoom covers zooming there. */}
+              <button type="button" className={`${btn} max-[419px]:hidden`} onClick={() => scene.current?.zoom(0.8)} aria-label="Zoom in" title="Zoom in">
                 <svg {...icon}><path d="M9 4v10M4 9h10" /></svg>
               </button>
-              <button type="button" className={`${btn} max-[359px]:hidden`} onClick={() => scene.current?.zoom(1.25)} aria-label="Zoom out" title="Zoom out">
+              <button type="button" className={`${btn} max-[419px]:hidden`} onClick={() => scene.current?.zoom(1.25)} aria-label="Zoom out" title="Zoom out">
                 <svg {...icon}><path d="M4 9h10" /></svg>
+              </button>
+              <button
+                type="button"
+                className={btn}
+                aria-label={`Skin tone: ${PHOTO_TONES[skinTone].name}. Tap to change`}
+                title={`Skin tone: ${PHOTO_TONES[skinTone].name}`}
+                onClick={() => setSkinTone(TONE_ORDER[(TONE_ORDER.indexOf(skinTone) + 1) % TONE_ORDER.length])}
+              >
+                <span className="block h-5 w-5 rounded-full ring-2 ring-white/70" style={{ background: PHOTO_TONES[skinTone].sw }} />
               </button>
               <button
                 type="button"
@@ -249,6 +265,7 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
               </button>
             </>
           )}
+        </div>
         </div>
       )}
       {mode === "3d" && !showFeetNote && (

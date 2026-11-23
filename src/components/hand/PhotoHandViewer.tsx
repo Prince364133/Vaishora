@@ -1,25 +1,36 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import type { PhotoSceneHandle } from "./PhotoHandScene";
-import { PHOTO_MATCH, PHOTO_PRESETS, PHOTO_TONES, PhotoLook, PhotoPresetId, PhotoTone } from "@/lib/photo-tryon";
+import type { ModelSceneHandle } from "./ModelHandScene";
+import { PhotoBackdrop } from "./PhotoBackdrop";
+import { getSkinTone, PHOTO_MATCH, PHOTO_PRESETS, PHOTO_TONES, PhotoLook, PhotoPresetId, PhotoTone, setSkinTone, subscribeSkinTone, TONE_ORDER } from "@/lib/photo-tryon";
+
+/** Height kept clear for the floating toolbar + label (px); the 3D view centres the hands above it. */
+const TOOLBAR_SPACE = 76;
 
 const PhotoHandScene = dynamic(() => import("./PhotoHandScene"), { ssr: false });
-
-const TONE_ORDER: PhotoTone[] = ["natural", "fair", "tan", "deep"];
+const ModelHandScene = dynamic(() => import("./ModelHandScene"), { ssr: false });
 
 /** "Photo 3D" viewer: photographed hands with photo mehndi, mapped from the selected catalogue design. */
-export function PhotoHandViewer({ designSlug, onStage = true }: { designSlug?: string; onStage?: boolean }) {
+/** `variant="model"` is the "3D model" tab: the same hands as a closed 3D model built from the photo, turning 360°. */
+export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" }: { designSlug?: string; onStage?: boolean; variant?: "photo" | "model" }) {
   const match = designSlug ? PHOTO_MATCH[designSlug] : undefined;
   // A manual pick applies only to the design it was made on; a new catalogue design resets it.
   const [pick, setPick] = useState<{ slug?: string; id: PhotoPresetId } | null>(null);
   const preset: PhotoPresetId = pick && pick.slug === designSlug ? pick.id : match?.id ?? "royal";
   const [look, setLook] = useState<PhotoLook>("stain");
-  const [tone, setTone] = useState<PhotoTone>("natural");
+  const tone = useSyncExternalStore<PhotoTone>(subscribeSkinTone, getSkinTone, () => "natural");
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const scene = useRef<PhotoSceneHandle>(null);
+  const model = useRef<ModelSceneHandle>(null);
+  const [side, setSide] = useState<"palm" | "back">("palm");
+  const isModel = variant === "model";
+  const ctl = (): PhotoSceneHandle | null => (isModel ? model.current : scene.current);
+  const [showcase, setShowcase] = useState(false);
+  const onShowcaseEnd = useCallback(() => setShowcase(false), []);
   const onReady = useCallback(() => setReady(true), []);
   const onError = useCallback(() => setFailed(true), []);
 
@@ -31,28 +42,37 @@ export function PhotoHandViewer({ designSlug, onStage = true }: { designSlug?: s
   }`;
 
   return (
-    <div className="absolute inset-0 flex flex-col">
-      <div className="relative min-h-0 flex-1">
+    <div className="absolute inset-0">
+      <div className="absolute inset-0">
         {failed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={thumb} alt={`${presetName} mehndi on photographed hands`} className="absolute inset-0 m-auto h-full w-auto object-contain p-4" />
         ) : (
           <div className={`absolute inset-0 transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}>
-            <PhotoHandScene ref={scene} preset={preset} look={bare ? "paste" : look} tone={tone} onReady={onReady} onError={onError} />
+            {isModel ? (
+              <>
+                <PhotoBackdrop />
+                <ModelHandScene ref={model} insetBottom={TOOLBAR_SPACE} preset={preset} look={bare ? "paste" : look} tone={tone} showcase={showcase} onShowcaseEnd={onShowcaseEnd} onReady={onReady} onError={onError} />
+              </>
+            ) : (
+              <PhotoHandScene ref={scene} insetBottom={TOOLBAR_SPACE} preset={preset} look={bare ? "paste" : look} tone={tone} showcase={showcase} onShowcaseEnd={onShowcaseEnd} onReady={onReady} onError={onError} />
+            )}
           </div>
         )}
         {!ready && !failed && (
-          <p className={`absolute inset-x-0 bottom-3 text-center text-xs ${onStage ? "text-blush/70" : "text-muted"}`} role="status">
-            Loading photo 3D…
+          <p className="absolute inset-x-0 bottom-20 text-center text-xs text-plum/70" role="status">
+            {isModel ? "Loading 3D model…" : "Loading photo 3D…"}
           </p>
         )}
-        <p className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center px-4">
+        <p className="pointer-events-none absolute inset-x-0 bottom-[4.25rem] flex justify-center px-4">
           <span className="rounded-full bg-plum-deep/80 px-3 py-1 text-center text-[0.72rem] text-ivory backdrop-blur-sm">
           {bare ? "Bare hands" : `${presetName}${match && !match.exact && !pick ? " — closest photo look" : ""} · ${look === "stain" ? "dried stain" : "fresh paste"}`}
           </span>
         </p>
       </div>
-      <div className="relative z-10 flex flex-nowrap items-center justify-center gap-1 px-2 pb-3 sm:gap-1.5" role="toolbar" aria-label="Photo 3D controls">
+      {/* floating over the photo backdrop, on a soft plum pill so the controls read on the light silk */}
+      <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center px-2 pb-3">
+      <div className="flex flex-nowrap items-center justify-center gap-1 rounded-[calc(var(--radius-sm)+4px)] bg-plum-deep/75 p-1 shadow-lg backdrop-blur-md sm:gap-1.5" role="toolbar" aria-label={isModel ? "3D hand controls" : "Photo 3D controls"}>
         <div className={`inline-flex shrink-0 rounded-[var(--radius-sm)] p-0.5 ${onStage ? "bg-white/10" : "bg-blush"}`} role="radiogroup" aria-label="Henna look">
           {(["paste", "stain"] as const).map((l) => (
             <button
@@ -75,14 +95,14 @@ export function PhotoHandViewer({ designSlug, onStage = true }: { designSlug?: s
           className={btn}
           aria-label={`Skin tone: ${PHOTO_TONES[tone].name}. Tap to change`}
           title={`Skin tone: ${PHOTO_TONES[tone].name}`}
-          onClick={() => setTone(TONE_ORDER[(TONE_ORDER.indexOf(tone) + 1) % TONE_ORDER.length])}
+          onClick={() => setSkinTone(TONE_ORDER[(TONE_ORDER.indexOf(tone) + 1) % TONE_ORDER.length])}
         >
           <span className="block h-5 w-5 rounded-full ring-2 ring-white/70" style={{ background: PHOTO_TONES[tone].sw }} />
         </button>
         <label className="sr-only" htmlFor="photo-look-select">Photo design</label>
         <select
           id="photo-look-select"
-          className={`${btn} w-[7.5rem] cursor-pointer appearance-none truncate text-left`}
+          className={`${btn} w-[7.5rem] max-[419px]:w-[6.5rem] cursor-pointer appearance-none truncate text-left`}
           value={preset}
           onChange={(e) => setPick({ slug: designSlug, id: e.target.value as PhotoPresetId })}
         >
@@ -92,12 +112,74 @@ export function PhotoHandViewer({ designSlug, onStage = true }: { designSlug?: s
             </option>
           ))}
         </select>
-        <button type="button" className={btn} aria-label="Reset view" title="Reset view" onClick={() => scene.current?.reset()}>
+        {isModel ? (
+          <>
+            <button
+              type="button"
+              className={btn}
+              aria-label={side === "palm" ? "Turn to the back of the hands" : "Turn to the palms"}
+              title={side === "palm" ? "Show back" : "Show palms"}
+              onClick={() => {
+                const next = side === "palm" ? "back" : "palm";
+                setShowcase(false);
+                setSide(next);
+                model.current?.turn(next);
+              }}
+            >
+              {side === "palm" ? "Back" : "Palm"}
+            </button>
+            <button
+              type="button"
+              className={`${btn} max-[419px]:hidden ${showcase ? (onStage ? "!bg-ivory !text-plum" : "!bg-plum !text-ivory") : ""}`}
+              aria-pressed={showcase}
+              aria-label="Spin 360°"
+              title="Spin 360°"
+              onClick={() => setShowcase((v) => !v)}
+            >
+              360°
+            </button>
+            <button type="button" className={`${btn} max-[639px]:hidden`} aria-label="Zoom in" title="Zoom in" onClick={() => model.current?.zoom(0.8)}>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden><path d="M9 4v10M4 9h10" /></svg>
+            </button>
+            <button type="button" className={`${btn} max-[639px]:hidden`} aria-label="Zoom out" title="Zoom out" onClick={() => model.current?.zoom(1.25)}>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden><path d="M4 9h10" /></svg>
+            </button>
+          </>
+        ) : (
+          <>
+        <button
+          type="button"
+          className={`${btn} max-[419px]:hidden ${showcase ? (onStage ? "!bg-ivory !text-plum" : "!bg-plum !text-ivory") : ""}`}
+          aria-pressed={showcase}
+          aria-label="Showcase: gentle automatic turn"
+          title="Showcase"
+          onClick={() => setShowcase((v) => !v)}
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M14.5 9A5.5 5.5 0 1 1 9 3.5c1.8 0 3.3.8 4.3 2" />
+            <path d="M13.8 2.8v2.9h-2.9" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          className={`${btn} max-[419px]:hidden`}
+          aria-label="Download image"
+          title="Download image"
+          onClick={() => ctl()?.download(`vaishora-mehndi-${preset}${bare ? "" : `-${look}`}.png`)}
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M9 3v8.5M5.5 8 9 11.5 12.5 8M3.5 14.5h11" />
+          </svg>
+        </button>
+          </>
+        )}
+        <button type="button" className={btn} aria-label="Reset view" title="Reset view" onClick={() => { setShowcase(false); setSide("palm"); ctl()?.reset(); }}>
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
             <path d="M3.5 9a5.5 5.5 0 1 0 1.6-3.9" />
             <path d="M3 3.5v3h3" />
           </svg>
         </button>
+      </div>
       </div>
     </div>
   );
