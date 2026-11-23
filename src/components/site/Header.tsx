@@ -34,6 +34,9 @@ export function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <Link href="/account" className="btn btn-ghost btn-sm hidden px-3 text-sm sm:inline-flex">
+            My bookings
+          </Link>
           <Link href="/designs" className="btn btn-primary btn-sm hidden sm:inline-flex">
             Book an artist
           </Link>

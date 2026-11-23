@@ -71,5 +71,8 @@ with sync_playwright() as p:
     pg.screenshot(path=f"{out}/e2e-confirmed.png", full_page=True)
     print('final status OK; url', pg.url)
     with open(f"{out}/last-booking-url.txt", "w") as f: f.write(pg.url)
+    pg.goto(f"{base}/account", wait_until='networkidle')
+    expect(pg.get_by_text(code.strip()).first).to_be_visible(timeout=15000)
+    print('My bookings lists', code.strip())
     print('page errors:', errors[:5])
     b.close()

@@ -3,6 +3,20 @@
 Environment: Windows 11, Node 24, Chromium (Playwright 1.65) with hardware GPU (ANGLE D3D11) and device emulation;
 production checks on `next build && next start` with an isolated database. **Not tested on physical phones or Safari/iOS.**
 
+## Second iteration — results (2026-11-23)
+
+- Vitest: **31/31** (adds 180 webhook signature tests; integration tests now book as signed-in customers).
+- `tsc`, ESLint: clean. Production build: 46/46 pages.
+- E2E booking (390px): browse without account → when & where → guest details → pay (mock) fail → retry → success →
+  “Awaiting artist confirmation”. ✅
+- E2E production QA: no fake availability, admin price change live, honest “payment not configured”, admin pages,
+  all public pages 200 with no overflow at 390px. ✅
+- No-WebGL fallback with the new photographic hand. ✅
+- Video row: each scroll step mounts exactly one player in order; no overflow. ✅
+- Mobile sweep (agent): no horizontal overflow at 320/360/375/390/412/430/768 and 844×390 landscape.
+- 180 Identity / 180 Pay: **not testable live** — login disabled for the app (403), checkout in maintenance.
+- Known: running `next build` while `next dev` holds the embedded dev database aborts prerendering; use a separate `PGLITE_DIR`.
+
 ## Automated tests
 
 | Suite | Result |

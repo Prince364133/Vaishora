@@ -99,6 +99,22 @@ browser                         server                                    Razorp
 - The mock provider is selectable only when `PAYMENT_PROVIDER=mock` **and** `NODE_ENV !== "production"`; its route returns
   404 otherwise (verified on a production build).
 
+## Customer accounts and 180 Core
+
+- Browsing, pricing and slot selection need no account. At checkout the customer signs in through the **180 Identity**
+  bottom sheet; the browser forwards only the authorization code / ID token to `POST /api/auth/180`, which exchanges the
+  code with the client secret (or verifies the RS256 ID token against 180's JWKS: issuer, audience = our client id,
+  expiry). The sheet's unsigned `user` object is never trusted. A `customer_sessions` cookie (httpOnly, 30 days) follows.
+- A one-time quick profile collects name, phone, email, gender and address (`PUT /api/account`). `POST /api/bookings`
+  requires a session with a complete profile and takes customer details from the account, not the request.
+- While 180 login is disabled, `POST /api/auth/guest` creates the session from submitted details. Submitted details
+  always overwrite the stored ones (no reading someone else's saved address); numbers linked to a 180 account must sign in.
+- **180 Pay**: `/api/payments/order` returns an order reference; the browser opens the 180 checkout sheet (amount in
+  rupees); `/api/payments/verify` fetches the 180 session server-side and requires our client id, PAID status, INR and the
+  exact advance amount. The session id is stored as `provider_payment_id` (unique), so one payment confirms one booking.
+  Sandbox sessions are rejected in production. `/api/webhooks/180pay` verifies `x-180-signature` (HMAC-SHA256, optional
+  timestamp, 300 s tolerance) and re-verifies through the session API.
+
 ## Security model
 
 | Concern | Implementation |

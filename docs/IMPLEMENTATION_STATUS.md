@@ -1,4 +1,17 @@
-# Implementation status — 2026-11-23
+# Implementation status — 2026-11-23 (updated after the second iteration)
+
+## Second iteration (this update)
+
+| Request | Status |
+|---|---|
+| Realistic hand + real-looking mehndi | **Done.** CC0 MakeHuman hand with an Indian female skin texture, built headless in Blender (`scripts/hand-real/build.sh`); cone-drawn artwork; stain shader; photographic thumbnails. See `docs/HAND_REALISM.md`. |
+| Mobile responsiveness | **Done.** Root cause of the broken mobile view: the header's `backdrop-filter` collapsed the phone menu. Plus tap targets, sticky bars, landscape and admin card layouts. No horizontal overflow at 320–768px. |
+| Video row (5 links), plays one by one on scroll | **Done.** Sticky row driven by page scroll, swipeable, one player at a time, YouTube auto-advance. The videos belong to other creators (Lashes Beauty Parlour, Naina Goyal Mehandi, Rukaiya Mehendi House, an Instagram reel, Mehndi Designs Collection), so they are credited, not labelled as VAISHORA customers. Config: `src/lib/showcase-videos.ts`. |
+| Reviews on the website | **Done (real reviews only).** Customers review completed bookings; admins record reviews genuinely received elsewhere, with a link or evidence note; moderation at `/admin/reviews`. Shows nothing until real reviews exist. |
+| 180 Identity sign-in + 180 Pay checkout (their own sheets) | **Built, blocked on 180's side.** Login returns 403 "180 Identity Authentication is disabled for application 'Vaishora'"; 180 Pay checkout was under scheduled maintenance. Enable both in the 180 developer portal, set `NEXT_PUBLIC_180_IDENTITY` (not `off`), `PAYMENT_PROVIDER=180pay`, `ONE_EIGHTY_WEBHOOK_SECRET`. Spec: `docs/integrations/180CORE.md`. |
+| Account only at checkout (name, phone, email, gender, address) | **Done.** “My bookings” page at `/account`. Browse and pick a slot freely; checkout asks for sign-in (180) or, while 180 login is off, a one-time guest details form. Bookings require a complete profile server-side. |
+| One ad video from the two scripts, aimed at prepaid bookings | **Draft done; final render with the realistic hand in progress.** Analysis, final script ("Rate pehle, slot pakka"), Veo prompt pack and build pipeline in `marketing/ad/`. Voice licence must be confirmed before paid use (see `marketing/ad/FINAL_SCRIPT.md`). |
+| Push to GitHub | **Done** — `github.com/Prince364133/Vaishora` (`main`). Private research notes and generated ad media are not tracked. Note: an earlier commit (`f11c886`, made by another session) contains `research/reseach.txt` in the public history. |
 
 ## Completed (built and tested)
 
@@ -39,9 +52,8 @@
 
 | Item | State | What is missing |
 |---|---|---|
-| Realistic hand | Smooth, well-proportioned stylised hand with shader skin and nails | Photoreal licensed model with skin textures (see “Assets still needed”) |
-| Razorpay | Fully implemented to documented spec, unit/integration tested via the same verification path | Live test-mode run with real keys and webhooks |
-| Reviews | Schema, display (only published, only from bookings), artist rating aggregation | Customer review submission form after completion + admin moderation screen |
+| Realistic hand | Photoreal CC0 hand; skin texture is ~400px across the hand, so extreme close-ups are soft | A commercial hand scan (e.g. V-ARM 03) drops into the same pipeline |
+| Payments | 180 Pay (primary, pending 180 enabling it) and Razorpay (fallback) implemented with server-side verification | Live run once 180 Pay is out of maintenance, or Razorpay test keys |
 | Notifications | Rows queued on payment (`notifications` table) | WhatsApp Business / SMS provider integration and a sender |
 | Policies | Draft terms, privacy, cancellation/refund pages (policy page reads live settings) | Legal review |
 | Admin roles | admin and staff | Finer-grained permissions, staff user management UI (create staff via SQL/seed for now) |
@@ -50,7 +62,6 @@
 
 ## Pending
 
-- Customer OTP login / booking history across bookings (customers currently use private links or ID + phone).
 - Rescheduling flow (today: cancel + rebook or admin handles).
 - Razorpay Route / automated artist payouts and commission accounting.
 - GST invoices / receipts (PDF) once tax treatment is confirmed.
@@ -70,7 +81,7 @@
 
 ## Assets still needed
 
-- **Licensed photoreal female hand GLB** (e.g. V-ARM 02, ≈US$35 standard licence — confirm web redistribution rights).
+- Optional: a commercial high-resolution hand scan for sharper close-ups (current hand is CC0 and photoreal at normal viewing distance).
 - Real artist photos and portfolio images (with artists’ consent).
 - Optional: commissioned mehndi artwork from VAISHORA artists (upload as transparent PNG via admin).
 - Brand: an SVG version of the logo (current marks are extracted from the PNG).

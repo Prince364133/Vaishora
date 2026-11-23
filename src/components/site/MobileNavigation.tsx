@@ -79,6 +79,9 @@ export function MobileNavigation({ items }: { items: { href: string; label: stri
                 </li>
               ))}
               <li>
+                <Link href="/account" onClick={close} className="flex min-h-14 items-center border-b hairline font-display text-[1.65rem] text-plum">
+                  My bookings
+                </Link>
                 <Link href="/become-an-artist" onClick={close} className="flex min-h-14 items-center border-b hairline font-display text-[1.65rem] text-plum">
                   Become an artist
                 </Link>

@@ -9,11 +9,17 @@ def book_until_slots(pg):
     pg.goto(f"{base}/book/minimal-arabic-trail", wait_until='networkidle')
     pg.get_by_role('button', name='Continue').click()
     pg.get_by_role('button', name='Continue').click()
-    pg.get_by_label('Your name').fill('QA Customer'); pg.get_by_label('Mobile number').fill('9123456780')
-    pg.get_by_label('Service address').fill('House 12, QA Lane, Phase 2'); pg.get_by_label('Locality').select_option(label='Kondapur')
-    pg.get_by_role('button', name='Continue').click()
+    pg.get_by_label('Your locality in Hyderabad').select_option(label='Kondapur')
     pg.get_by_role('radiogroup', name='Date').get_by_role('radio').nth(2).click()
     pg.wait_for_timeout(2500)
+
+def guest_details(pg):
+    expect(pg.get_by_role('heading', name='A few details for your artist')).to_be_visible(timeout=15000)
+    pg.get_by_label('Full name').fill('QA Customer'); pg.get_by_label('Mobile number').fill('9123456780')
+    pg.get_by_label('Email').fill('qa.customer@example.com'); pg.get_by_role('radio', name='Female').click()
+    pg.get_by_label('Address where the artist should come').fill('House 12, QA Lane, Phase 2')
+    pg.get_by_role('button', name='Save and continue').click()
+    expect(pg.get_by_role('heading', name='Review and pay')).to_be_visible(timeout=15000)
 
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
@@ -43,8 +49,9 @@ with sync_playwright() as p:
     book_until_slots(pg)
     pg.locator('[aria-label="Start time"] button:not([disabled])').first.click()
     pg.get_by_role('button', name='Continue').click()
+    guest_details(pg)
     pg.get_by_role('checkbox', name=re.compile('I have read and accept')).check()
-    pg.get_by_role('button', name=re.compile('Continue to pay')).click()
+    pg.get_by_role('button', name=re.compile(r'^Pay .* advance')).click()
     pg.wait_for_url(re.compile('/booking/'), timeout=20000)
     pg.get_by_role('button', name=re.compile(r'^Pay ')).click()
     expect(pg.get_by_text(re.compile('Online payment is not configured yet'))).to_be_visible(timeout=15000)
@@ -55,7 +62,7 @@ with sync_playwright() as p:
     for path in ['/admin', '/admin/bookings', '/admin/artists', '/admin/customers', '/admin/pricing']:
         a.goto(base + path); a.wait_for_load_state('networkidle'); assert a.locator('h1').count() >= 1, path
     a.goto(base + '/admin'); a.screenshot(path=f"{out}/admin-dashboard.png", full_page=True)
-    a.goto(base + '/admin/bookings'); a.locator('table a').first.click(); a.wait_for_load_state('networkidle'); a.screenshot(path=f"{out}/admin-booking.png", full_page=True)
+    a.goto(base + '/admin/bookings'); a.locator('table a:visible').first.click(); expect(a.locator('h1:visible').first).to_contain_text('VSH-', timeout=20000); a.screenshot(path=f"{out}/admin-booking.png", full_page=True)
     print('4. admin pages render')
     # 5. Public pages
     for path in ['/', '/designs', '/designs/royal-bridal', '/artists', '/artists/demo-artist-a', '/contact', '/become-an-artist', '/terms', '/privacy', '/cancellation-refund', '/about', '/booking/find']:
