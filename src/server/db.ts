@@ -117,6 +117,18 @@ export function getDb(): Promise<Db> {
       const url = process.env.DATABASE_URL;
       const db = url ? await createPostgres(url) : await createPglite();
       if (!url || process.env.DATABASE_AUTO_MIGRATE === "true") await migrate(db);
+      if (!url && process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
+        try {
+          const counts = await db.query<{ count: string }>("SELECT count(*) FROM design_categories");
+          if (Number(counts[0]?.count ?? 0) === 0) {
+            const { seedDatabase } = await import("./seed");
+            await seedDatabase(db, { demo: true, adminPassword: process.env.ADMIN_PASSWORD || "admin123" });
+            console.info("[db] auto-seeded initial catalogue, admin user and demo artists");
+          }
+        } catch (err) {
+          console.warn("[db] auto-seed check skipped:", err);
+        }
+      }
       g.__vaishoraMigSig = migrationSignature();
       return db;
     })().catch((e) => {

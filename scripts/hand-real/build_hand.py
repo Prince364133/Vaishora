@@ -58,15 +58,15 @@ for name, w in [
     ("mindfront_hand_fingers_correction", 1.0),
     ("mindfront_hand_thenar_eminence", 0.6),
     ("mindfront_hand_hypothenar", 0.5),
-    ("jujube_knobby_knuckles", 0.25),
+    # (no "knobby knuckles": hand-model castings ask for smooth, non-prominent knuckles)
 ]:
     p = user_targets / f"{name}.target"
     if p.exists():
         TargetService.load_target(human, str(p), weight=w, name=name)
     else:
         print("WARN missing target", p)
-# Slightly slimmer, longer fingers: typical of the reference photos and of hand models.
-for name, w in [("r-hand-fingers-diameter-decr", 0.35), ("r-hand-fingers-length-incr", 0.25)]:
+# Slim, long fingers (hand-model proportions; see docs/HAND_REALISM.md §6). Extra tip taper is applied below.
+for name, w in [("r-hand-fingers-diameter-decr", 0.45), ("r-hand-fingers-length-incr", 0.35), ("r-hand-scale-decr", 0.1)]:
     p = MPFB_ROOT / "data" / "targets" / "hands" / f"{name}.target.gz"
     TargetService.load_target(human, str(p), weight=w, name=name)
 
@@ -82,6 +82,13 @@ for v in human.data.vertices:
             w = g.weight
     nail_attr.data[v.index].value = w
 
+# Per-finger skin weights as point attributes (used to taper the fingers after posing).
+for k in range(1, 6):
+    idx = {human.vertex_groups[f"finger{k}-{j}.R"].index for j in (1, 2, 3)}
+    at = human.data.attributes.new(f"f{k}", "FLOAT", "POINT")
+    for v in human.data.vertices:
+        at.data[v.index].value = min(1.0, sum(g.weight for g in v.groups if g.group in idx))
+
 # ---------------------------------------------------------------- 2. pose (open, relaxed, slightly spread)
 bpy.context.view_layer.objects.active = rig
 bpy.ops.object.mode_set(mode="POSE")
@@ -96,19 +103,21 @@ def rot(bone, axis, deg):
     b.rotation_euler = r
 
 
-# Relax the curl a little so palm and back both read well, keep a natural bend at the joints.
+# Elegant relaxed pose (jewellery / mehndi photography): a gentle cascade of curl from index to pinky, fingers
+# softly fanned, thumb relaxed towards the palm. Kept moderate so palm and back stay readable for the artwork.
 for f, (a1, a2, a3) in {
-    "finger2": (-6, -5, -3),
-    "finger3": (-6, -5, -3),
-    "finger4": (-5, -5, -3),
-    "finger5": (-4, -4, -3),
+    "finger2": (-4, 2, 2),
+    "finger3": (-3, 4, 3),
+    "finger4": (0, 6, 5),
+    "finger5": (3, 9, 7),
 }.items():
     rot(f"{f}-1.R", "X", a1)
     rot(f"{f}-2.R", "X", a2)
     rot(f"{f}-3.R", "X", a3)
-# Fan the fingers apart (local Z is the spread axis on this rig).
-for f, s in {"finger2": 4, "finger3": 0, "finger4": -4, "finger5": -9}.items():
+for f, s in {"finger2": 5, "finger3": 0, "finger4": -5, "finger5": -11}.items():
     rot(f"{f}-1.R", "Z", s)
+rot("finger1-2.R", "X", 4)
+rot("finger1-3.R", "X", 6)
 bpy.ops.object.mode_set(mode="OBJECT")
 bpy.context.view_layer.update()
 
@@ -159,6 +168,32 @@ while stack:
             keep.add(o)
             stack.append(o)
 bmesh.ops.delete(bm, geom=[v for v in bm.verts if v not in keep], context="VERTS")
+
+# Taper the fingers: shrink the radial distance from each finger's axis progressively towards the tip, giving the
+# slender, tapered fingers of hand models (base 1.0 -> tip 0.89 of the MakeHuman width).
+chains = {1: ("finger1-2.R", "finger1-3.R"), 2: ("finger2-1.R", "finger2-3.R"), 3: ("finger3-1.R", "finger3-3.R"),
+          4: ("finger4-1.R", "finger4-3.R"), 5: ("finger5-1.R", "finger5-3.R")}
+flayers = {k: bm.verts.layers.float.get(f"f{k}") for k in chains}
+nail_l = bm.verts.layers.float.get("nail")
+free_l = bm.verts.layers.float.new("freeedge")
+for v in bm.verts:
+    for k, (b0, b1) in chains.items():
+        w = v[flayers[k]]
+        if w <= 0.02:
+            continue
+        a0 = J(b0)
+        a1 = J(b1, tail=True)
+        ax = a1 - a0
+        L = ax.length
+        t = max(0.0, min(1.0, (v.co - a0).dot(ax) / (L * L)))
+        c = a0 + ax * t
+        radial = v.co - c
+        scale = 1.0 - 0.11 * t
+        v.co = v.co - radial * (1.0 - scale) * min(1.0, w * 1.2)
+    # nail free edge: the part of the nail plate within ~3.5 mm of the fingertip
+    if v[nail_l] > 0.05:
+        dmin = min((v.co - J(b1, tail=True)).length for (_, b1) in chains.values())
+        v[free_l] = max(0.0, min(1.0, (0.0045 - dmin) / 0.002)) * v[nail_l]
 bm.transform(R)
 bm.to_mesh(me)
 bm.free()
@@ -216,6 +251,8 @@ skin_img = bpy.data.images.load(SKIN_PNG)
 
 def bake(kind, size=2048):
     img = bpy.data.images.new(kind, size, size, alpha=False)
+    if kind != "albedo":
+        img.colorspace_settings.name = "Non-Color"  # data maps: store values linearly
     mat = bpy.data.materials.new(kind)
     mat.use_nodes = True
     nt = mat.node_tree
@@ -231,9 +268,17 @@ def bake(kind, size=2048):
         uvn.uv_map = "body"
         nt.links.new(uvn.outputs[0], tex.inputs[0])
         nt.links.new(tex.outputs[0], em.inputs[0])
+    elif kind == "normal_os":
+        geo = nt.nodes.new("ShaderNodeNewGeometry")
+        vm = nt.nodes.new("ShaderNodeVectorMath")
+        vm.operation = "MULTIPLY_ADD"
+        vm.inputs[1].default_value = (0.5, 0.5, 0.5)
+        vm.inputs[2].default_value = (0.5, 0.5, 0.5)
+        nt.links.new(geo.outputs["Normal"], vm.inputs[0])
+        nt.links.new(vm.outputs[0], em.inputs[0])
     else:
         at = nt.nodes.new("ShaderNodeAttribute")
-        at.attribute_name = "nail"
+        at.attribute_name = "nail" if kind == "nails" else "freeedge"
         nt.links.new(at.outputs["Fac"], em.inputs[0])
     target = nt.nodes.new("ShaderNodeTexImage")
     target.image = img
@@ -254,6 +299,8 @@ def bake(kind, size=2048):
 
 albedo = bake("albedo")
 bake("nails")
+bake("freeedge")
+bake("normal_os")
 
 # ---------------------------------------------------------------- 7. joints (WebXR names) + export
 JOINTS = {"wrist": ("wrist.R", False)}
@@ -283,7 +330,7 @@ def export(ob, path):
     for uvl in list(ob.data.uv_layers):
         if uvl.name != "hand":
             ob.data.uv_layers.remove(uvl)
-    for at in [a.name for a in ob.data.attributes if a.name == "nail"]:
+    for at in [a.name for a in ob.data.attributes if a.name in ("nail", "freeedge", "f1", "f2", "f3", "f4", "f5")]:
         ob.data.attributes.remove(ob.data.attributes[at])
     ob.data.materials.clear()
     for o in scene.objects:
