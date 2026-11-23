@@ -72,9 +72,43 @@ async function createPostgres(rawUrl: string): Promise<Db> {
 async function createPglite(): Promise<Db> {
   const { PGlite } = await import("@electric-sql/pglite");
   const { btree_gist } = await import("@electric-sql/pglite/contrib/btree_gist");
-  const dir = process.env.PGLITE_DIR ?? path.join(process.cwd(), ".data", "pglite");
-  if (dir !== "memory://") fs.mkdirSync(dir, { recursive: true });
-  const pg = await PGlite.create(dir, { extensions: { btree_gist } });
+  const base = process.env.PGLITE_DIR ?? path.join(process.cwd(), ".data", "pglite");
+  // After a recovery the active database may live in another folder, recorded in `<base>.current`.
+  let dir = base;
+  try {
+    const current = fs.readFileSync(`${base}.current`, "utf8").trim();
+    if (current && fs.existsSync(current)) dir = current;
+  } catch {
+    /* no pointer: use the base folder */
+  }
+  if (dir !== "memory://") {
+    fs.mkdirSync(dir, { recursive: true });
+    acquireLock(base);
+  }
+  let pg: InstanceType<typeof PGlite>;
+  try {
+    pg = await PGlite.create(dir, { extensions: { btree_gist } });
+  } catch (e) {
+    // A local database left damaged (e.g. two servers wrote to it, or a process was killed
+    // mid-write) aborts on open. In development, keep it as a backup and start fresh; the
+    // auto-seed below refills the catalogue, admin and demo data.
+    if (dir === "memory://" || process.env.NODE_ENV === "production") throw e;
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    try {
+      fs.renameSync(dir, `${base}-damaged-${stamp}`);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.rmSync(`${base}.current`, { force: true });
+      if (dir !== base) dir = base;
+    } catch {
+      // Windows keeps the damaged files open in this process: start fresh in a new folder and
+      // point future starts at it. The damaged folder can be deleted once the server stops.
+      dir = `${base}-${stamp}`;
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(`${base}.current`, dir);
+    }
+    console.warn(`[db] local database could not be opened (${(e as Error).message}); started a fresh one at ${dir}`);
+    pg = await PGlite.create(dir, { extensions: { btree_gist } });
+  }
   // PGlite is single-connection and serialises queries/transactions internally.
   const exec = async <T,>(q: { query: typeof pg.query; exec: typeof pg.exec }, sql: string, params?: unknown[]) => {
     if (!params?.length && /;\s*\S/.test(sql.trim())) {
@@ -95,6 +129,44 @@ async function createPglite(): Promise<Db> {
     },
   };
   return db;
+}
+
+/**
+ * PGlite is single-process: two servers writing to one directory corrupt it. A lock file next to
+ * the database records the owning process; a second live process gets a clear error instead.
+ */
+function acquireLock(dir: string) {
+  // `next build` prerenders in several worker processes that only read; don't lock there.
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
+  const lock = `${dir}.lock`;
+  let owner = 0;
+  try {
+    owner = Number(fs.readFileSync(lock, "utf8")) || 0;
+  } catch {
+    owner = 0;
+  }
+  if (owner && owner !== process.pid) {
+    let alive = false;
+    try {
+      process.kill(owner, 0);
+      alive = true;
+    } catch {
+      alive = false; // stale lock from a process that has exited
+    }
+    if (alive) {
+      throw new Error(
+        `The local database ${dir} is already used by another process (pid ${owner}). Stop that dev server, or give this one its own database with PGLITE_DIR=.data/pglite-2`,
+      );
+    }
+  }
+  fs.writeFileSync(lock, String(process.pid));
+  process.once("exit", () => {
+    try {
+      if (Number(fs.readFileSync(lock, "utf8")) === process.pid) fs.unlinkSync(lock);
+    } catch {
+      /* already gone */
+    }
+  });
 }
 
 const g = globalThis as unknown as { __vaishoraDb?: Promise<Db>; __vaishoraMigSig?: string };
