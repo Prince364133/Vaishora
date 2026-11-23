@@ -12,7 +12,7 @@ export function Logo({ className = "" }: { className?: string }) {
   return (
     <Link href="/" className={`flex min-h-11 items-center gap-2.5 ${className}`} aria-label="VAISHORA home">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/emblem.png" alt="" width={30} height={28} className="h-7 w-auto" />
+      <img src="/brand/emblem.png" alt="" width={38} height={28} className="h-7 w-auto" />
       <span className="wordmark h-[14px] w-[124px] min-[360px]:h-[15px] min-[360px]:w-[136px]" aria-hidden />
     </Link>
   );

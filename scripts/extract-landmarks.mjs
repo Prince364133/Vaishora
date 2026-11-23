@@ -18,12 +18,23 @@ new GLTFLoader().parse(ab, "", (gltf) => {
   gltf.scene.traverse((o) => o.isMesh && (mesh = o));
   const g = mesh.geometry;
   g.computeBoundingBox();
-  const bb = g.boundingBox;
+  const armMaxY = g.boundingBox.max.y;
+  // The projection frame covers the hand region only (fingertips → 8.5 cm below the wrist joint, which sits at
+  // y = 0). The long forearm beyond it is mostly out of frame and gets no artwork, so it must not dilute the frame.
+  const bb = new THREE.Box3();
+  {
+    const p = g.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      if (v.y <= 0.085) bb.expandByPoint(v);
+    }
+  }
   const size = Math.max(bb.max.y - bb.min.y, bb.max.z - bb.min.z) * 1.04;
   const cy = (bb.max.y + bb.min.y) / 2;
   const cz = (bb.max.z + bb.min.z) / 2;
   // Projection frame shared with the shader (src/components/hand/mehndiMaterial.ts)
-  const frame = { axisU: "z", axisV: "y", centerU: cz, centerV: cy, size, palmNormalX: -1, minY: bb.min.y, maxY: bb.max.y };
+  const frame = { axisU: "z", axisV: "y", centerU: cz, centerV: cy, size, palmNormalX: -1, minY: bb.min.y, maxY: bb.max.y, armMaxY };
   // SVG coords: x right, y down; fingertips at the top.
   const toPalm = (p) => [(0.5 - (p.z - cz) / size) * 1000, (0.5 - (cy - p.y) / size) * 1000];
   const toBack = (p) => [(0.5 + (p.z - cz) / size) * 1000, (0.5 - (cy - p.y) / size) * 1000];

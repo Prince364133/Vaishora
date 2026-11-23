@@ -111,6 +111,12 @@ nail_col = nail_col * (fine ** 0.15)[..., None]
 cuticle = np.clip(blurf(nm, 2) - blurf(nm, 6), 0, 1) * 1.2  # thin soft edge just outside the plate
 skin = skin + (CUTICLE[None, None] - skin) * (cuticle * 0.35)[..., None]
 albedo = skin * (1 - nm[..., None]) + nail_col * nm[..., None]
+# baked ambient occlusion (between the fingers, palm hollow, finger webs): soft, so it reads as contact shading
+ao_path = src / "ao.png"
+if ao_path.exists():
+    ao = fill_empty(load("ao.png", "L"), valid)
+    ao = blurf(ao, 2)
+    albedo = albedo * (0.35 + 0.65 * ao)[..., None] ** 0.8
 
 # ------------------------------------------------------------------ normal map
 crease = np.log(np.clip(mid, 0.6, 1.4))

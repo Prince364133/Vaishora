@@ -152,7 +152,7 @@ me = bpy.data.meshes.new_from_object(human.evaluated_get(dg), preserve_all_data_
 bm = bmesh.new()
 bm.from_mesh(me)
 arm_dir = (W - E).normalized()
-cut = E.lerp(W, 0.64)  # about 6 cm of forearm below the wrist joint
+cut = E.lerp(W, 0.22)  # most of the forearm: the end is always out of frame (no fade, no visible cut)
 bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=cut, plane_no=arm_dir, clear_inner=True)
 # keep only the connected piece that contains the middle fingertip
 tip = J("finger3-3.R", tail=True)
@@ -194,6 +194,10 @@ for v in bm.verts:
     if v[nail_l] > 0.05:
         dmin = min((v.co - J(b1, tail=True)).length for (_, b1) in chains.values())
         v[free_l] = max(0.0, min(1.0, (0.0045 - dmin) / 0.002)) * v[nail_l]
+# Close the forearm end (a rounded cap after subdivision) so no rotation ever reveals an open tube.
+boundary = [e for e in bm.edges if e.is_boundary]
+if boundary:
+    bmesh.ops.holes_fill(bm, edges=boundary, sides=0)
 bm.transform(R)
 bm.to_mesh(me)
 bm.free()
@@ -210,10 +214,47 @@ bpy.context.view_layer.objects.active = hand
 hand.select_set(True)
 uv = me.uv_layers.new(name="hand")
 me.uv_layers.active = uv
+# The hand (fingertips → ~8 cm below the wrist) gets most of the texture; the long forearm, which is mostly out of
+# frame, is unwrapped separately and shrunk so it does not dilute the hand's texel density.
+ARM_Y = 0.08  # model space: wrist joint at y = 0, forearm towards +y
+for poly in me.polygons:
+    poly.select = poly.center.y <= ARM_Y
+bpy.ops.object.mode_set(mode="EDIT")
+bpy.ops.uv.smart_project(angle_limit=math.radians(60), island_margin=0.006, area_weight=0.0, scale_to_bounds=False)
+bpy.ops.object.mode_set(mode="OBJECT")
+for poly in me.polygons:
+    poly.select = poly.center.y > ARM_Y
+bpy.ops.object.mode_set(mode="EDIT")
+bpy.ops.uv.smart_project(angle_limit=math.radians(60), island_margin=0.006, area_weight=0.0, scale_to_bounds=False)
+bpy.ops.object.mode_set(mode="OBJECT")
+uvd = me.uv_layers["hand"].data
+arm_loops = [li for poly in me.polygons if poly.center.y > ARM_Y for li in poly.loop_indices]
+hand_loops = [li for poly in me.polygons if poly.center.y <= ARM_Y for li in poly.loop_indices]
+# match texel density between the two unwraps first (smart_project normalises each call), then shrink the arm
+
+
+def uv_area(polys):
+    a = 0.0
+    for poly in polys:
+        pts = [uvd[li].uv for li in poly.loop_indices]
+        for k in range(1, len(pts) - 1):
+            a += abs((pts[k] - pts[0]).cross(pts[k + 1] - pts[0])) / 2
+    return a
+
+
+hp = [pl for pl in me.polygons if pl.center.y <= ARM_Y]
+apl = [pl for pl in me.polygons if pl.center.y > ARM_Y]
+dens_h = uv_area(hp) / sum(pl.area for pl in hp)
+dens_a = uv_area(apl) / sum(pl.area for pl in apl)
+k = math.sqrt(dens_h / dens_a) * 0.35
+for li in arm_loops:
+    uvd[li].uv = uvd[li].uv * k
 bpy.ops.object.mode_set(mode="EDIT")
 bpy.ops.mesh.select_all(action="SELECT")
-bpy.ops.uv.smart_project(angle_limit=math.radians(60), island_margin=0.006, area_weight=0.0, scale_to_bounds=True)
+bpy.ops.uv.select_all(action="SELECT")
+bpy.ops.uv.pack_islands(rotate=True, scale=True, margin=0.004)
 bpy.ops.object.mode_set(mode="OBJECT")
+print("uv density hand/arm", dens_h, dens_a, "arm scale", k, len(hand_loops))
 
 
 def subdivided(levels, name):
@@ -290,7 +331,17 @@ def bake(kind, size=2048):
         o.select_set(False)
     hq.select_set(True)
     bpy.context.view_layer.objects.active = hq
-    bpy.ops.object.bake(type="EMIT", margin=24)
+    if kind == "ao":
+        # only the HQ hand may occlude itself (the LQ / unsubdivided copies sit exactly on top of it)
+        for o in scene.objects:
+            if o is not hq:
+                o.hide_render = True
+        scene.cycles.samples = 96
+        scene.render.bake.use_selected_to_active = False
+        bpy.ops.object.bake(type="AO", margin=24)
+        scene.cycles.samples = 1
+    else:
+        bpy.ops.object.bake(type="EMIT", margin=24)
     img.filepath_raw = str(OUT / f"{kind}.png")
     img.file_format = "PNG"
     img.save()
@@ -301,6 +352,7 @@ albedo = bake("albedo")
 bake("nails")
 bake("freeedge")
 bake("normal_os")
+bake("ao")  # ambient occlusion between the fingers / in the palm hollow (multiplied into the albedo)
 
 # ---------------------------------------------------------------- 7. joints (WebXR names) + export
 JOINTS = {"wrist": ("wrist.R", False)}
@@ -327,9 +379,17 @@ for name, (bone, tail) in JOINTS.items():
 
 
 def export(ob, path):
-    for uvl in list(ob.data.uv_layers):
-        if uvl.name != "hand":
-            ob.data.uv_layers.remove(uvl)
+    # internal UV-editor selection layers (".vs.*", ".es.*", ".pn.*") are not exportable data
+    for name in [a.name for a in ob.data.attributes if a.name.startswith(".")]:
+        try:
+            ob.data.attributes.remove(ob.data.attributes[name])
+        except (KeyError, RuntimeError):
+            pass
+    for name in [u.name for u in ob.data.uv_layers if u.name != "hand"]:
+        try:
+            ob.data.uv_layers.remove(ob.data.uv_layers[name])
+        except (KeyError, RuntimeError):
+            pass
     for at in [a.name for a in ob.data.attributes if a.name in ("nail", "freeedge", "f1", "f2", "f3", "f4", "f5")]:
         ob.data.attributes.remove(ob.data.attributes[at])
     ob.data.materials.clear()

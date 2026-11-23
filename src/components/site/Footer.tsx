@@ -44,7 +44,7 @@ export function Footer() {
         <div className="col-span-2 max-w-xs md:col-span-1">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/emblem.png" alt="" width={44} height={42} className="h-11 w-auto" />
+            <img src="/brand/emblem.png" alt="" width={60} height={44} className="h-11 w-auto" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/wordmark.png" alt="VAISHORA" width={160} height={18} className="h-[18px] w-auto" />
           </div>

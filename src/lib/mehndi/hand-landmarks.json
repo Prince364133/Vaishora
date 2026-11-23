@@ -3,222 +3,223 @@
  "frame": {
   "axisU": "z",
   "axisV": "y",
-  "centerU": -0.008522603660821915,
-  "centerV": -0.04250617325305939,
-  "size": 0.2490436601638794,
+  "centerU": -0.008522601798176765,
+  "centerV": -0.03862902149558067,
+  "size": 0.25710813581943515,
   "palmNormalX": -1,
   "minY": -0.1622387021780014,
-  "maxY": 0.07722635567188263
+  "maxY": 0.08498065918684006,
+  "armMaxY": 0.16117364168167114
  },
  "widths": {
-  "thumb": 55.9,
-  "index": 54.4,
-  "middle": 54.7,
-  "ring": 53.1,
-  "pinky": 63.6
+  "thumb": 54.1,
+  "index": 52.7,
+  "middle": 53,
+  "ring": 51.4,
+  "pinky": 61.6
  },
  "palm": {
   "wrist": [
-   465.8,
-   670.7
+   466.9,
+   650.2
   ],
   "index-finger-metacarpal": [
-   476.1,
-   564.9
+   476.9,
+   547.8
   ],
   "index-finger-phalanx-proximal": [
-   553.4,
-   326
+   551.8,
+   316.4
   ],
   "index-finger-phalanx-intermediate": [
-   562.8,
-   218.2
+   560.8,
+   211.9
   ],
   "index-finger-phalanx-distal": [
-   564.8,
-   130
+   562.8,
+   126.5
   ],
   "index-finger-tip": [
-   566.8,
-   40
+   564.7,
+   39.4
   ],
   "middle-finger-metacarpal": [
-   476.1,
-   564.9
+   476.9,
+   547.8
   ],
   "middle-finger-phalanx-proximal": [
-   465.8,
-   329.9
+   466.9,
+   320.2
   ],
   "middle-finger-phalanx-intermediate": [
-   452,
-   208.6
+   453.5,
+   202.6
   ],
   "middle-finger-phalanx-distal": [
-   444.6,
-   106.9
+   446.3,
+   104.1
   ],
   "middle-finger-tip": [
-   433.7,
+   435.8,
    18.8
   ],
   "ring-finger-metacarpal": [
-   405,
-   548.4
+   408,
+   531.8
   ],
   "ring-finger-phalanx-proximal": [
-   401.5,
-   348
+   404.6,
+   337.7
   ],
   "ring-finger-phalanx-intermediate": [
-   378.8,
-   236.9
+   382.6,
+   230.1
   ],
   "ring-finger-phalanx-distal": [
-   367.7,
-   167.8
+   371.9,
+   163.1
   ],
   "ring-finger-tip": [
-   348.4,
-   93.2
+   353.1,
+   90.9
   ],
   "pinky-finger-metacarpal": [
-   405,
-   548.4
+   408,
+   531.8
   ],
   "pinky-finger-phalanx-proximal": [
-   340.5,
-   379.4
+   345.5,
+   368.1
   ],
   "pinky-finger-phalanx-intermediate": [
-   322.4,
-   302.6
+   328,
+   293.7
   ],
   "pinky-finger-phalanx-distal": [
-   315.9,
-   256.1
+   321.7,
+   248.7
   ],
   "pinky-finger-tip": [
-   306.9,
-   205.4
+   313,
+   199.5
   ],
   "thumb-metacarpal": [
-   547.1,
-   548
+   545.6,
+   531.4
   ],
   "thumb-phalanx-proximal": [
-   613.1,
-   512.2
+   609.5,
+   496.8
   ],
   "thumb-phalanx-distal": [
-   679.6,
-   410.4
+   673.9,
+   398.2
   ],
   "thumb-tip": [
-   695.1,
-   312.5
+   689,
+   303.3
   ]
  },
  "back": {
   "wrist": [
-   534.2,
-   670.7
+   533.1,
+   650.2
   ],
   "index-finger-metacarpal": [
-   523.9,
-   564.9
+   523.1,
+   547.8
   ],
   "index-finger-phalanx-proximal": [
-   446.6,
-   326
+   448.2,
+   316.4
   ],
   "index-finger-phalanx-intermediate": [
-   437.2,
-   218.2
+   439.2,
+   211.9
   ],
   "index-finger-phalanx-distal": [
-   435.2,
-   130
+   437.2,
+   126.5
   ],
   "index-finger-tip": [
-   433.2,
-   40
+   435.3,
+   39.4
   ],
   "middle-finger-metacarpal": [
-   523.9,
-   564.9
+   523.1,
+   547.8
   ],
   "middle-finger-phalanx-proximal": [
-   534.2,
-   329.9
+   533.1,
+   320.2
   ],
   "middle-finger-phalanx-intermediate": [
-   548,
-   208.6
+   546.5,
+   202.6
   ],
   "middle-finger-phalanx-distal": [
-   555.4,
-   106.9
+   553.7,
+   104.1
   ],
   "middle-finger-tip": [
-   566.3,
+   564.2,
    18.8
   ],
   "ring-finger-metacarpal": [
-   595,
-   548.4
+   592,
+   531.8
   ],
   "ring-finger-phalanx-proximal": [
-   598.5,
-   348
+   595.4,
+   337.7
   ],
   "ring-finger-phalanx-intermediate": [
-   621.2,
-   236.9
+   617.4,
+   230.1
   ],
   "ring-finger-phalanx-distal": [
-   632.3,
-   167.8
+   628.1,
+   163.1
   ],
   "ring-finger-tip": [
-   651.6,
-   93.2
+   646.9,
+   90.9
   ],
   "pinky-finger-metacarpal": [
-   595,
-   548.4
+   592,
+   531.8
   ],
   "pinky-finger-phalanx-proximal": [
-   659.5,
-   379.4
+   654.5,
+   368.1
   ],
   "pinky-finger-phalanx-intermediate": [
-   677.6,
-   302.6
+   672,
+   293.7
   ],
   "pinky-finger-phalanx-distal": [
-   684.1,
-   256.1
+   678.3,
+   248.7
   ],
   "pinky-finger-tip": [
-   693.1,
-   205.4
+   687,
+   199.5
   ],
   "thumb-metacarpal": [
-   452.9,
-   548
+   454.4,
+   531.4
   ],
   "thumb-phalanx-proximal": [
-   386.9,
-   512.2
+   390.5,
+   496.8
   ],
   "thumb-phalanx-distal": [
-   320.4,
-   410.4
+   326.1,
+   398.2
   ],
   "thumb-tip": [
-   304.9,
-   312.5
+   311,
+   303.3
   ]
  }
 }
