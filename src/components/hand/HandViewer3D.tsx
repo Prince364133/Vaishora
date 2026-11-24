@@ -63,24 +63,27 @@ export function HandViewer3D(props: Props) {
             role="radiogroup"
             aria-label="3D viewer"
           >
-            {(["sculpted", "photo"] as const).map((m) => (
+            {(["sculpted", "photo", "realistic"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 role="radio"
                 aria-checked={mode === m}
                 onClick={() => setViewerMode(m)}
-                className={`min-h-9 rounded-full px-3.5 transition-colors ${
+                className={`min-h-9 whitespace-nowrap rounded-full px-2.5 transition-colors sm:px-3.5 ${
                   mode === m ? (onStage ? "bg-ivory text-plum" : "bg-plum text-ivory") : onStage ? "text-blush" : "text-plum"
                 }`}
               >
-                {m === "sculpted" ? "3D model" : "Photo 3D"}
+                {m === "sculpted" ? "3D model" : m === "photo" ? "Photo 3D" : "Realistic 3D"}
               </button>
             ))}
           </div>
         </div>
       )}
-      {!feet ? (
+      {!feet && mode === "realistic" ? (
+        // "Realistic 3D": the CC0 MakeHuman hand with projected mehndi, photoreal palm, studio lighting.
+        <SculptedHandViewer {...props} className="absolute inset-0 z-[1]" />
+      ) : !feet ? (
         // Both tabs show the hands rebuilt in 3D from the photograph (same skin, henna and smoothness), full
         // frame over the fixed silk backdrop; "3D model" swaps showcase/download for zoom controls.
         <div className="absolute inset-0 z-[1]">

@@ -2,7 +2,7 @@
 // (height map), with each design photo (fresh paste / dried stain) and the photo's own backdrop. Assets in
 // public/tryon/ (same files as mehndi-3d-tryon/data). The default viewer; the sculpted hand stays as "3D model".
 
-export type ViewerMode = "sculpted" | "photo";
+export type ViewerMode = "sculpted" | "photo" | "realistic";
 export type PhotoLook = "paste" | "stain";
 export type PhotoTone = "natural" | "fair" | "tan" | "deep";
 
@@ -77,7 +77,8 @@ const EVT = "vaishora:viewer";
 
 export function getViewerMode(): ViewerMode {
   try {
-    return localStorage.getItem(KEY) === "sculpted" ? "sculpted" : "photo";
+    const v = localStorage.getItem(KEY);
+    return v === "sculpted" || v === "realistic" ? v : "photo";
   } catch {
     return "photo";
   }
