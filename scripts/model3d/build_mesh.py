@@ -1,8 +1,9 @@
 # Closed 3D mesh of the two photographed hands, built from the Photo 3D photograph itself.
 #
 #   outline  = the photo's exact hand outline (public/tryon/mask.png), split into the two hands
-#   front    = the photo's own relief (public/tryon/hmap.png, the same heights Photo 3D uses), rounded at the rim
-#   back     = a smooth, rounder mirror of the front relief, meeting the front exactly on the outline
+#   depth    = real-hand anatomy (see anatomy()): round fingers, a thin palm with thumb mound, heel pad and hollow, a
+#              flatter back of the hand with a knuckle ridge, an oval wrist and forearm. Front and back meet exactly on
+#              the outline. (The photo's hmap.png relief is an inflated outline, which made the model look like a balloon.)
 #
 # Writes public/tryon/model/hands.bin + hands.json: per hand, a front and a back sheet (positions, normals, uv, index).
 # Front uv maps the design photo as it is; back uv maps the mirrored back-of-hand image (u = 1 - u_front).
@@ -58,28 +59,16 @@ DST.mkdir(exist_ok=True)
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--step", type=float, default=4.5, help="interior point spacing (atlas px)")
-ap.add_argument("--back", type=float, default=1.05, help="back depth relative to the front relief")
 ap.add_argument("--part", type=float, default=0.12, help="half the parting between the hands (scene units)")
 ap.add_argument("--rim", type=int, default=61, help="window (atlas px) for the local half-width that rounds the sides")
 args = ap.parse_args()
 
 man = json.loads((TRY / "manifest.json").read_text())
-G, T = man["geo"]["geo"], man["geo"]["tex"]
+T = man["geo"]["tex"]
 mask = cv2.imread(str(TRY / "mask.png"), 0).astype(np.float32) / 255
 H, W = mask.shape
 S = (T["x1"] - T["x0"]) / W  # frame px per atlas px (≈1.333)
 U, CX, CY = 0.01, 768, 960
-
-hm = cv2.imread(str(TRY / "hmap.png"), cv2.IMREAD_UNCHANGED)
-hmap = (hm[..., 2].astype(np.float32) * 256 + hm[..., 1]) / 65535 * G["hmax"]
-
-
-def hsample(X, Y, img=hmap):
-    """bilinear sample of a height grid at frame px."""
-    fx = (X - G["x0"]) / G["d"] - 0.5
-    fy = (Y - G["y0"]) / G["d"] - 0.5
-    return sample(img, fy, fx)
-
 
 # ---- split the outline into the two hands (they touch around the heel of the palms)
 binm = (mask > 0.5).astype(np.uint8)
@@ -91,15 +80,6 @@ n, lab = cv2.connectedComponents(cut)
 sizes = [(lab == i).sum() for i in range(1, n)]
 hands = sorted(np.argsort(sizes)[-2:] + 1, key=lambda i: np.where(lab == i)[1].mean())
 print(f"split at x={mid}, components {n - 1}, sizes {sorted(sizes)[-2:]}")
-
-# smooth heights for the back side
-hm_s = cv2.GaussianBlur(hmap, (0, 0), 6)
-
-
-def smin(a, b, k):
-    """smooth minimum: like min(a, b) but without a crease where the two surfaces meet."""
-    m = np.minimum(a, b)
-    return m - k * np.log(np.exp(-(a - m) / k) + np.exp(-(b - m) / k))
 
 
 def laplace(z, tri, fixed, iters, lam=0.5):
@@ -195,10 +175,74 @@ def march(hm8, step):
                 tris.append([poly[0], poly[q], poly[q + 1]])
     T = np.array(tris, int)
     # drop degenerate slivers' zero-area triangles
-    a = np.cross(P[T[:, 1]] - P[T[:, 0]], P[T[:, 2]] - P[T[:, 0]])
+    e1, e2 = P[T[:, 1]] - P[T[:, 0]], P[T[:, 2]] - P[T[:, 0]]
+    a = e1[:, 0] * e2[:, 1] - e1[:, 1] * e2[:, 0]  # 2-D cross product (np.cross no longer takes 2-D vectors)
     T = T[np.abs(a) > 1e-6]
     # pixel centres → continuous coords (matches the texture / distance sampling below)
     return P + 0.5, R, T
+
+
+def sstep(a, b, x):
+    t = np.clip((x - a) / (b - a), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def anatomy(handmask, allp, d, Rv, q):
+    """Front (palm) and back heights (frame px, both positive) shaped like a real hand, not an inflated outline.
+
+    Every part gets an elliptical cross-section whose depth is a fraction of its own half-width (Rv): fingers and the
+    thumb are nearly round, the wrist and forearm a rounded oval, and the palm a thin plate (a real palm is about a
+    third as thick as it is wide) with a padded heel, a thumb (thenar) mound and a shallow hollow in the middle. The back
+    of the hand is flatter than the palm, as on a real hand.
+    """
+    rows = handmask.sum(1).astype(np.float64)
+    ys = np.where(rows > 0)[0]
+    tip = ys.max()  # fingertips (the photo's hands hang down)
+    palm_row = ys[0] + int(np.argmax(rows[ys[0]:]))
+    lo = max(ys[0] + 5, palm_row - 520)
+    wrist = lo + int(np.argmin(rows[lo:palm_row - 60]))
+    knuck = wrist + 0.63 * (tip - wrist)  # finger roots (hand proportions: palm ≈ 0.63 of wrist → fingertip)
+    # which side the thumb is on (the side the outline flares out to below the wrist)
+    cols = np.arange(handmask.shape[1])
+    cen_w = (handmask[wrist] * cols).sum() / max(rows[wrist], 1)
+    band = handmask[int(wrist + 0.25 * (knuck - wrist)): int(wrist + 0.55 * (knuck - wrist))]
+    cen_b = (band * cols).sum() / max(band.sum(), 1)
+    thumb_dir = 1.0 if cen_b > cen_w else -1.0
+    # per-row centre line and half-width
+    cen = np.where(rows > 0, (handmask * cols).sum(1) / np.maximum(rows, 1), cen_w)
+    cen = cv2.GaussianBlur(cen.reshape(-1, 1), (1, 0), 25).ravel()
+    halfw = cv2.GaussianBlur((rows / 2).reshape(-1, 1), (1, 0), 25).ravel()
+
+    y = np.clip(allp[:, 1] - 0.5, 0, len(rows) - 1)
+    yi = y.astype(int)
+    s = (y - wrist) / (knuck - wrist)  # 0 at the wrist, 1 at the finger roots, < 0 along the forearm
+    lat = (allp[:, 0] - 0.5 - cen[yi]) / np.maximum(halfw[yi], 1) * thumb_dir  # + toward the thumb
+
+    fing = 1 - sstep(48, 105, Rv)  # fingers and thumb: thin limbs
+    sp = [-0.7, -0.3, 0.0, 0.18, 0.55, 1.0, 1.2]
+    rf = np.interp(s, sp, [0.72, 0.66, 0.60, 0.54, 0.42, 0.36, 0.36])  # palm side
+    rb = np.interp(s, sp, [0.72, 0.64, 0.56, 0.40, 0.31, 0.28, 0.28])  # back of the hand
+    rf = fing * 0.84 + (1 - fing) * rf
+    rb = fing * 0.84 + (1 - fing) * rb
+
+    t = np.clip(d / Rv, 0, 1)
+    e = np.sqrt(np.clip(2 * t - t * t, 0, None))  # elliptical cross-section, vertical tangent on the outline
+    zf = rf * Rv * e
+    zb = rb * Rv * e
+
+    broad = 1 - fing
+    palm = sstep(0.0, 0.2, s) * (1 - sstep(0.85, 1.05, s)) * broad
+    g = lambda v, m, w: np.exp(-0.5 * ((v - m) / w) ** 2)
+    # shallow hollow in the middle of the palm, a little toward the little finger
+    zf *= 1 - 0.24 * palm * g(s, 0.5, 0.2) * g(lat, -0.1, 0.38) * sstep(0.35, 0.9, t)
+    # thumb (thenar) mound at the base of the thumb, and the softer pad on the little-finger side of the heel
+    zf += Rv * e * palm * (0.16 * g(s, 0.3, 0.17) * g(lat, 0.55, 0.28) + 0.07 * g(s, 0.35, 0.2) * g(lat, -0.65, 0.25))
+    # pads under the finger roots
+    zf += Rv * e * broad * 0.06 * g(s, 0.9, 0.07)
+    # knuckle ridge across the back where the fingers start
+    zb += Rv * e * broad * 0.07 * g(s, 0.97, 0.06)
+    print(f"  wrist row {wrist}, finger roots {knuck:.0f}, tips {tip}, thumb side {'+' if thumb_dir > 0 else '-'}x")
+    return zf, zb
 
 
 def build(handmask, xshift):
@@ -222,13 +266,11 @@ def build(handmask, xshift):
         n_ = np.linalg.norm(g, axis=1, keepdims=True)
         q = q + np.where(n_ > 0.25, g / np.maximum(n_, 1e-9), 0) * 0.8
     Rv = np.maximum(sample(ds, q[:, 1], q[:, 0]) * S, d + 1e-3)
-    rim = np.sqrt(np.clip(2 * Rv * d - d * d, 0, None))  # round (vertical-tangent) rim profile
-    zf = smin(hsample(X, Y), rim * 0.9, 6.0)
-    zb = -smin(args.back * hsample(X, Y, hm_s), rim * 0.9, 8.0)
+    zf, zb = anatomy(handmask, allp, d, Rv, q)
     zf[isb] = 0
     zb[isb] = 0
-    zf = laplace(zf, tri, isb, 4, 0.45)  # even, creaseless surface (keeps the photo's relief)
-    zb = laplace(zb, tri, isb, 10, 0.5)  # the back is smooth skin
+    zf = laplace(zf, tri, isb, 6, 0.45)  # even, creaseless skin
+    zb = -laplace(zb, tri, isb, 8, 0.5)
 
     # welded mesh: front = all points, back = interior points (+ shared boundary)
     n = len(allp)

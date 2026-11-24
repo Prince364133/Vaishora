@@ -198,6 +198,19 @@ export function getDb(): Promise<Db> {
             const { seedDatabase } = await import("./seed");
             await seedDatabase(db, { demo: true, adminPassword: process.env.ADMIN_PASSWORD || "admin123" });
             console.info("[db] auto-seeded initial catalogue, admin user and demo artists");
+          } else {
+            // Ensure demo artist account exists for testing port 3001
+            const artistCount = await db.query<{ count: string }>("SELECT count(*) FROM users WHERE role = 'artist'");
+            if (Number(artistCount[0]?.count ?? 0) === 0) {
+              const { hashPassword } = await import("./crypto");
+              const artistEmail = "artist@vaishora.local";
+              const u = await db.query<{ id: string }>(
+                `INSERT INTO users(email, name, password_hash, role) VALUES ($1, 'Demo Artist A', $2, 'artist') RETURNING id`,
+                [artistEmail, hashPassword("artist12345")],
+              );
+              await db.query(`UPDATE artists SET user_id = $1 WHERE slug = 'demo-artist-a'`, [u[0].id]);
+              console.info("[db] auto-seeded demo artist user (artist@vaishora.local / artist12345)");
+            }
           }
         } catch (err) {
           console.warn("[db] auto-seed check skipped:", err);
