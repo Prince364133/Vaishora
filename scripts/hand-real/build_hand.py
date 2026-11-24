@@ -66,7 +66,7 @@ for name, w in [
     else:
         print("WARN missing target", p)
 # Slim, long fingers (hand-model proportions; see docs/HAND_REALISM.md §5). Extra tip taper is applied below.
-for name, w in [("r-hand-fingers-diameter-decr", 0.45), ("r-hand-fingers-length-incr", 0.35), ("r-hand-scale-decr", 0.1)]:
+for name, w in [("r-hand-fingers-diameter-decr", 0.45), ("r-hand-fingers-length-incr", 0.35), ("r-hand-scale-decr", 0.26)]:
     p = MPFB_ROOT / "data" / "targets" / "hands" / f"{name}.target.gz"
     TargetService.load_target(human, str(p), weight=w, name=name)
 
@@ -118,6 +118,20 @@ for f, s in {"finger2": 5, "finger3": 0, "finger4": -5, "finger5": -11}.items():
     rot(f"{f}-1.R", "Z", s)
 rot("finger1-2.R", "X", 4)
 rot("finger1-3.R", "X", 6)
+
+# ---- "beautiful" proportions (docs/HAND_AI_ARCHITECTURE.md §2): fingers ≈ 46–48 % of hand length by lengthening
+# the phalanges 6–10 %, mostly the middle phalanx. Bone-length scale in pose mode; children keep their own scale so
+# each segment is lengthened independently (they still follow their parent's tail).
+PHALANX_SCALE = {1: 1.05, 2: 1.12, 3: 1.05}  # proximal, middle, distal
+THUMB_SCALE = {2: 1.04, 3: 1.04}
+for f in ("finger2", "finger3", "finger4", "finger5"):
+    for k, sc in PHALANX_SCALE.items():
+        b = pb[f"{f}-{k}.R"]
+        b.scale = (1.0, sc, 1.0)
+        rig.data.bones[f"{f}-{k}.R"].inherit_scale = "NONE"
+for k, sc in THUMB_SCALE.items():
+    pb[f"finger1-{k}.R"].scale = (1.0, sc, 1.0)
+    rig.data.bones[f"finger1-{k}.R"].inherit_scale = "NONE"
 bpy.ops.object.mode_set(mode="OBJECT")
 bpy.context.view_layer.update()
 
@@ -125,6 +139,21 @@ bpy.context.view_layer.update()
 def J(bone, tail=False):
     b = rig.pose.bones[bone]
     return rig.matrix_world @ (b.tail if tail else b.head)
+
+
+def report_proportions():
+    """Hand length = wrist joint → middle fingertip; finger = palm-side digital crease (40 % along the proximal
+    phalanx from the knuckle joint, as in hand2d.ts) → tip. Anthropometric target for the beautiful variant: 46–48 %."""
+    wr = J("wrist.R")
+    tip = J("finger3-3.R", tail=True)
+    k0, k1 = J("finger3-1.R"), J("finger3-2.R")
+    crease = k0.lerp(k1, 0.4)
+    hand_len = (tip - wr).length
+    finger = (tip - crease).length
+    print(f"PROPORTIONS hand {hand_len * 100:.1f} cm, finger {finger * 100:.1f} cm = {finger / hand_len * 100:.1f} % of hand length")
+
+
+report_proportions()
 
 
 # ---------------------------------------------------------------- 3. orientation frame
@@ -170,7 +199,7 @@ while stack:
 bmesh.ops.delete(bm, geom=[v for v in bm.verts if v not in keep], context="VERTS")
 
 # Taper the fingers: shrink the radial distance from each finger's axis progressively towards the tip, giving the
-# slender, tapered fingers of hand models (base 1.0 -> tip 0.89 of the MakeHuman width).
+# slender, tapered fingers of hand models (base 1.0 -> tip 0.85 of the MakeHuman width).
 chains = {1: ("finger1-2.R", "finger1-3.R"), 2: ("finger2-1.R", "finger2-3.R"), 3: ("finger3-1.R", "finger3-3.R"),
           4: ("finger4-1.R", "finger4-3.R"), 5: ("finger5-1.R", "finger5-3.R")}
 flayers = {k: bm.verts.layers.float.get(f"f{k}") for k in chains}
@@ -188,13 +217,24 @@ for v in bm.verts:
         t = max(0.0, min(1.0, (v.co - a0).dot(ax) / (L * L)))
         c = a0 + ax * t
         radial = v.co - c
-        scale = 1.0 - 0.11 * t
+        scale = 1.0 - 0.15 * min(1.0, t / 0.85)  # ≈15 % taper, reached at 85 % so the tip pad stays round
         v.co = v.co - radial * (1.0 - scale) * min(1.0, w * 1.2)
     # nail free edge: the part of the nail plate within ~3.5 mm of the fingertip
     if v[nail_l] > 0.05:
         dmin = min((v.co - J(b1, tail=True)).length for (_, b1) in chains.values())
-        v[free_l] = max(0.0, min(1.0, (0.0045 - dmin) / 0.002)) * v[nail_l]
+        v[free_l] = max(0.0, min(1.0, (0.0034 - dmin) / 0.0014)) * v[nail_l]  # short natural free edge
 # Close the forearm end (a rounded cap after subdivision) so no rotation ever reveals an open tube.
+# Slimmer wrist (5–8 %): shrink the radial distance from the forearm axis around the wrist, fading out over ~3.5 cm
+# towards the palm and up the forearm (gaussian along the axis).
+for v in bm.verts:
+    rel = v.co - W
+    tax = rel.dot(arm_dir)  # < 0 towards the hand, > 0 towards the elbow
+    if tax < -0.06 or tax > 0.09:
+        continue
+    radial = rel - arm_dir * tax
+    k = 0.065 * math.exp(-((tax - 0.012) / 0.035) ** 2)
+    v.co = v.co - radial * k
+
 boundary = [e for e in bm.edges if e.is_boundary]
 if boundary:
     bmesh.ops.holes_fill(bm, edges=boundary, sides=0)

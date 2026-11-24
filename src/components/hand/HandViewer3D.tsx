@@ -153,7 +153,7 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
   return (
     <div ref={root} className={className || "relative"}>
       <PhotoBackdrop />
-      <div className={`hand-canvas absolute inset-x-0 top-12 bottom-[72px] ${explore ? "explore" : ""}`}>
+      <div className={`hand-canvas absolute inset-0 ${explore ? "explore" : ""}`}>
         {(mode !== "3d" || !ready || showFeetNote) && (
           <div className="absolute inset-0 flex items-center justify-center p-6">
             <HandIllustration

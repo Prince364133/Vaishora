@@ -23,7 +23,7 @@ with sync_playwright() as p:
             pg = b.new_page(viewport={"width": w, "height": h}, device_scale_factor=dpr, is_mobile=mobile, has_touch=mobile)
             pg.on("pageerror", lambda e: print("[pageerror]", e))
             pg.goto(f"{base}/designs/{slug}", wait_until="load", timeout=180000)
-            pg.evaluate("localStorage.setItem('vaishora.viewer','sculpted')")
+            pg.evaluate(f"localStorage.setItem('vaishora.viewer','{os.environ.get('VIEWER', 'realistic')}')")
             pg.reload(wait_until="load", timeout=180000)
             pg.wait_for_timeout(9000)
             if side == "back":

@@ -8,8 +8,9 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, OrbitControls, useGLTF, useTexture } from "@react-three/drei";
 import landmarks from "@/lib/mehndi/hand-landmarks.json";
-import { forwardRef, Suspense, useEffect, useImperativeHandle, useMemo, useRef } from "react";
+import { forwardRef, Suspense, use, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader.js";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { ensureRestAttributes } from "./handPose";
 import { createMehndiMaterial, EMPTY_TEXTURE, loadArtTexture, loadPhotoTexture } from "./mehndiMaterial";
@@ -18,13 +19,41 @@ import { PHOTO_TONES, PhotoTone } from "@/lib/photo-tryon";
 // Realistic female hand built from CC0 MakeHuman assets (scripts/hand-real, docs/HAND_REALISM.md).
 export const HAND_HQ_URL = "/models/hand-hq.glb";
 export const HAND_LQ_URL = "/models/hand-lq.glb";
-// Poly Haven "Studio Small 09" (CC0), 256x128 RGBE, and the tileable skin micro normal (scripts/hand-real/make_env_micro.py).
-const ENV_URL = "/models/studio-256.hdr";
+// Tileable skin micro normal (scripts/hand-real/make_env_micro.py).
 const MICRO_URL = "/models/skin-micro-normal.jpg";
+// Skin maps. Primary: KTX2 / Basis Universal (scripts/hand-real/make_ktx2.py) — GPU-compressed, so both tiers can use
+// 2K (a 2K ETC1S map is ~2–4 MB of GPU memory instead of 16 MB RGBA). The Basis transcoder is served locally from
+// /basis/ (copied from three/examples/jsm/libs/basis; no CDN). Fallback: the JPEGs, if KTX2 fails for any reason.
+const SKIN_MAPS_KTX2 = ["/models/hand-albedo-2k.ktx2", "/models/hand-normal-2k.ktx2", "/models/hand-detail-1k.ktx2"] as const;
 const SKIN_MAPS = {
   high: ["/models/hand-albedo-2k.jpg", "/models/hand-normal-2k.jpg", "/models/hand-detail-1k.jpg"],
   low: ["/models/hand-albedo-1k.jpg", "/models/hand-normal-1k.jpg", "/models/hand-detail-1k.jpg"],
 } as const;
+const BASIS_PATH = "/basis/";
+
+const skinMapCache = new Map<string, Promise<THREE.Texture[]>>();
+
+/** Load the three skin maps (albedo, normal, detail): KTX2 first, JPEG fallback. Cached per renderer + tier. */
+function loadSkinMaps(gl: THREE.WebGLRenderer, quality: "high" | "low"): Promise<THREE.Texture[]> {
+  const key = `${quality}:${gl.domElement.dataset.engine ?? ""}:${(gl as unknown as { id?: number }).id ?? 0}`;
+  const hit = skinMapCache.get(key);
+  if (hit) return hit;
+  const jpg = () => Promise.all(SKIN_MAPS[quality].map((u) => new THREE.TextureLoader().loadAsync(u)));
+  const p = (async () => {
+    const loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
+    try {
+      loader.detectSupport(gl);
+      return await Promise.all(SKIN_MAPS_KTX2.map((u) => loader.loadAsync(u)));
+    } catch (e) {
+      console.warn("KTX2 skin maps unavailable, using JPEG", e);
+      return jpg();
+    } finally {
+      loader.dispose();
+    }
+  })();
+  skinMapCache.set(key, p);
+  return p;
+}
 
 export type HandView = "palm" | "back";
 
@@ -65,8 +94,9 @@ const MAX_DISTANCE = 0.78;
 
 export function useHandAssets(quality: "high" | "low") {
   const gltf = useGLTF(quality === "high" ? HAND_HQ_URL : HAND_LQ_URL, false);
-  const [albedo, normal, detail, micro] = useTexture([...SKIN_MAPS[quality], MICRO_URL]);
   const gl = useThree((s) => s.gl);
+  const [albedo, normal, detail] = use(useMemo(() => loadSkinMaps(gl, quality), [gl, quality]));
+  const micro = useTexture(MICRO_URL);
   return useMemo(() => {
     let mesh: THREE.Mesh | null = null;
     gltf.scene.traverse((o) => {

@@ -291,6 +291,19 @@ for pid, look, fn in jobs:
     hen = np.clip((sat - 0.42) / 0.3, 0, 1)
     alb = alb + (lum3 - alb) * 0.12 * hen
     alb = alb * (1 - 0.08 * hen)
+    # Remove the models' nail tips peeking past the fingertips (pale, unsaturated slivers near each fingertip
+    # landmark); otherwise they land on our fingertip pads as light slits. Inpaint from the surrounding stain/skin.
+    tipmask = np.zeros(mask.shape, np.uint8)
+    tips = [(hand["fingers"][f]["T"], hand["fingers"][f]["rT"]) for f in ("index", "middle", "ring", "pinky")]
+    tips.append((hand["thumb"]["P"][2], hand["thumb"]["R"][2]))
+    for (tx, ty), tr in tips:
+        cv2.circle(tipmask, (int(tx * scale), int(ty * scale)), int(tr * scale * 1.9), 1, -1)
+    lum_px = alb @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    sat_px = (alb.max(axis=-1) - alb.min(axis=-1)) / np.maximum(alb.max(axis=-1), 1e-3)
+    nail_tip = (tipmask > 0) & (lum_px > np.percentile(lum_px[mask > 0], 70)) & (sat_px < 0.33)
+    nail_tip = cv2.dilate(nail_tip.astype(np.uint8), np.ones((5, 5), np.uint8))
+    if nail_tip.any():
+        alb = cv2.inpaint(np.clip(alb, 0, 255).astype(np.uint8), nail_tip, 7, cv2.INPAINT_TELEA).astype(np.float32)
     # fill outside the hand with nearby hand colour so Lanczos/mip filtering never pulls in silk at the edges
     inv = (mask == 0).astype(np.uint8)
     filled = cv2.inpaint(np.clip(alb, 0, 255).astype(np.uint8), inv, 5, cv2.INPAINT_TELEA) if inv.any() else alb.astype(np.uint8)

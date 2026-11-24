@@ -91,6 +91,10 @@ new GLTFLoader().parse(ab, "", (gltf) => {
     return parts.join("");
   };
   const out = {
+    // Bump whenever the hand mesh / projection frame changes; stored photo imports are re-projected per version
+    // (src/lib/photo-import/warp.ts reads it as FRAME_VERSION). v1: first CC0 MakeHuman hand. v2: "beautiful"
+    // proportions (longer, tapered fingers; slimmer wrist; long capped forearm).
+    frameVersion: 2,
     source: "public/models/hand-hq.glb (MakeHuman/MPFB2 CC0 female hand, built by scripts/hand-real)",
     frame,
     widths,

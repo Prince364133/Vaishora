@@ -248,3 +248,31 @@ desktop ≈ 1.7 MB.
 framing, §7) are the single biggest remaining upgrade; the back of the hand has no photo; the sculpted skin texture is a
 2K atlas from a CC0 full-body texture — a commercial scanned hand (8K, e.g. V-ARM 03) would add true pore-level
 skin and real knuckle/vein detail beyond what procedural micro detail can give.
+
+## 9. Phase 1 (docs/HAND_AI_ARCHITECTURE.md §2–§4): beautiful proportions, frame v2, KTX2 (Nov 2026)
+
+**Proportions** (all scripted in `scripts/hand-real/build_hand.py`, no manual Blender work; printed by the build):
+- phalanges lengthened by bone-length scale (proximal ×1.05, **middle ×1.12**, distal ×1.05; thumb ×1.04), each segment
+  independent (`inherit_scale = NONE`) → fingers **46.2 %** of hand length (digital crease → tip vs wrist → tip, 3D);
+  on the 2D palm projection used for the artwork the same measure rose from 40.4 % to 42.2 % (the relaxed curl
+  foreshortens it);
+- **15 % taper** base → tip, reached at 85 % of the finger so the tip pad stays round;
+- **wrist 6.5 % slimmer** (radial shrink about the forearm axis, gaussian falloff ~3.5 cm, so the palm stays natural);
+- **short natural free edge** on the nails (3.4 mm band instead of 4.5 mm); nail beds keep MakeHuman's oval plate;
+- **petite**: 16.7 cm hand length (median adult woman 16.6 cm; Indian samples smaller) via `r-hand-scale-decr 0.26`.
+
+**Frame v2:** `src/lib/mehndi/hand-landmarks.json` now carries `"frameVersion": 2` (joint names unchanged, values
+changed). All artwork (`pnpm artwork:generate`), photo palms (`photo_transfer.py`, now also removing the models' nail
+tips that showed as pale slits on our fingertip pads) and the importer silhouettes `public/hand/palm.webp`/`back.webp`
+were regenerated for v2.
+
+**KTX2 / Basis Universal:** `scripts/hand-real/make_ktx2.py` + `encode_ktx2.mjs` encode the skin maps with the
+pure-wasm `ktx2-encoder` (MIT, BinomialLLC basis_universal → WebAssembly; run from a scratch folder, not a project
+dependency; no native binary). Albedo 2K ETC1S (361 KB), normal 2K ETC1S max quality (201 KB; UASTC+Zstd was 1.39 MB),
+detail 1K ETC1S (127 KB). `HandScene` loads them with three's `KTX2Loader` and the transcoder served locally from
+`public/basis/` (copied from `three/examples/jsm/libs/basis`), so **both tiers get 2K** at ~1/4–1/8 of the GPU memory of
+RGBA; on any failure it falls back to the JPEG maps. Verified in Chromium: BC7 transcode, full mip chains, correct
+colour spaces and orientation (`scripts/out/hand/production/iter-5/ktx2-decode-check.png`).
+
+Payload trade-off (low tier): ≈ 1.6 MB transferred (2K KTX2 maps + Basis transcoder ≈ 230 KB gzipped, first load only,
+cacheable) vs ≈ 1.0 MB with the 1K JPEGs — higher download, much lower GPU memory, sharper zoom.

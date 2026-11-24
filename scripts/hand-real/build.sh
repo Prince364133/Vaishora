@@ -24,3 +24,8 @@ node scripts/extract-landmarks.mjs public/models/hand-hq.glb                    
 pnpm artwork:generate                                                                           # designs/*.svg
 "$BLENDER" -b --factory-startup --python scripts/hand-real/render_stills.py -- "$PWD" "$OUT/stills" 1000
 python scripts/hand-real/stills_web.py "$OUT/stills" public/hand                               # 2D stills
+python scripts/hand-real/make_env_micro.py "$W/dl/hdri/studio.hdr" public/models                    # micro normal (+ optional HDRI)
+python scripts/hand-real/photo_transfer.py                                                       # photo palms (palm_photo contract)
+# KTX2 skin maps: needs the pure-wasm encoder unpacked once in a scratch folder (see make_ktx2.py header)
+[ -n "${KTX2_ENCODER:-}" ] && python scripts/hand-real/make_ktx2.py "$KTX2_ENCODER" public/models
+cp node_modules/three/examples/jsm/libs/basis/basis_transcoder.{js,wasm} public/basis/              # local transcoder
