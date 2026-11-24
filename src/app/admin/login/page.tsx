@@ -11,21 +11,58 @@ export default async function LoginPage() {
   const isArtist = service === "Artists Portal";
   const isAdmin = service === "Admin Portal";
 
-  // Ensure demo artist account exists in development so port 3001 can be tested immediately
+  // Ensure demo admin and artist accounts exist and have active credentials matching dev settings
   if (process.env.NODE_ENV !== "production") {
     try {
       const db = await getDb();
-      const artist = await db.query<{ id: string }>("SELECT id FROM users WHERE email = 'artist@vaishora.local'");
-      let uId = artist[0]?.id;
-      if (!uId) {
-        const { hashPassword } = await import("@/server/crypto");
-        const u = await db.query<{ id: string }>(
-          `INSERT INTO users(email, name, password_hash, role) VALUES ('artist@vaishora.local', 'Demo Artist A', $1, 'artist') RETURNING id`,
-          [hashPassword("artist12345")],
+      const { hashPassword, verifyPassword } = await import("@/server/crypto");
+
+      // 1. Admin account sync
+      const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@vaishora.local").toLowerCase();
+      const adminPass = process.env.ADMIN_PASSWORD ?? "admin123";
+      const adminUser = await db.query<{ id: string; active: boolean; password_hash: string }>(
+        `SELECT id, active, password_hash FROM users WHERE email = $1`,
+        [adminEmail]
+      );
+      if (!adminUser.length) {
+        await db.query(
+          `INSERT INTO users(email, name, password_hash, role, active) VALUES ($1, 'VAISHORA Admin', $2, 'admin', true)`,
+          [adminEmail, hashPassword(adminPass)]
         );
-        uId = u[0].id;
+      } else if (!adminUser[0].active || !verifyPassword(adminPass, adminUser[0].password_hash)) {
+        await db.query(
+          `UPDATE users SET password_hash = $1, active = true WHERE email = $2`,
+          [hashPassword(adminPass), adminEmail]
+        );
       }
-      await db.query(`UPDATE artists SET user_id = $1 WHERE (slug = 'demo-artist-a' OR user_id IS NULL) AND (user_id IS NULL OR user_id = $1)`, [uId]);
+
+      // 2. Artist account sync
+      const artistEmail = (process.env.ARTIST_EMAIL ?? "artist@vaishora.local").toLowerCase();
+      const artistPass = process.env.ARTIST_PASSWORD ?? "artist12345";
+      const artistUser = await db.query<{ id: string; active: boolean; password_hash: string }>(
+        `SELECT id, active, password_hash FROM users WHERE email = $1`,
+        [artistEmail]
+      );
+      let artistId: string;
+      if (!artistUser.length) {
+        const u = await db.query<{ id: string }>(
+          `INSERT INTO users(email, name, password_hash, role, active) VALUES ($1, 'Demo Artist A', $2, 'artist', true) RETURNING id`,
+          [artistEmail, hashPassword(artistPass)]
+        );
+        artistId = u[0].id;
+      } else {
+        artistId = artistUser[0].id;
+        if (!artistUser[0].active || !verifyPassword(artistPass, artistUser[0].password_hash)) {
+          await db.query(
+            `UPDATE users SET password_hash = $1, active = true WHERE email = $2`,
+            [hashPassword(artistPass), artistEmail]
+          );
+        }
+      }
+      await db.query(
+        `UPDATE artists SET user_id = $1 WHERE (slug = 'demo-artist-a' OR user_id IS NULL) AND (user_id IS NULL OR user_id = $1)`,
+        [artistId]
+      );
     } catch {
       // Non-blocking in dev
     }
