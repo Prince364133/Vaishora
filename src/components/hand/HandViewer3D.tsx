@@ -1,15 +1,12 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { HandSceneHandle, HandView } from "./HandScene";
+import HandScene, { type HandSceneHandle, type HandView } from "./HandScene";
 import { HandIllustration } from "./HandIllustration";
 import { PhotoHandViewer } from "./PhotoHandViewer";
 import { PhotoBackdrop } from "./PhotoBackdrop";
 import { getSkinTone, getViewerMode, PHOTO_TONES, PhotoTone, setSkinTone, setViewerMode, subscribeSkinTone, subscribeViewerMode, TONE_ORDER, ViewerMode } from "@/lib/photo-tryon";
 import { catalogHasStain, catalogPhotoBack, catalogPhotoPalm, PhotoPalmLook } from "@/lib/mehndi/photo-palm";
-
-const HandScene = dynamic(() => import("./HandScene"), { ssr: false });
 
 type Mode = "checking" | "3d" | "fallback";
 

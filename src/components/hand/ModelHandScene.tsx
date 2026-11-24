@@ -62,27 +62,31 @@ const ModelHandScene = forwardRef<ModelSceneHandle, Props>(function ModelHandSce
     el.appendChild(canvas);
 
     let renderer: THREE.WebGLRenderer;
+    let pmrem: THREE.PMREMGenerator;
+    let envTex: THREE.Texture;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 400);
+
     try {
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.NoToneMapping; // the photographs' true colours, as in Photo 3D
+
+      camera.up.set(0, 0, 1);
+
+      // ---- same light rig as Photo 3D
+      pmrem = new THREE.PMREMGenerator(renderer);
+      envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      scene.environment = envTex;
+      scene.environmentIntensity = 0.18;
     } catch (e) {
       latest.current.onError?.(e as Error);
       canvas.remove();
       return;
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.NoToneMapping; // the photographs' true colours, as in Photo 3D
+
     const ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 400);
-    camera.up.set(0, 0, 1);
-
-    // ---- same light rig as Photo 3D
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environment = envTex;
-    scene.environmentIntensity = 0.18;
     const hemi = new THREE.HemisphereLight(0xffffff, 0xf2d6d2, 0.62);
     hemi.position.set(0, 0, 1);
     const key = new THREE.DirectionalLight(0xfff4ec, 1.35);

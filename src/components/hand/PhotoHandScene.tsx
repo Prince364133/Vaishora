@@ -79,36 +79,39 @@ const PhotoHandScene = forwardRef<PhotoSceneHandle, Props>(function PhotoHandSce
     el.appendChild(canvas);
 
     let renderer: THREE.WebGLRenderer;
+    let pmrem: THREE.PMREMGenerator;
+    let envTex: THREE.Texture;
+    let controls: OrbitControls;
+    const scene = new THREE.Scene(); // transparent: the photo backdrop is a fixed image behind the canvas
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 400);
+
     try {
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.NoToneMapping; // keep the photographs' true colours
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
+
+      camera.up.set(0, 0, 1);
+      controls = new OrbitControls(camera, canvas);
+      Object.assign(controls, {
+        enableDamping: true, dampingFactor: 0.08, rotateSpeed: 0.7, zoomSpeed: 0.9, panSpeed: 0.7, screenSpacePanning: true,
+        minPolarAngle: 0, maxPolarAngle: 0.9, minAzimuthAngle: -0.9, maxAzimuthAngle: 0.9,
+      });
+      controls.target.set(0, 0, 0.45);
+
+      pmrem = new THREE.PMREMGenerator(renderer);
+      envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      scene.environment = envTex;
+      scene.environmentIntensity = 0.18;
     } catch (e) {
       latest.current.onError?.(e as Error);
       canvas.remove();
       return;
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.NoToneMapping; // keep the photographs' true colours
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
+
     const ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-
-    const scene = new THREE.Scene(); // transparent: the photo backdrop is a fixed image behind the canvas
-    const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 400);
-    camera.up.set(0, 0, 1);
-    const controls = new OrbitControls(camera, canvas);
-    Object.assign(controls, {
-      enableDamping: true, dampingFactor: 0.08, rotateSpeed: 0.7, zoomSpeed: 0.9, panSpeed: 0.7, screenSpacePanning: true,
-      minPolarAngle: 0, maxPolarAngle: 0.9, minAzimuthAngle: -0.9, maxAzimuthAngle: 0.9,
-    });
-    controls.target.set(0, 0, 0.45);
-
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environment = envTex;
-    // three ≥ r163 scales scene.environment by scene.environmentIntensity (the original, on r160, set the same
-    // 0.18 through material.envMapIntensity, which no longer applies to scene.environment).
-    scene.environmentIntensity = 0.18;
     const hemi = new THREE.HemisphereLight(0xffffff, 0xf2d6d2, 0.62);
     hemi.position.set(0, 0, 1);
     scene.add(hemi);

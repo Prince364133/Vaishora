@@ -68,7 +68,17 @@ function createProxyServer(config: ProxyConfig) {
   // Support WebSockets for Fast Refresh / HMR
   server.on("upgrade", (req, clientSocket, head) => {
     const targetSocket = net.connect(CORE_PORT, TARGET_HOST, () => {
-      targetSocket.write(head);
+      let rawReq = `${req.method} ${req.url} HTTP/${req.httpVersion}\r\n`;
+      for (let i = 0; i < req.rawHeaders.length; i += 2) {
+        const key = req.rawHeaders[i];
+        const val = req.rawHeaders[i + 1];
+        rawReq += `${key}: ${val}\r\n`;
+      }
+      rawReq += "\r\n";
+      targetSocket.write(rawReq);
+      if (head && head.length > 0) {
+        targetSocket.write(head);
+      }
       targetSocket.pipe(clientSocket);
       clientSocket.pipe(targetSocket);
     });

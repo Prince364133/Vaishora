@@ -1,17 +1,13 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
-import type { PhotoSceneHandle } from "./PhotoHandScene";
-import type { ModelSceneHandle } from "./ModelHandScene";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import PhotoHandScene, { type PhotoSceneHandle } from "./PhotoHandScene";
+import ModelHandScene, { type ModelSceneHandle } from "./ModelHandScene";
 import { PhotoBackdrop } from "./PhotoBackdrop";
 import { getSkinTone, PHOTO_MATCH, PHOTO_PRESETS, PHOTO_TONES, PhotoLook, PhotoPresetId, PhotoTone, setSkinTone, subscribeSkinTone, TONE_ORDER } from "@/lib/photo-tryon";
 
 /** Height kept clear for the floating toolbar + label (px); the 3D view centres the hands above it. */
 const TOOLBAR_SPACE = 76;
-
-const PhotoHandScene = dynamic(() => import("./PhotoHandScene"), { ssr: false });
-const ModelHandScene = dynamic(() => import("./ModelHandScene"), { ssr: false });
 
 /** "Photo 3D" viewer: photographed hands with photo mehndi, mapped from the selected catalogue design. */
 /** `variant="model"` is the "3D model" tab: the same hands as a closed 3D model built from the photo, turning 360°. */
@@ -33,6 +29,14 @@ export function PhotoHandViewer({ designSlug, onStage = true, variant = "photo" 
   const onShowcaseEnd = useCallback(() => setShowcase(false), []);
   const onReady = useCallback(() => setReady(true), []);
   const onError = useCallback(() => setFailed(true), []);
+
+  // Safety fallback: if WebGL or assets take >3.5s, dismiss loading badge so the user is never stuck
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setReady((prev) => prev || true);
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const presetName = PHOTO_PRESETS.find((p) => p.id === preset)?.name ?? "";
   const bare = preset === "bare";
