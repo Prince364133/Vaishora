@@ -16,14 +16,16 @@ export default async function LoginPage() {
     try {
       const db = await getDb();
       const artist = await db.query<{ id: string }>("SELECT id FROM users WHERE email = 'artist@vaishora.local'");
-      if (!artist.length) {
+      let uId = artist[0]?.id;
+      if (!uId) {
         const { hashPassword } = await import("@/server/crypto");
         const u = await db.query<{ id: string }>(
           `INSERT INTO users(email, name, password_hash, role) VALUES ('artist@vaishora.local', 'Demo Artist A', $1, 'artist') RETURNING id`,
           [hashPassword("artist12345")],
         );
-        await db.query(`UPDATE artists SET user_id = $1 WHERE slug = 'demo-artist-a'`, [u[0].id]);
+        uId = u[0].id;
       }
+      await db.query(`UPDATE artists SET user_id = $1 WHERE (slug = 'demo-artist-a' OR user_id IS NULL) AND (user_id IS NULL OR user_id = $1)`, [uId]);
     } catch {
       // Non-blocking in dev
     }

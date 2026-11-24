@@ -12,8 +12,51 @@ export const metadata: Metadata = { title: "Artist portal", robots: { index: fal
 
 async function Portal() {
   await connection();
-  const user = await requireRole(["artist"]);
+  let user = await requireRole(["artist"]);
   const db = await getDb();
+
+  // If user is not yet linked to an artist profile, auto-link to Demo Artist A or first available artist
+  if (!user.artist_id) {
+    const artist = await db.query<{ id: string; name: string }>(
+      `SELECT id, name FROM artists WHERE user_id = $1 OR user_id IS NULL ORDER BY is_demo DESC, created_at ASC LIMIT 1`,
+      [user.id]
+    );
+    if (artist[0]) {
+      await db.query(`UPDATE artists SET user_id = $1 WHERE id = $2`, [user.id, artist[0].id]);
+      user = { ...user, artist_id: artist[0].id, name: artist[0].name };
+    }
+  }
+
+  // In development, ensure there is at least one active sample booking for Demo Artist A so the portal is functional
+  if (process.env.NODE_ENV !== "production" && user.artist_id) {
+    try {
+      const hasBookings = await db.query<{ count: string }>(
+        `SELECT count(*) FROM bookings WHERE artist_id = $1`,
+        [user.artist_id]
+      );
+      if (Number(hasBookings[0]?.count ?? 0) === 0) {
+        const design = (await db.query<{ id: string }>(`SELECT id FROM designs LIMIT 1`))[0];
+        const locality = (await db.query<{ id: number }>(`SELECT id FROM localities LIMIT 1`))[0];
+        if (design && locality) {
+          const cust = await db.query<{ id: string }>(
+            `INSERT INTO customers(name, phone, email) VALUES ('Priya Sharma', '+919876543210', 'priya@example.com') RETURNING id`
+          );
+          const code = `VSH-DEMO${Math.floor(100 + Math.random() * 900)}`;
+          const tokenHash = `demo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          const startsAt = new Date(Date.now() + 2 * 3600 * 1000).toISOString();
+          const endsAt = new Date(Date.now() + 3 * 3600 * 1000).toISOString();
+          await db.query(
+            `INSERT INTO bookings(code, access_token_hash, customer_id, design_id, artist_id, status, starts_at, ends_at, block, duration_minutes, address_line, landmark, locality_id, city, instructions, special_requirements, people_count, subtotal_paise, total_paise, advance_paise)
+             VALUES ($1, $2, $3, $4, $5, 'awaiting_artist_confirmation', $6, $7, tstzrange($6::timestamptz - interval '30 minutes', $7::timestamptz + interval '30 minutes'), 60, 'Villa 42, Green Meadows', 'Near Club House', $8, 'Hyderabad', 'Please ring the bell twice.', 'Traditional bridal mehndi look', 1, 99900, 99900, 29900)`,
+            [code, tokenHash, cust[0].id, design.id, user.artist_id, startsAt, endsAt, locality.id]
+          );
+        }
+      }
+    } catch (e) {
+      console.warn("[artist-portal seed]", e);
+    }
+  }
+
   // Artists see only bookings assigned to them, and only the details needed to do the job.
   const rows = user.artist_id
     ? await db.query<{ id: string; code: string; status: BookingStatus; starts_at: string; duration_minutes: number; design: string; locality: string; address_line: string; landmark: string; instructions: string; special_requirements: string; customer_first: string; customer_phone: string; people_count: number }>(

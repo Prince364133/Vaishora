@@ -6,6 +6,7 @@ import "server-only";
 const buckets = ((globalThis as unknown as { __rl?: Map<string, { n: number; reset: number }> }).__rl ??= new Map());
 
 export function rateLimit(key: string, limit: number, windowMs: number): { ok: boolean; retryAfter: number } {
+  if (process.env.NODE_ENV !== "production") return { ok: true, retryAfter: 0 };
   const now = Date.now();
   const b = buckets.get(key);
   if (!b || b.reset <= now) {
