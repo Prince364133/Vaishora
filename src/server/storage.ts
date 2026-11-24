@@ -22,7 +22,7 @@ function sniff(buf: Buffer): { ext: string; type: string } | null {
  * Stores an uploaded image after validating its real content type (magic bytes, not the
  * file name). SVG uploads are rejected on purpose: they can carry scripts.
  */
-export async function storeImage(file: File, folder: "designs" | "portfolio", opts: { requireAlpha?: boolean } = {}): Promise<string> {
+export async function storeImage(file: File, folder: "designs" | "portfolio" | "captures", opts: { requireAlpha?: boolean } = {}): Promise<string> {
   if (!file || file.size === 0) throw new UploadError("Choose an image to upload.");
   if (file.size > MAX_BYTES) throw new UploadError("Images must be 3 MB or smaller.");
   const buf = Buffer.from(await file.arrayBuffer());

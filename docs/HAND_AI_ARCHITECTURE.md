@@ -1,6 +1,22 @@
 # Beautiful realistic hand + self-improving mehndi capture — research and proposed architecture
 
-Status: **proposal** (nothing here is built yet). Written 2026-11-25.
+Status: **Phase 1 in progress.** Written 2026-11-25.
+
+Built so far (Phase 1, capture side):
+- **Migration `006_capture_sources.sql`.**
+  - `capture_sources` holds the original photo, its hash and size, the uploader, the rights confirmation and a separate training-consent flag.
+  - `capture_runs` holds the method, the parameters, the auto-detected and final landmarks, the photo-space brush layer and the frame version.
+  - `design_assets` gains `frame_version` and `capture_run_id`.
+- **Importer (`src/components/admin/PhotoDesignImporter.tsx`):**
+  - drag any of the 21 hand points to fix it;
+  - "Place points by hand" (with "Turn points upside down") when MediaPipe finds no hand;
+  - Paint / Erase brush on the extracted henna.
+  - Brush strokes are stored in **photo space** through the warp's inverse mapping (`toSource`, `paintEdit` in `src/lib/photo-import/warp.ts`).
+- **Rebuild tool** at `/admin/designs/reproject`. It re-warps every photo design from its stored original, landmarks and brush layer for the current `frameVersion` in `hand-landmarks.json`, then records a new capture run.
+- **Tests:**
+  - unit: `tests/unit/photo-warp.test.ts` (inverse mapping, brush add/erase through the warp);
+  - end to end: `scripts/out/capture-e2e.py`. It covers both the detected and the placed-by-hand paths, through save and rebuild.
+- **Production note:** originals are stored with `storeImage(…, "captures")`. Before collecting real customer or artist photos, point captures at a **private** storage bucket.
 Scope: (1) what makes a woman's hand read as beautiful and how to get there technically, (2) how the
 photo → design → 3D engine stays compatible, (3) how to add ML that repairs, completes and learns from
 mehndi photos over time.

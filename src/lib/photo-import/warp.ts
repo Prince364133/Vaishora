@@ -108,23 +108,59 @@ export function fitTps(from: Pt[], to: Pt[]) {
 export interface WarpResult {
   /** Real photo of the hand in our frame; alpha = hand coverage. */
   photo: ImageData;
-  /** Henna mask (white, alpha = henna strength). */
+  /** Henna mask (white, alpha = henna strength), with the brush edits applied. */
   mask: ImageData;
   size: number;
+  /** Maps a frame pixel to the matching pixel of the ORIGINAL (unflipped) photo. */
+  toSource: (x: number, y: number) => Pt;
+}
+
+/** Version of the projection frame in hand-landmarks.json (bumped whenever the hand mesh changes). */
+export const FRAME_VERSION: number = (landmarks as unknown as { frameVersion?: number }).frameVersion ?? 1;
+
+/**
+ * Brush edits live in PHOTO space (same size as the original photo) so they survive a new hand mesh:
+ * R = add henna, G = erase henna (0..255), anything else untouched.
+ */
+export function emptyEdits(w: number, h: number) {
+  return new ImageData(w, h);
+}
+
+/** Paints a soft round dab into the photo-space edit layer. */
+export function paintEdit(edits: ImageData, cx: number, cy: number, r: number, mode: "add" | "erase") {
+  const { width: w, height: h, data } = edits;
+  const x0 = Math.max(0, Math.floor(cx - r));
+  const x1 = Math.min(w - 1, Math.ceil(cx + r));
+  const y0 = Math.max(0, Math.floor(cy - r));
+  const y1 = Math.min(h - 1, Math.ceil(cy + r));
+  const on = mode === "add" ? 0 : 1;
+  const off = 1 - on;
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++) {
+      const d = Math.hypot(x - cx, y - cy) / r;
+      if (d > 1) continue;
+      const a = Math.round(255 * Math.min(1, (1 - d) * 3)); // soft 1/3 edge
+      const o = (y * w + x) << 2;
+      if (a > data[o + on]) data[o + on] = a;
+      data[o + off] = Math.min(data[o + off], 255 - a);
+      data[o + 3] = 255;
+    }
 }
 
 /**
  * Warps `src` (photo pixels) so its landmarks `srcPts` (pixels) land on our hand's joints.
  * `coverage` is our hand silhouette in the same frame (alpha channel used), `sensitivity` 0..1.
  */
-export function warpToHand(src: ImageData, srcPts: Pt[], side: Side, size: number, coverage: ImageData, sensitivity = 0.5): WarpResult {
+export function warpToHand(src: ImageData, srcPts: Pt[], side: Side, size: number, coverage: ImageData, sensitivity = 0.5, edits: ImageData | null = null): WarpResult {
   let pts = srcPts;
   let image = src;
+  let flipped = false;
   const dstPts = targetPoints(side).map(([x, y]) => [(x / FRAME) * size, (y / FRAME) * size] as Pt);
   // A left hand (or mirrored photo) has the opposite chirality: flip it horizontally.
   if (chirality(pts) !== chirality(dstPts)) {
     image = flipX(src);
     pts = pts.map(([x, y]) => [src.width - 1 - x, y] as Pt);
+    flipped = true;
   }
   const inv = fitTps(augment(dstPts), augment(pts)); // destination pixel → source pixel
   const photo = new ImageData(size, size);
@@ -142,6 +178,10 @@ export function warpToHand(src: ImageData, srcPts: Pt[], side: Side, size: numbe
     }
   const cov = coverage.data;
   const cs = coverage.width;
+  // brush edits sampled through the same mapping (edit layer is in original-photo space)
+  const E = edits && edits.width === src.width && edits.height === src.height ? edits.data : null;
+  const add = E ? new Uint8Array(size * size) : null;
+  const erase = E ? new Uint8Array(size * size) : null;
   for (let y = 0; y < size; y++) {
     const gy = Math.min(gw - 2, Math.floor(y / G));
     const fy = y / G - gy;
@@ -170,9 +210,30 @@ export function warpToHand(src: ImageData, srcPts: Pt[], side: Side, size: numbe
         out[o + c] = (p00 * (1 - ax) + p10 * ax) * (1 - ay) + (p01 * (1 - ax) + p11 * ax) * ay;
       }
       out[o + 3] = ca;
+      if (E && add && erase) {
+        const ex = Math.round(flipped ? W - 1 - sx : sx);
+        const e = ((Math.round(sy) * W + ex) << 2);
+        add[y * size + x] = E[e];
+        erase[y * size + x] = E[e + 1];
+      }
     }
   }
-  return { photo, mask: extractHenna(photo, sensitivity), size };
+  const mask = extractHenna(photo, sensitivity);
+  if (add && erase) {
+    const m = mask.data;
+    for (let i = 0; i < size * size; i++) {
+      if (!add[i] && !erase[i]) continue;
+      const o = i << 2;
+      const a = Math.max(m[o + 3], add[i]) * (1 - erase[i] / 255);
+      m[o] = m[o + 1] = m[o + 2] = 255;
+      m[o + 3] = Math.round(a * (out[o + 3] / 255));
+    }
+  }
+  const toSource = (x: number, y: number): Pt => {
+    const [sx, sy] = inv(x, y);
+    return [flipped ? W - 1 - sx : sx, sy];
+  };
+  return { photo, mask, size, toSource };
 }
 
 function flipX(img: ImageData) {

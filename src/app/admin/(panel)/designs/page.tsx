@@ -79,6 +79,7 @@ export default function AdminDesigns(props: { searchParams: Promise<{ saved?: st
         <h1 className="text-[2.25rem] sm:text-4xl">Designs</h1>
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/designs/from-photo" className="btn btn-secondary btn-sm">Add from photo</Link>
+          <Link href="/admin/designs/reproject" className="btn btn-ghost btn-sm">Rebuild photo designs</Link>
           <Link href="/admin/designs/new" className="btn btn-primary btn-sm">New design</Link>
         </div>
       </div>

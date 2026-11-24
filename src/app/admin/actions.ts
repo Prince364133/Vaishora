@@ -2,6 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import crypto from "node:crypto";
 import { z } from "zod";
 import { audit, login, logout, requireRole } from "@/server/auth";
 import { getDb } from "@/server/db";
@@ -545,6 +546,24 @@ export async function addExternalReviewAction(_: ActionState, form: FormData): P
 }
 
 // ------------------------------------------------------------------ design from photo
+const point = z.tuple([z.number().finite(), z.number().finite()]);
+const landmarksSchema = z.array(point).length(21);
+const captureSchema = z.object({
+  source_w: z.coerce.number().int().min(16).max(8192),
+  source_h: z.coerce.number().int().min(16).max(8192),
+  landmarks: landmarksSchema,
+  auto_landmarks: landmarksSchema.nullable(),
+  landmarks_edited: z.boolean(),
+  params: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])),
+  frame_version: z.coerce.number().int().min(1).max(1000),
+});
+function jsonField(v: FormDataEntryValue | null): unknown {
+  try {
+    return JSON.parse(s(v) || "null");
+  } catch {
+    return undefined;
+  }
+}
 /**
  * Creates a design from an uploaded mehndi photo. The browser (PhotoDesignImporter) has already
  * detected the hand, warped the photo onto our 3D hand frame and extracted the henna; this stores
@@ -573,6 +592,19 @@ export async function createDesignFromPhotoAction(_: ActionState, form: FormData
     const mask = form.get(`art_${region}`);
     const photo = form.get(`photo_${region}`);
     if (!(mask instanceof File) || !mask.size || !(photo instanceof File) || !photo.size) return { error: "Process a photo first." };
+    const cap = captureSchema.parse({
+      source_w: s(form.get("source_w")),
+      source_h: s(form.get("source_h")),
+      landmarks: jsonField(form.get("landmarks")),
+      auto_landmarks: jsonField(form.get("auto_landmarks")),
+      landmarks_edited: s(form.get("landmarks_edited")) === "1",
+      params: jsonField(form.get("params")),
+      frame_version: s(form.get("frame_version")),
+    });
+    const source = form.get("source");
+    if (!(source instanceof File) || !source.size) return { error: "The original photo is missing. Process the photo again." };
+    const edits = form.get("edits");
+    const sha256 = crypto.createHash("sha256").update(Buffer.from(await source.arrayBuffer())).digest("hex");
     const db = await getDb();
     await db.tx(async (q) => {
       const r = await q.query<{ id: string }>(
@@ -581,9 +613,26 @@ export async function createDesignFromPhotoAction(_: ActionState, form: FormData
         [d.slug, d.name, d.category_slug, d.description, d.region, d.complexity, d.duration_minutes, d.base_price_paise, d.artist_eligibility, d.status],
       );
       id = r[0].id;
+      // Keep the original photo, landmarks, parameters and brush layer: the design can then be rebuilt
+      // for a new hand mesh, and (with consent) used to train better detection.
+      const sourceUrl = await storeImage(source, "captures");
+      const editsUrl = edits instanceof File && edits.size ? await storeImage(edits, "captures", { requireAlpha: true }) : null;
+      const src = await q.query<{ id: string }>(
+        `INSERT INTO capture_sources(design_id, side, photo_url, sha256, width, height, uploaded_by, rights_confirmed, consent_training)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8) RETURNING id`,
+        [id, region, sourceUrl, sha256, cap.source_w, cap.source_h, user.id, form.get("consent_training") === "on"],
+      );
+      const run = await q.query<{ id: string }>(
+        `INSERT INTO capture_runs(source_id, method, params, auto_landmarks, landmarks, landmarks_edited, edits_url, frame_version, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+        [src[0].id, "heuristic-v1", JSON.stringify(cap.params), cap.auto_landmarks ? JSON.stringify(cap.auto_landmarks) : null, JSON.stringify(cap.landmarks), cap.landmarks_edited, editsUrl, cap.frame_version, user.id],
+      );
       const maskUrl = await storeImage(mask, "designs", { requireAlpha: true });
       const photoUrl = await storeImage(photo, "designs", { requireAlpha: true });
-      await q.query(`INSERT INTO design_assets(design_id, kind, url, source) VALUES ($1,$2,$3,'upload'), ($1,$4,$5,'upload')`, [id, region, maskUrl, `${region}_photo`, photoUrl]);
+      await q.query(
+        `INSERT INTO design_assets(design_id, kind, url, source, frame_version, capture_run_id) VALUES ($1,$2,$3,'upload',$6,$7), ($1,$4,$5,'upload',$6,$7)`,
+        [id, region, maskUrl, `${region}_photo`, photoUrl, cap.frame_version, run[0].id],
+      );
     });
     await audit(user.id, "design_from_photo", "design", id, { slug: d.slug, region, status: d.status });
     updateTag("catalog");
@@ -591,4 +640,51 @@ export async function createDesignFromPhotoAction(_: ActionState, form: FormData
     return fail(e);
   }
   redirect(`/admin/designs/${id}?created=1`);
+}
+
+/**
+ * Rebuilds a photo-imported design's assets for the current hand mesh. The browser re-warps the stored
+ * original photo with the stored landmarks and brush layer (admin/designs/reproject) and uploads the
+ * result here; a new capture run is recorded so every asset stays traceable to its source.
+ */
+export async function reprojectDesignAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin"]);
+  try {
+    const runId = z.string().uuid().parse(s(form.get("run_id")));
+    const frameVersion = z.coerce.number().int().min(1).max(1000).parse(s(form.get("frame_version")));
+    const mask = form.get("mask");
+    const photo = form.get("photo");
+    if (!(mask instanceof File) || !mask.size || !(photo instanceof File) || !photo.size) return { error: "Missing re-projected images." };
+    const db = await getDb();
+    let designId = "";
+    await db.tx(async (q) => {
+      const rows = await q.query<{ source_id: string; method: string; params: unknown; auto_landmarks: unknown; landmarks: unknown; landmarks_edited: boolean; edits_url: string | null; design_id: string | null; side: string }>(
+        `SELECT r.source_id, r.method, r.params, r.auto_landmarks, r.landmarks, r.landmarks_edited, r.edits_url, s.design_id, s.side
+           FROM capture_runs r JOIN capture_sources s ON s.id = r.source_id WHERE r.id = $1`,
+        [runId],
+      );
+      const r = rows[0];
+      if (!r || !r.design_id) throw new UploadError("This capture is no longer linked to a design.");
+      designId = r.design_id;
+      const run = await q.query<{ id: string }>(
+        `INSERT INTO capture_runs(source_id, method, params, auto_landmarks, landmarks, landmarks_edited, edits_url, frame_version, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+        [r.source_id, r.method, JSON.stringify(r.params), r.auto_landmarks ? JSON.stringify(r.auto_landmarks) : null, JSON.stringify(r.landmarks), r.landmarks_edited, r.edits_url, frameVersion, user.id],
+      );
+      const maskUrl = await storeImage(mask, "designs", { requireAlpha: true });
+      const photoUrl = await storeImage(photo, "designs", { requireAlpha: true });
+      for (const [kind, url] of [[r.side, maskUrl], [`${r.side}_photo`, photoUrl]]) {
+        await q.query(
+          `INSERT INTO design_assets(design_id, kind, url, source, frame_version, capture_run_id) VALUES ($1,$2,$3,'upload',$4,$5)
+           ON CONFLICT (design_id, kind) DO UPDATE SET url = EXCLUDED.url, frame_version = EXCLUDED.frame_version, capture_run_id = EXCLUDED.capture_run_id`,
+          [r.design_id, kind, url, frameVersion, run[0].id],
+        );
+      }
+    });
+    await audit(user.id, "design_reproject", "design", designId, { run: runId, frame_version: frameVersion });
+    updateTag("catalog");
+    return { ok: "Re-projected." };
+  } catch (e) {
+    return fail(e);
+  }
 }
