@@ -631,6 +631,17 @@ export async function createDesignFromPhotoAction(_: ActionState, form: FormData
         `INSERT INTO design_assets(design_id, kind, url, source, frame_version, capture_run_id) VALUES ($1,$2,$3,'upload',$6,$7), ($1,$4,$5,'upload',$6,$7)`,
         [id, region, maskUrl, `${region}_photo`, photoUrl, cap.frame_version, run[0].id],
       );
+      const modelTex = form.get(`model_${region}`);
+      if (modelTex instanceof File && modelTex.size) {
+        const modelUrl = await storeImage(modelTex, "designs");
+        await q.query(`INSERT INTO design_assets(design_id, kind, url, source, frame_version, capture_run_id) VALUES ($1,$2,$3,'upload',$4,$5)`, [
+          id,
+          region === "palm" ? "model_front" : "model_back",
+          modelUrl,
+          cap.frame_version,
+          run[0].id,
+        ]);
+      }
     });
     await audit(user.id, "design_from_photo", "design", id, { slug: d.slug, region, status: d.status });
     updateTag("catalog");
@@ -951,7 +962,11 @@ export async function reprojectDesignAction(_: ActionState, form: FormData): Pro
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`,
         [r.source_id, method, JSON.stringify({ ...(r.params as object), method }), r.auto_landmarks ? JSON.stringify(r.auto_landmarks) : null, JSON.stringify(r.landmarks), r.landmarks_edited, r.edits_url, frameVersion, user.id, unc, maskUrl, r.review_status, r.reviewed_by, r.reviewed_at],
       );
-      for (const [kind, url] of [[r.side, maskUrl], [`${r.side}_photo`, photoUrl]]) {
+      const modelTex = form.get("model");
+      const modelUrl = modelTex instanceof File && modelTex.size ? await storeImage(modelTex, "designs") : null;
+      const kinds: [string, string][] = [[r.side, maskUrl], [`${r.side}_photo`, photoUrl]];
+      if (modelUrl) kinds.push([r.side === "palm" ? "model_front" : "model_back", modelUrl]);
+      for (const [kind, url] of kinds) {
         await q.query(
           `INSERT INTO design_assets(design_id, kind, url, source, frame_version, capture_run_id) VALUES ($1,$2,$3,'upload',$4,$5)
            ON CONFLICT (design_id, kind) DO UPDATE SET url = EXCLUDED.url, frame_version = EXCLUDED.frame_version, capture_run_id = EXCLUDED.capture_run_id`,

@@ -6,7 +6,7 @@ import { Queryable } from "./db";
 //  - an edit of a LIVE design is stored as a snapshot in designs.pending_changes. The live version keeps
 //    selling, and the snapshot replaces it in one step when an admin approves it.
 
-export const ASSET_KINDS = ["palm", "back", "feet", "palm_photo", "back_photo"] as const;
+export const ASSET_KINDS = ["palm", "back", "feet", "palm_photo", "back_photo", "model_front", "model_back"] as const;
 export type AssetKind = (typeof ASSET_KINDS)[number];
 
 export interface DesignSnapshot {

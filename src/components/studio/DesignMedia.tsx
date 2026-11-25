@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { LazyHandViewer3D } from "@/components/hand/LazyHandViewer3D";
 import { youTubeId } from "@/lib/youtube";
 
-type Assets = { palm?: string; back?: string; feet?: string; palm_photo?: string; back_photo?: string };
+type Assets = { palm?: string; back?: string; feet?: string; palm_photo?: string; back_photo?: string; model_front?: string; model_back?: string };
 
 /**
  * Design media: a "Photos" view (optional YouTube video first, then photos — swipe, arrows, dots) and a
@@ -36,7 +36,7 @@ export function DesignMedia({
 }) {
   const vid = youTubeId(videoUrl);
   const hasPhotos = photos.length > 0 || !!vid;
-  const show3D = has3D ?? (!!(assets.palm || assets.back || assets.feet) || !hasPhotos);
+  const show3D = has3D ?? (!!(assets.palm || assets.back || assets.feet || assets.model_front || assets.model_back) || !hasPhotos);
   const [view, setView] = useState<"photos" | "3d">(hasPhotos ? "photos" : "3d");
   const isFeet = region === "feet";
 
@@ -54,6 +54,8 @@ export function DesignMedia({
           palmPhoto={assets.palm_photo ?? null}
           backPhoto={assets.back_photo ?? null}
           customOnly={custom}
+          modelFront={assets.model_front ?? null}
+          modelBack={assets.model_back ?? null}
           className="absolute inset-0 pt-6"
         />
       )}

@@ -11,7 +11,7 @@ export interface StudioDesign {
   base_price_paise: number;
   status: "active" | "draft" | "unavailable";
   featured: boolean;
-  assets: { palm?: string; back?: string; feet?: string; palm_photo?: string; back_photo?: string };
+  assets: { palm?: string; back?: string; feet?: string; palm_photo?: string; back_photo?: string; model_front?: string; model_back?: string };
   /** Artist's own design: real photos (first = cover) and the artist it is booked with. */
   photos?: string[];
   artist_name?: string | null;

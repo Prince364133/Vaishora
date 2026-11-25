@@ -4,6 +4,7 @@ import { useState } from "react";
 import { reprojectDesignAction } from "@/app/admin/actions";
 import { FRAME_VERSION, Pt, Side } from "@/lib/photo-import/warp";
 import { dataBlob, imageData, loadImageUrl, warpSource } from "@/lib/photo-import/browser";
+import { buildModelTexture } from "@/lib/photo-import/model-texture";
 
 export interface ReprojectItem {
   run_id: string;
@@ -46,6 +47,7 @@ export function ReprojectTool({ items }: { items: ReprojectItem[] }) {
       if (r.uncertainty != null) fd.set("uncertainty", String(r.uncertainty));
       fd.set("mask", new File([await dataBlob(r.mask)], "mask.webp", { type: "image/webp" }));
       fd.set("photo", new File([await dataBlob(r.photo)], "photo.webp", { type: "image/webp" }));
+      fd.set("model", new File([await buildModelTexture(r.mask, r.photo, item.side)], "model.jpg", { type: "image/jpeg" }));
       const res = await reprojectDesignAction(null, fd);
       setRows((s) => ({ ...s, [item.run_id]: res?.error ? res.error : "done" }));
     } catch (e) {

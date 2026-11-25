@@ -64,8 +64,24 @@ Settings and scheduling:
   - Manual promote and roll back switched the importer's model.
   - The promotion rule has unit tests (`tests/unit/ml-promotion.test.ts`).
 
+**Realistic 3D behind a flag, and artist uploads on the 3D model** (migration `010_model_textures.sql`):
+- **Feature flag `realistic3d`** (settings key `feature_flags`, `src/server/features.ts`, `GET /api/features`). It is **off by default**.
+  - While off, customers see only the 3D model, with no viewer switch, in the hero, on design pages and in booking.
+  - Switch it on from Admin → Designs → **Realistic 3D** (`/admin/designs/realistic`), which needs a "checked the designs" confirmation.
+- **The admin Realistic 3D page** shows:
+  - progress: uploaded designs with 3D artwork, how many show on the 3D model, photos waiting for review, and the live detector;
+  - every artist upload and admin photo import, with a preview of both viewers;
+  - a button to build the 3D model view for designs uploaded before this existed.
+- **Every photo import now also paints the design onto the 3D model's photographed hands** (`src/lib/photo-import/model-texture.ts`), stored as design assets `model_front` / `model_back`:
+  - The model's own hand landmarks come from `scripts/model3d/hand_landmarks.py`. The henna is transferred as a stain (relative to the artist's skin), so it matches the model's skin.
+  - Artist designs show their own work on the 3D model, never a "closest look". A design without a texture yet shows bare hands, labelled as being prepared.
+- **Artist uploads feed learning.** The artist portal's 3D maker now:
+  - uses the AI detector;
+  - creates a capture record (`src/server/captures.ts`), so the photo appears in the review queue;
+  - asks for an optional training opt-in. Only opted-in, approved photos are ever trained on.
+
 **Later** (not possible yet, or waiting on a decision):
-1. **Artists' uploads feeding the loop.** The artist portal (another workstream) still has to create capture records, with the training opt-in, when artists upload photos. Today only the admin importer does.
+1. **Artist consent wording:** review the opt-in text in the artist 3D maker (`DesignMediaFields.tsx`). It is a placeholder until the owner settles it.
 2. **Bigger model and longer training on a GPU** (larger crops, more steps). v0 is deliberately small so it trains on this CPU in about 1–1.5 hours.
 3. **Choosing where the worker runs** (this PC with Task Scheduler, or a small server) and setting `ML_WORKER_TOKEN` in production. That is an owner decision.
 4. **Gold photos as an absolute quality floor** (alerts when the live model falls below X on gold photos). This needs enough gold photos first.

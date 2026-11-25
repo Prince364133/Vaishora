@@ -5,6 +5,7 @@ import { createDesignFromPhotoAction, type ActionState } from "@/app/admin/actio
 import { emptyEdits, FRAME_VERSION, paintEdit, Pt, Side } from "@/lib/photo-import/warp";
 import { canvasBlob, dataBlob, Extractor, imageData, normaliseSource, OUT, SourceResult, templatePoints, warpSource } from "@/lib/photo-import/browser";
 import { loadHennaModel } from "@/lib/photo-import/henna-model";
+import { buildModelTexture } from "@/lib/photo-import/model-texture";
 
 const MP_VERSION = "1.2.3";
 const WASM = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}/wasm`;
@@ -306,6 +307,8 @@ export function PhotoDesignImporter({ categories }: { categories: { slug: string
     if (!result || !source || !pts) return;
     fd.set(`art_${side}`, new File([await dataBlob(result.mask)], `${side}-mask.webp`, { type: "image/webp" }));
     fd.set(`photo_${side}`, new File([await dataBlob(result.photo)], `${side}-photo.webp`, { type: "image/webp" }));
+    // the design on the 3D model's photographed hands (what customers see)
+    fd.set(`model_${side}`, new File([await buildModelTexture(result.mask, result.photo, side)], `model-${side}.jpg`, { type: "image/jpeg" }));
     // original photo: highest JPEG quality that stays under the upload limit
     let original = await canvasBlob(source.canvas, "image/jpeg", 0.92);
     for (const q of [0.88, 0.84, 0.78, 0.7]) {

@@ -14,6 +14,8 @@ import { backdropRect, BACKDROP_URL } from "./PhotoBackdrop";
 
 type Props = {
   preset: PhotoPresetId;
+  /** A design's own textures (artist uploads); replace the preset when given. */
+  custom?: { front: string | null; back: string | null };
   look: PhotoLook;
   tone: PhotoTone;
   showcase?: boolean;
@@ -48,7 +50,7 @@ const ModelHandScene = forwardRef<ModelSceneHandle, Props>(function ModelHandSce
   useEffect(() => {
     latest.current = props;
   });
-  const api = useRef<{ setDesign: (p: PhotoPresetId, l: PhotoLook) => void; setTone: (t: PhotoTone) => void; handle: ModelSceneHandle } | null>(null);
+  const api = useRef<{ setDesign: (p: PhotoPresetId, l: PhotoLook, c?: { front: string | null; back: string | null }) => void; setTone: (t: PhotoTone) => void; handle: ModelSceneHandle } | null>(null);
 
   useImperativeHandle(ref, () => ({
     reset: () => api.current?.handle.reset(),
@@ -158,11 +160,12 @@ const ModelHandScene = forwardRef<ModelSceneHandle, Props>(function ModelHandSce
     const disposables: { dispose: () => void }[] = [envTex, pmrem, frontMat, backMat];
 
     let job = 0;
-    const setDesign = async (id: PhotoPresetId, look: PhotoLook) => {
+    const setDesign = async (id: PhotoPresetId, look: PhotoLook, custom?: { front: string | null; back: string | null }) => {
       const my = ++job;
       const k = keyOf(id, look);
       const [f, b] = await Promise.all([
-        loadTex(frontUrl(k)),
+        custom ? loadTex(custom.front ?? frontUrl("bare")).catch(() => loadTex(frontUrl("bare"))) : loadTex(frontUrl(k)),
+        custom ? loadTex(custom.back ?? backUrl("bare")).catch(() => loadTex(backUrl("bare"))) :
         // a design without its own back view falls back to the stain back of the same design, then to bare hands
         loadTex(backUrl(k)).catch(() => loadTex(backUrl(`${id}_stain`))).catch(() => loadTex(backUrl("bare")))
           .catch(() => loadTex(backUrl("trail_stain"))),
@@ -299,7 +302,7 @@ const ModelHandScene = forwardRef<ModelSceneHandle, Props>(function ModelHandSce
         disposables.push(g);
       }
       setTone(latest.current.tone);
-      await setDesign(latest.current.preset, latest.current.look);
+      await setDesign(latest.current.preset, latest.current.look, latest.current.custom);
       if (disposed) return;
       resize();
       ro.observe(el);
@@ -344,7 +347,7 @@ const ModelHandScene = forwardRef<ModelSceneHandle, Props>(function ModelHandSce
       const bg = new Image();
       bg.src = BACKDROP_URL;
       api.current = {
-        setDesign: (p, l) => void setDesign(p, l),
+        setDesign: (p, l, c) => void setDesign(p, l, c),
         setTone,
         handle: {
           reset: () => {
@@ -412,8 +415,8 @@ const ModelHandScene = forwardRef<ModelSceneHandle, Props>(function ModelHandSce
   }, []);
 
   useEffect(() => {
-    api.current?.setDesign(props.preset, props.look);
-  }, [props.preset, props.look]);
+    api.current?.setDesign(props.preset, props.look, props.custom);
+  }, [props.preset, props.look, props.custom?.front, props.custom?.back]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     api.current?.setTone(props.tone);
   }, [props.tone]);

@@ -38,7 +38,7 @@ const cross = (o: Pt, a: Pt, b: Pt) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o
 export const chirality = (p: Pt[]) => Math.sign(cross(p[0], p[5], p[17]));
 
 /** Adds stabilising control points: wrist sides and points just beyond each fingertip. */
-function augment(p: Pt[]): Pt[] {
+export function augment(p: Pt[]): Pt[] {
   const out = [...p];
   const w = p[0];
   const mid = p[9];

@@ -12,8 +12,20 @@ const TOOLBAR_SPACE = 76;
  * "3D model" viewer: both hands as a closed 3D model built from the photograph (scripts/model3d), with the
  * photographed mehndi of the closest catalogue look, turning 360°.
  */
-export function ModelHandViewer({ designSlug, onStage = true }: { designSlug?: string; onStage?: boolean }) {
-  const match = designSlug ? PHOTO_MATCH[designSlug] : undefined;
+export function ModelHandViewer({
+  designSlug,
+  onStage = true,
+  custom,
+  designName,
+}: {
+  designSlug?: string;
+  onStage?: boolean;
+  /** An artist / uploaded design: its own textures on the model (never a catalogue look). */
+  custom?: { front: string | null; back: string | null };
+  designName?: string;
+}) {
+  const match = designSlug && !custom ? PHOTO_MATCH[designSlug] : undefined;
+  const hasCustom = !!(custom && (custom.front || custom.back));
   // A manual pick applies only to the design it was made on; a new catalogue design resets it.
   const [pick, setPick] = useState<{ slug?: string; id: PhotoPresetId } | null>(null);
   const preset: PhotoPresetId = pick && pick.slug === designSlug ? pick.id : match?.id ?? "royal";
@@ -34,9 +46,9 @@ export function ModelHandViewer({ designSlug, onStage = true }: { designSlug?: s
     return () => clearTimeout(timer);
   }, []);
 
-  const presetName = PHOTO_PRESETS.find((p) => p.id === preset)?.name ?? "";
-  const bare = preset === "bare";
-  const thumb = `/tryon/thumb-${bare ? "bare" : look === "stain" ? `${preset}_stain` : preset}.jpg`;
+  const presetName = custom ? designName ?? "This design" : PHOTO_PRESETS.find((p) => p.id === preset)?.name ?? "";
+  const bare = custom ? !hasCustom : preset === "bare";
+  const thumb = custom ? "/tryon/thumb-bare.jpg" : `/tryon/thumb-${bare ? "bare" : look === "stain" ? `${preset}_stain` : preset}.jpg`;
   const btn = `inline-flex h-11 min-w-11 shrink-0 max-[419px]:min-w-10 items-center justify-center rounded-[var(--radius-sm)] px-2 text-sm font-semibold transition-colors ${
     onStage ? "bg-white/10 text-ivory hover:bg-white/18 border border-white/15" : "bg-white text-plum border hairline hover:bg-blush"
   }`;
@@ -51,7 +63,7 @@ export function ModelHandViewer({ designSlug, onStage = true }: { designSlug?: s
         )}
         {!failed && (
           <div className={`absolute inset-0 transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-            <ModelHandScene ref={model} insetBottom={TOOLBAR_SPACE} preset={preset} look={bare ? "paste" : look} tone={tone} showcase={showcase} onShowcaseEnd={onShowcaseEnd} onReady={onReady} onError={onError} />
+            <ModelHandScene ref={model} insetBottom={TOOLBAR_SPACE} preset={custom ? "bare" : preset} look={bare ? "paste" : look} custom={custom} tone={tone} showcase={showcase} onShowcaseEnd={onShowcaseEnd} onReady={onReady} onError={onError} />
           </div>
         )}
         {!ready && !failed && (
@@ -64,13 +76,20 @@ export function ModelHandViewer({ designSlug, onStage = true }: { designSlug?: s
         )}
         <p className="pointer-events-none absolute inset-x-0 bottom-[4.25rem] flex justify-center px-4">
           <span className="rounded-full bg-plum-deep/80 px-3 py-1 text-center text-[0.72rem] text-ivory backdrop-blur-sm">
-            {bare ? "Bare hands" : `${presetName}${match && !match.exact && !pick ? " — closest photo look" : ""} · ${look === "stain" ? "dried stain" : "fresh paste"}`}
+            {custom
+              ? hasCustom
+                ? presetName
+                : "3D preview of this design is being prepared"
+              : bare
+                ? "Bare hands"
+                : `${presetName}${match && !match.exact && !pick ? " — closest photo look" : ""} · ${look === "stain" ? "dried stain" : "fresh paste"}`}
           </span>
         </p>
       </div>
       {/* floating over the backdrop, on a soft plum pill so the controls read on the light silk */}
       <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center px-2 pb-3">
         <div className="flex flex-nowrap items-center justify-center gap-1 rounded-[calc(var(--radius-sm)+4px)] bg-plum-deep/75 p-1 shadow-lg backdrop-blur-md sm:gap-1.5" role="toolbar" aria-label="3D hand controls">
+          {!custom && (
           <div className={`inline-flex shrink-0 rounded-[var(--radius-sm)] p-0.5 ${onStage ? "bg-white/10" : "bg-blush"}`} role="radiogroup" aria-label="Henna look">
             {(["paste", "stain"] as const).map((l) => (
               <button
@@ -88,6 +107,7 @@ export function ModelHandViewer({ designSlug, onStage = true }: { designSlug?: s
               </button>
             ))}
           </div>
+          )}
           <button
             type="button"
             className={btn}
@@ -97,7 +117,8 @@ export function ModelHandViewer({ designSlug, onStage = true }: { designSlug?: s
           >
             <span className="block h-5 w-5 rounded-full ring-2 ring-white/70" style={{ background: PHOTO_TONES[tone].sw }} />
           </button>
-          <label className="sr-only" htmlFor="model-look-select">Design look</label>
+          {!custom && <label className="sr-only" htmlFor="model-look-select">Design look</label>}
+          {!custom && (
           <select
             id="model-look-select"
             className={`${btn} w-[7.5rem] cursor-pointer appearance-none truncate text-left max-[419px]:w-[4.75rem] max-[339px]:hidden`}
@@ -110,6 +131,7 @@ export function ModelHandViewer({ designSlug, onStage = true }: { designSlug?: s
               </option>
             ))}
           </select>
+          )}
           <button
             type="button"
             className={btn}

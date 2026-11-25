@@ -25,7 +25,7 @@ export interface Design {
   status: "active" | "draft" | "unavailable";
   featured: boolean;
   sort: number;
-  assets: { palm?: string; back?: string; feet?: string; palm_photo?: string; back_photo?: string };
+  assets: { palm?: string; back?: string; feet?: string; palm_photo?: string; back_photo?: string; model_front?: string; model_back?: string };
   /** Owner when this is an artist's own design (booked with that artist); null for platform designs. */
   artist_id: string | null;
   artist_name: string | null;

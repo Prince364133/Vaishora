@@ -17,6 +17,8 @@ import { InvalidTransitionError } from "@/lib/booking-status";
 import { phoneSchema } from "@/lib/schemas";
 import { youTubeId } from "@/lib/youtube";
 import { applySnapshot, ASSET_KINDS, currentSnapshot, DesignSnapshot } from "@/server/design-revisions";
+import { recordCapture } from "@/server/captures";
+import { FRAME_VERSION } from "@/lib/photo-import/warp";
 import { localityFromPlace, MapsError } from "@/server/maps";
 import type { ActionState } from "@/app/admin/actions";
 
@@ -286,12 +288,18 @@ export async function saveArtistDesignAction(_: ActionState, form: FormData): Pr
     // 3D preview made in the browser from a photo (henna mask + fitted hand photo per side).
     const assets = { ...(base?.assets ?? {}) };
     if (s(form.get("remove_3d")) === "1") for (const k of ASSET_KINDS) delete assets[k];
+    let captureSide: "palm" | "back" | null = null;
     for (const side of ["palm", "back"] as const) {
       const art = files(form, `art_${side}`)[0];
       const photo = files(form, `photo_${side}`)[0];
       if (art && photo) {
         assets[side] = await storeImage(art, "designs", { requireAlpha: true });
         assets[`${side}_photo`] = await storeImage(photo, "designs", { requireAlpha: true });
+        // the same design painted on the 3D model's photographed hands (what customers see)
+        const model = files(form, `model_${side === "palm" ? "front" : "back"}`)[0];
+        if (model) assets[side === "palm" ? "model_front" : "model_back"] = await storeImage(model, "designs");
+        else delete assets[side === "palm" ? "model_front" : "model_back"];
+        captureSide = side;
       }
     }
     const urls: string[] = [];
@@ -335,6 +343,25 @@ export async function saveArtistDesignAction(_: ActionState, form: FormData): Pr
       }
       return existing.id;
     });
+    // The photo used for the 3D preview goes to the admin review queue (and, if the artist opted in, teaches the
+    // henna detector). Never blocks saving the design.
+    const captureSource = files(form, "capture_source")[0];
+    if (captureSide && captureSource && assets[captureSide]) {
+      try {
+        await recordCapture(db, {
+          designId,
+          uploadedBy: a.user_id,
+          source: captureSource,
+          landmarksJson: s(form.get("capture_landmarks")),
+          paramsJson: s(form.get("capture_params")),
+          maskUrl: assets[captureSide] as string,
+          frameVersion: FRAME_VERSION,
+          consentTraining: form.get("consent_training") === "on",
+        });
+      } catch (e) {
+        console.warn("capture not recorded", e);
+      }
+    }
     await audit(a.user_id, existing ? "artist_design_update" : "artist_design_create", "design", designId, { live_edit: live });
     notifyTeam({
       template: "design_review",

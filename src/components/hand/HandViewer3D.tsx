@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import HandScene, { type HandSceneHandle, type HandView } from "./HandScene";
 import { HandIllustration } from "./HandIllustration";
 import { ModelHandViewer } from "./ModelHandViewer";
+import { useFeature } from "@/lib/features";
 import { PhotoBackdrop } from "./PhotoBackdrop";
 import { getSkinTone, getViewerMode, PHOTO_TONES, PhotoTone, setSkinTone, setViewerMode, subscribeSkinTone, subscribeViewerMode, TONE_ORDER, ViewerMode } from "@/lib/photo-tryon";
 import { catalogHasStain, catalogPhotoBack, catalogPhotoPalm, PhotoPalmLook } from "@/lib/mehndi/photo-palm";
@@ -43,23 +44,30 @@ interface Props {
   /** Photo albedo assets ("palm_photo" / "back_photo"); built-in catalogue photos are used when absent. */
   palmPhoto?: string | null;
   backPhoto?: string | null;
-  /** The design's own uploaded artwork only (artist designs): no catalogue-look viewers or switch. */
+  /** The design's own uploaded artwork only (artist designs): never a catalogue "closest look". */
   customOnly?: boolean;
+  /** The design painted on the 3D model's hands (design_assets model_front / model_back). */
+  modelFront?: string | null;
+  modelBack?: string | null;
+  /** Show the Realistic 3D tab even while its feature flag is off (admin preview). */
+  forceRealistic?: boolean;
 }
 
 /**
- * Hand stage with a viewer switch: "Sculpted" (the CC0 3D hand with projected mehndi) or "Photo"
- * (mehndi-3d-tryon: photographed hands rebuilt as relief). The choice is shared by every stage and
- * remembered on the device, so the two can be compared before deciding which to keep.
+ * Hand stage. Customers see the "3D model" (photographed hands as a 3D model). The "Realistic 3D" hand is behind the
+ * realistic3d feature flag (admin → Designs → Realistic 3D): while it is off there is no switch at all; when on, a
+ * switch offers both, remembered on the device. Artist designs show their own artwork on either viewer.
  */
 export function HandViewer3D(props: Props) {
-  const mode = useSyncExternalStore<ViewerMode>(subscribeViewerMode, getViewerMode, () => "sculpted");
-  if (props.customOnly) return <SculptedHandViewer {...props} className={props.className || "relative"} />;
+  const storedMode = useSyncExternalStore<ViewerMode>(subscribeViewerMode, getViewerMode, () => "sculpted");
+  const realisticOn = useFeature("realistic3d") || !!props.forceRealistic;
+  const mode: ViewerMode = realisticOn ? storedMode : "sculpted";
   const onStage = (props.tone ?? "stage") === "stage";
   const feet = props.region === "feet";
+  const custom = props.customOnly ? { front: props.modelFront ?? null, back: props.modelBack ?? null } : undefined;
   return (
     <div className={`flex flex-col ${props.className || "relative"}`}>
-      {!feet && (
+      {!feet && realisticOn && (
         <div className="absolute inset-x-0 top-3 z-20 flex justify-center pointer-events-none">
           <div
             className={`pointer-events-auto inline-flex rounded-full p-0.5 text-xs font-semibold shadow-sm ${onStage ? "bg-plum-deep/80 ring-1 ring-gold/40" : "bg-blush ring-1 ring-[var(--color-line)]"}`}
@@ -90,7 +98,7 @@ export function HandViewer3D(props: Props) {
         // Both tabs show the hands rebuilt in 3D from the photograph (same skin, henna and smoothness), full
         // frame over the fixed silk backdrop; "3D model" swaps showcase/download for zoom controls.
         <div className="absolute inset-0 z-[1]">
-          <ModelHandViewer designSlug={props.designSlug} onStage={onStage} />
+          <ModelHandViewer designSlug={props.designSlug} onStage={onStage} custom={custom} designName={props.designName} />
         </div>
       ) : (
         // full frame: fixed silk backdrop over the whole arch, controls floating on top

@@ -5,7 +5,7 @@ import { LazyHandViewer3D } from "@/components/hand/LazyHandViewer3D";
 import { youTubeId } from "@/lib/youtube";
 
 type Side = "palm" | "back";
-type Assets = { palm?: string; back?: string; palm_photo?: string; back_photo?: string };
+type Assets = { palm?: string; back?: string; palm_photo?: string; back_photo?: string; model_front?: string; model_back?: string };
 
 /**
  * The media part of the artist's design form, with a Photos / 3D switch. Both panels stay mounted (the
@@ -64,7 +64,10 @@ function ThreeDMaker({ existing, region }: { existing: Assets; region: "palm" | 
   const [side, setSide] = useState<Side>(region === "back" ? "back" : "palm");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
-  const [preview, setPreview] = useState<{ side: Side; art: string; photo: string } | null>(null);
+  const [preview, setPreview] = useState<{ side: Side; art: string; photo: string; model: string } | null>(null);
+  // what the learning loop needs (original photo, auto + final hand points, settings), sent with the design
+  const [capture, setCapture] = useState<{ params: string; landmarks: string } | null>(null);
+  const [autoPts, setAutoPts] = useState<[number, number][] | null>(null);
   const [remove, setRemove] = useState(false);
   const [sensitivity, setSensitivity] = useState(0.5);
   type Source = { canvas: HTMLCanvasElement; data: ImageData; pts: [number, number][] };
@@ -72,12 +75,15 @@ function ThreeDMaker({ existing, region }: { existing: Assets; region: "palm" | 
   const [editing, setEditing] = useState<[number, number][] | null>(null);
   const artInput = useRef<HTMLInputElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
+  const modelInput = useRef<HTMLInputElement>(null);
+  const sourceInput = useRef<HTMLInputElement>(null);
   const hasExisting = !!(existing.palm || existing.back);
 
   useEffect(() => () => {
     if (preview) {
       URL.revokeObjectURL(preview.art);
       URL.revokeObjectURL(preview.photo);
+      URL.revokeObjectURL(preview.model);
     }
   }, [preview]);
 
@@ -86,18 +92,32 @@ function ThreeDMaker({ existing, region }: { existing: Assets; region: "palm" | 
     setBusy(true);
     setStatus("Fitting your design onto the 3D hand…");
     try {
-      const { warpSource, dataBlob } = await import("@/lib/photo-import/browser");
-      const r = await warpSource(src.data, src.pts, s, sens, null);
-      const [art, photo] = await Promise.all([dataBlob(r.mask), dataBlob(r.photo)]);
+      const { warpSource, dataBlob, canvasBlob } = await import("@/lib/photo-import/browser");
+      const { buildModelTexture } = await import("@/lib/photo-import/model-texture");
+      // the learned henna detector (falls back to the rules if it cannot load)
+      const r = await warpSource(src.data, src.pts, s, sens, null, "model");
+      const [art, photo, model] = await Promise.all([dataBlob(r.mask), dataBlob(r.photo), buildModelTexture(r.mask, r.photo, s)]);
       const put = (input: HTMLInputElement | null, blob: Blob, name: string) => {
         if (!input) return;
         const dt = new DataTransfer();
-        dt.items.add(new File([blob], name, { type: "image/webp" }));
+        dt.items.add(new File([blob], name, { type: blob.type || "image/webp" }));
         input.files = dt.files;
       };
       put(artInput.current, art, `${s}-mask.webp`);
       put(photoInput.current, photo, `${s}-photo.webp`);
-      setPreview({ side: s, art: URL.createObjectURL(art), photo: URL.createObjectURL(photo) });
+      put(modelInput.current, model, `model-${s === "palm" ? "front" : "back"}.jpg`);
+      let original = await canvasBlob(src.canvas, "image/jpeg", 0.9);
+      for (const q of [0.84, 0.76, 0.68]) {
+        if (original.size <= 2.9 * 1024 * 1024) break;
+        original = await canvasBlob(src.canvas, "image/jpeg", q);
+      }
+      put(sourceInput.current, original, "source.jpg");
+      const round = (p: [number, number][]) => p.map(([x, y]) => [Math.round(x * 100) / 100, Math.round(y * 100) / 100]);
+      setCapture({
+        landmarks: JSON.stringify({ w: src.data.width, h: src.data.height, side: s, landmarks: round(src.pts), auto: autoPts ? round(autoPts) : null }),
+        params: JSON.stringify({ sensitivity: sens, method: r.method, uncertainty: r.uncertainty, manual: !autoPts }),
+      });
+      setPreview({ side: s, art: URL.createObjectURL(art), photo: URL.createObjectURL(photo), model: URL.createObjectURL(model) });
       setRemove(false);
       setStatus("Here’s your design in 3D. Drag to turn the hand. It will be saved with the design.");
     } catch (e) {
@@ -123,6 +143,7 @@ function ThreeDMaker({ existing, region }: { existing: Assets; region: "palm" | 
       const canvas = normaliseSource(img);
       URL.revokeObjectURL(url);
       const pts = await detectHand(canvas);
+      setAutoPts(pts ? pts.map((p) => [...p] as [number, number]) : null);
       const data = imageData(canvas, canvas.width, canvas.height);
       if (!pts) {
         // Dense henna can hide the hand from the detector: let the artist place the joints.
@@ -145,7 +166,14 @@ function ThreeDMaker({ existing, region }: { existing: Assets; region: "palm" | 
   }
 
   const shown = preview
-    ? { palm: preview.side === "palm" ? preview.art : undefined, back: preview.side === "back" ? preview.art : undefined, palm_photo: preview.side === "palm" ? preview.photo : undefined, back_photo: preview.side === "back" ? preview.photo : undefined }
+    ? {
+        palm: preview.side === "palm" ? preview.art : undefined,
+        back: preview.side === "back" ? preview.art : undefined,
+        palm_photo: preview.side === "palm" ? preview.photo : undefined,
+        back_photo: preview.side === "back" ? preview.photo : undefined,
+        model_front: preview.side === "palm" ? preview.model : undefined,
+        model_back: preview.side === "back" ? preview.model : undefined,
+      }
     : remove
       ? null
       : hasExisting
@@ -232,6 +260,8 @@ function ThreeDMaker({ existing, region }: { existing: Assets; region: "palm" | 
             designName="Your design"
             palmPhoto={shown.palm_photo ?? null}
             backPhoto={shown.back_photo ?? null}
+            modelFront={shown.model_front ?? null}
+            modelBack={shown.model_back ?? null}
             customOnly
             className="absolute inset-0 pt-6"
           />
@@ -245,6 +275,21 @@ function ThreeDMaker({ existing, region }: { existing: Assets; region: "palm" | 
       )}
       <input ref={artInput} type="file" name={`art_${preview?.side ?? side}`} className="hidden" tabIndex={-1} aria-hidden />
       <input ref={photoInput} type="file" name={`photo_${preview?.side ?? side}`} className="hidden" tabIndex={-1} aria-hidden />
+      <input ref={modelInput} type="file" name={`model_${(preview?.side ?? side) === "palm" ? "front" : "back"}`} className="hidden" tabIndex={-1} aria-hidden />
+      <input ref={sourceInput} type="file" name="capture_source" className="hidden" tabIndex={-1} aria-hidden />
+      {capture && (
+        <>
+          <input type="hidden" name="capture_landmarks" value={capture.landmarks} />
+          <input type="hidden" name="capture_params" value={capture.params} />
+          <label className="flex items-start gap-2 text-sm">
+            <input type="checkbox" name="consent_training" className="mt-1 h-5 w-5 accent-[var(--color-plum)]" />
+            <span>
+              Also let VAISHORA use this photo to improve how designs are detected from photos (optional). It is only used for training, never shown
+              anywhere else.
+            </span>
+          </label>
+        </>
+      )}
     </div>
   );
 }
