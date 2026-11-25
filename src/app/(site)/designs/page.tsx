@@ -5,8 +5,11 @@ import { cachedCategories, cachedDesigns } from "@/server/cached";
 import type { StudioDesign } from "@/components/studio/types";
 
 export const metadata: Metadata = {
-  title: "Mehndi designs and prices",
-  description: "Browse original mehndi designs — bridal, Arabic, mandala, floral, minimal and more — with prices and application times.",
+  title: "Mehndi designs with prices — bridal, Arabic, mandala & more",
+  description:
+    "Browse mehndi designs by Hyderabad artists — bridal, Arabic, mandala, floral, minimal and more — with photos, 3D previews, prices and application times. Book at home.",
+  alternates: { canonical: "/designs" },
+  openGraph: { title: "Mehndi designs with prices", url: "/designs" },
 };
 
 async function List() {

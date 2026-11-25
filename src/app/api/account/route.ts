@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { getDb } from "@/server/db";
 import { currentCustomer, endCustomerSession, getCustomer, isProfileComplete } from "@/server/customer-auth";
+import { currentArtist } from "@/server/artist-auth";
+import { after } from "next/server";
+import { maybeSendReviewRequests } from "@/server/reviews";
 import { fail, handleError, limit, ok, readJson } from "@/server/http";
 import { phoneSchema } from "@/lib/schemas";
 
@@ -8,8 +11,10 @@ import { phoneSchema } from "@/lib/schemas";
 // DELETE: sign out.
 
 export async function GET() {
-  const c = await currentCustomer();
-  return ok({ customer: c });
+  // Every page load asks who is signed in: a cheap, throttled moment to send due "rate your artist" emails.
+  after(() => maybeSendReviewRequests());
+  const [c, a] = await Promise.all([currentCustomer(), currentArtist()]);
+  return ok({ customer: c, artist: a ? { name: a.name, status: a.status } : null });
 }
 
 const profileSchema = z.object({
@@ -17,9 +22,6 @@ const profileSchema = z.object({
   phone: phoneSchema,
   email: z.string().trim().email("Enter a valid email").max(120),
   gender: z.enum(["female", "male", "non_binary", "prefer_not_to_say"], { error: "Choose an option" }),
-  address_line: z.string().trim().min(8, "Enter the full address — house/flat number and street").max(240),
-  locality_id: z.coerce.number().int().positive("Choose your locality"),
-  landmark: z.string().trim().max(120).default(""),
 });
 
 export async function PUT(req: Request) {
@@ -30,14 +32,12 @@ export async function PUT(req: Request) {
     if (!me) return fail("Please sign in again.", 401);
     const p = profileSchema.parse(await readJson(req));
     const db = await getDb();
-    const loc = await db.query(`SELECT 1 FROM localities WHERE id = $1 AND active`, [p.locality_id]);
-    if (!loc.length) return fail("We do not serve this locality yet.", 422);
     const clash = await db.query(`SELECT 1 FROM customers WHERE phone = $1 AND id <> $2`, [p.phone, me.id]);
     if (clash.length) return fail("This mobile number is linked to another account. Sign in with that number or contact support.", 409);
     await db.query(
-      `UPDATE customers SET name=$2, phone=$3, email=$4, gender=$5, address_line=$6, locality_id=$7, landmark=$8,
+      `UPDATE customers SET name=$2, phone=$3, email=$4, gender=$5,
          profile_completed_at = COALESCE(profile_completed_at, now()), updated_at = now() WHERE id = $1`,
-      [me.id, p.name, p.phone, p.email, p.gender, p.address_line, p.locality_id, p.landmark],
+      [me.id, p.name, p.phone, p.email, p.gender],
     );
     const c = await getCustomer(me.id, db);
     return ok({ customer: c, complete: c ? isProfileComplete(c) : false });

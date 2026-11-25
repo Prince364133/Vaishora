@@ -122,19 +122,7 @@ export async function seedDatabase(db: Db, opts: SeedOptions = {}) {
       console.log(`\nAdmin user created:\n  email:    ${email}\n  password: ${password}\n`);
     }
 
-    const artistEmail = (process.env.ARTIST_EMAIL ?? "artist@vaishora.local").toLowerCase();
-    const existingArtist = await q.query<{ id: string }>(`SELECT id FROM users WHERE email = $1`, [artistEmail]);
-    let artistUserId = existingArtist[0]?.id;
-    if (!artistUserId) {
-      const artistPassword = process.env.ARTIST_PASSWORD ?? "artist12345";
-      const u = await q.query<{ id: string }>(
-        `INSERT INTO users(email, name, password_hash, role) VALUES ($1, 'Demo Artist A', $2, 'artist') RETURNING id`,
-        [artistEmail, hashPassword(artistPassword)],
-      );
-      artistUserId = u[0].id;
-      console.log(`\nDemo artist user created:\n  email:    ${artistEmail}\n  password: ${artistPassword}\n`);
-    }
-    await q.query(`UPDATE artists SET user_id = $1 WHERE slug = 'demo-artist-a' AND (user_id IS NULL OR user_id != $1)`, [artistUserId]);
+    // Artist logins are never seeded: artists apply on the site and sign in with 180 Identity.
 
     if (demo) {
       const allCats = categories.map((c) => c[0]);

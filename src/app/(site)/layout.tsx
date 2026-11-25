@@ -1,5 +1,8 @@
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
+import { Suspense } from "react";
+import { SiteTabBar } from "@/components/site/SiteTabBar";
+import { ReviewPrompt } from "@/components/site/ReviewPrompt";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,6 +15,10 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         {children}
       </main>
       <Footer />
+      <Suspense fallback={null}>
+        <SiteTabBar />
+        <ReviewPrompt />
+      </Suspense>
     </>
   );
 }

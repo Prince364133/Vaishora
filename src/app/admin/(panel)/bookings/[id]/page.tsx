@@ -10,6 +10,7 @@ import { assignArtistAction, changeBookingStatusAction, refundBookingAction } fr
 import { STATUS_LABEL, TRANSITIONS } from "@/lib/booking-status";
 import { formatPaise } from "@/lib/money";
 import { formatDuration, formatIstDate, formatIstTime } from "@/lib/time";
+import { AdaptiveSkeleton } from "@/components/admin/AdaptiveSkeleton";
 
 async function Detail({ params }: { params: Promise<{ id: string }> }) {
   await connection();
@@ -178,7 +179,7 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
 
 export default function BookingDetailPage(props: { params: Promise<{ id: string }> }) {
   return (
-    <Suspense fallback={<p className="text-muted">Loading booking…</p>}>
+    <Suspense fallback={<AdaptiveSkeleton />}>
       <Detail {...props} />
     </Suspense>
   );

@@ -2,15 +2,20 @@ import { z } from "zod";
 import { getDb } from "@/server/db";
 import { OneEightyError, verifyIdentityResult } from "@/server/one-eighty";
 import { getCustomer, startCustomerSession } from "@/server/customer-auth";
+import { matchArtistForIdentity, startArtistSession } from "@/server/artist-auth";
 import { fail, handleError, limit, ok, readJson } from "@/server/http";
 
-// Completes 180 Identity sign-in: verify server-side, find or create the customer, start a session.
+// Completes 180 Identity sign-in: verify server-side, then route by role. An identity that belongs to a
+// VAISHORA artist (bound 180 subject or verified application email) gets an artist session and is sent to
+// the artist portal; everyone else is a customer (found or created) with a customer session.
 const schema = z.object({
   code: z.string().max(2000).optional(),
   idToken: z.string().max(8000).optional(),
   id_token: z.string().max(8000).optional(),
   redirectUri: z.string().url().max(500).optional(),
   codeVerifier: z.string().max(200).optional(),
+  /** "customer" at checkout: always sign in as a customer, even if the identity is also an artist. */
+  as: z.enum(["auto", "customer"]).optional(),
 });
 
 export async function POST(req: Request) {
@@ -26,6 +31,12 @@ export async function POST(req: Request) {
       codeVerifier: b.codeVerifier,
     });
     const db = await getDb();
+    const match = b.as === "customer" ? null : await matchArtistForIdentity(db, id);
+    const artistId = match?.artistId ?? null;
+    if (artistId) {
+      await startArtistSession(artistId, id.sub);
+      return ok({ role: "artist", redirect: "/artist-portal" });
+    }
     const customerId = await db.tx(async (q) => {
       const existing = await q.query<{ id: string }>(`SELECT id FROM customers WHERE identity_sub = $1`, [id.sub]);
       if (existing[0]) return existing[0].id;
@@ -48,9 +59,19 @@ export async function POST(req: Request) {
       return r[0].id;
     });
     await startCustomerSession(customerId, db);
-    return ok({ customer: await getCustomer(customerId, db) });
+    // Why this identity is not an artist, so the artist sign-in page can say exactly what to fix. The email/phone
+    // shown are the signed-in person's own (masked), as returned by 180.
+    const artistCheck = match ? { reason: match.reason, email: mask(id.email, "email"), phone: mask(id.phone, "phone") } : undefined;
+    return ok({ role: "customer", customer: await getCustomer(customerId, db), artistCheck });
   } catch (e) {
     if (e instanceof OneEightyError) return fail(e.message, e.status);
     return handleError(e);
   }
+}
+
+function mask(v: string | null, kind: "email" | "phone"): string | null {
+  if (!v) return null;
+  if (kind === "phone") return v.length > 4 ? `${"•".repeat(v.length - 4)}${v.slice(-4)}` : v;
+  const [user, domain] = v.split("@");
+  return domain ? `${user.slice(0, 2)}${"•".repeat(Math.max(1, user.length - 2))}@${domain}` : v;
 }

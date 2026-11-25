@@ -10,6 +10,10 @@ import { computeQuote, Quote, QuoteCoupon, QuoteError, QuoteOptions } from "@/li
 import { assertTransition, BookingStatus } from "@/lib/booking-status";
 import type { BookingRequest } from "@/lib/schemas";
 import { istToUtc } from "@/lib/time";
+import { recordBookingEarning } from "./ledger";
+import { queueEmail } from "./email";
+import { addressLine, createAddress, getAddress } from "./customer-addresses";
+import { formatIstDate, formatIstTime } from "@/lib/time";
 
 export class BookingError extends Error {
   constructor(message: string, public code: "slot_taken" | "invalid" | "not_found" | "unavailable" = "invalid", public status = 400) {
@@ -35,7 +39,12 @@ export async function findCoupon(q: Queryable, code: string | undefined): Promis
 
 export async function quoteForDesign(q: Queryable, slug: string, options: QuoteOptions, couponCode?: string) {
   const design = await getDesignBySlug(slug, q);
-  if (!design || design.status === "draft") throw new BookingError("This design is not available.", "not_found", 404);
+  if (!design || design.status === "draft" || design.review_status !== "approved") throw new BookingError("This design is not available.", "not_found", 404);
+  if (design.artist_id) {
+    const owner = await q.query(`SELECT 1 FROM artists WHERE id = $1 AND status = 'active'`, [design.artist_id]);
+    if (!owner.length) throw new BookingError("This artist is not taking bookings right now.", "unavailable", 409);
+    if (design.status !== "active") throw new BookingError("This design is not available for booking right now.", "unavailable", 409);
+  }
   if (design.status === "unavailable") throw new BookingError("This design is temporarily unavailable for booking.", "unavailable", 409);
   const [rules, settings, coupon] = await Promise.all([listPricingRules({}, q), getSettings(q), findCoupon(q, couponCode)]);
   try {
@@ -84,7 +93,36 @@ export async function transitionBooking(
   if (to !== "pending_payment") sets.push("hold_expires_at = NULL");
   await q.query(`UPDATE bookings SET ${sets.join(", ")} WHERE id = $1`, params);
   await recordStatus(q, bookingId, from, to, actor, note);
+  // Same transaction: a completed booking always credits the artist exactly once.
+  if (to === "completed") await recordBookingEarning(q, bookingId);
+  if (to === "awaiting_artist_confirmation") await notifyArtistOfRequest(q, bookingId);
   return from;
+}
+
+/** Emails the assigned artist about a new booking request (sent after the response). */
+async function notifyArtistOfRequest(q: Queryable, bookingId: string) {
+  const r = (
+    await q.query<{ email: string | null; artist_id: string; name: string; code: string; starts_at: string; design: string; locality: string }>(
+      `SELECT a.email, a.id AS artist_id, a.name, b.code, b.starts_at, d.name AS design, l.name AS locality
+       FROM bookings b JOIN artists a ON a.id = b.artist_id JOIN designs d ON d.id = b.design_id JOIN localities l ON l.id = b.locality_id
+       WHERE b.id = $1`,
+      [bookingId],
+    )
+  )[0];
+  if (!r?.email) return;
+  queueEmail({
+    to: r.email,
+    template: "artist_booking_request",
+    artistId: r.artist_id,
+    bookingId,
+    subject: `New booking request ${r.code} — ${formatIstDate(r.starts_at)}`,
+    heading: "You have a new booking request",
+    paragraphs: [
+      `${r.design} in ${r.locality} on ${formatIstDate(r.starts_at)} at ${formatIstTime(r.starts_at)} (IST). The customer has paid the advance.`,
+      "Please accept or decline it from your artist portal as soon as possible.",
+    ],
+    cta: { label: "Respond now", path: "/artist-portal/orders" },
+  });
 }
 
 export interface CreatedBooking {
@@ -101,8 +139,9 @@ function isExclusionViolation(e: unknown) {
   return typeof e === "object" && e !== null && (e as { code?: string }).code === "23P01";
 }
 
-export async function createBooking(req: BookingRequest, idempotencyKey: string | null, customerId: string): Promise<CreatedBooking> {
+export async function createBooking(input: BookingRequest, idempotencyKey: string | null, customerId: string): Promise<CreatedBooking> {
   const db = await getDb();
+  let req = input;
   try {
     return await db.tx(async (q) => {
       // Serialise booking creation so availability checks and inserts cannot interleave.
@@ -120,6 +159,15 @@ export async function createBooking(req: BookingRequest, idempotencyKey: string 
       const { design, quote, settings, coupon } = await quoteForDesign(q, req.designSlug, req.options, req.couponCode);
       if (req.couponCode && !quote.coupon?.applied) throw new BookingError(quote.coupon?.message ?? "Coupon is not valid.");
 
+      // The address: a saved one (verified to belong to this customer), or a new one picked on the map.
+      if (req.address.id) {
+        const saved = await getAddress(q, customerId, req.address.id);
+        if (!saved) throw new BookingError("That saved address was not found. Please choose another.");
+        req = {
+          ...req,
+          address: { ...req.address, line: addressLine(saved), localityId: saved.locality_id, landmark: saved.landmark, instructions: req.address.instructions || saved.instructions, placeId: saved.place_id ?? undefined, lat: saved.lat, lng: saved.lng },
+        };
+      }
       const loc = await q.query<{ id: number; city: string }>(`SELECT id, city FROM localities WHERE id = $1 AND active`, [req.address.localityId]);
       if (!loc[0]) throw new BookingError("We do not serve this locality yet.");
 
@@ -131,6 +179,7 @@ export async function createBooking(req: BookingRequest, idempotencyKey: string 
           localityId: req.address.localityId,
           categorySlug: design.category_slug,
           eligibility: design.artist_eligibility,
+          artistId: design.artist_id,
         },
         settings,
       );
@@ -151,6 +200,33 @@ export async function createBooking(req: BookingRequest, idempotencyKey: string 
         [customerId],
       );
       if (!customer[0]) throw new BookingError("Please complete your details before booking.", "invalid", 409);
+      let addressId = req.address.id ?? null;
+      const a = req.address;
+      if (!addressId && a.save && a.lat != null && a.lng != null && a.house && a.formatted) {
+        // Saving to the address book is a convenience: it must never block the booking (e.g. a full book).
+        // A savepoint keeps any database error here from aborting the booking transaction.
+        await q.query("SAVEPOINT save_address");
+        try {
+          addressId = (
+            await createAddress(q, customerId, {
+              label: a.label || "Home",
+              house: a.house,
+              building: a.building ?? "",
+              formatted_address: a.formatted,
+              place_id: a.placeId ?? null,
+              lat: a.lat,
+              lng: a.lng,
+              locality_id: a.localityId,
+              landmark: a.landmark,
+              instructions: a.instructions,
+            })
+          ).id;
+          await q.query("RELEASE SAVEPOINT save_address");
+        } catch (e) {
+          await q.query("ROLLBACK TO SAVEPOINT save_address");
+          console.warn("[booking] address not saved:", (e as Error).message);
+        }
+      }
 
       const starts = istToUtc(req.date, req.startMinute);
       const ends = new Date(starts.getTime() + quote.duration_minutes * 60_000);
@@ -170,8 +246,8 @@ export async function createBooking(req: BookingRequest, idempotencyKey: string 
         `INSERT INTO bookings(id, code, access_token_hash, idempotency_key, customer_id, design_id, artist_id, status,
             starts_at, ends_at, block, duration_minutes, people_count, options, address_line, locality_id, city, landmark,
             instructions, special_requirements, subtotal_paise, discount_paise, fee_paise, tax_paise, total_paise,
-            advance_paise, coupon_id, hold_expires_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,'pending_payment',$8,$9,tstzrange($10,$11),$12,$13,$14::jsonb,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)`,
+            advance_paise, coupon_id, hold_expires_at, address_id, lat, lng, place_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'pending_payment',$8,$9,tstzrange($10,$11),$12,$13,$14::jsonb,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)`,
         [
           id, code, sha256(token), idempotencyKey, customer[0].id, design.id, artistId,
           starts.toISOString(), ends.toISOString(),
@@ -180,6 +256,7 @@ export async function createBooking(req: BookingRequest, idempotencyKey: string 
           loc[0].city, req.address.landmark, req.address.instructions, req.specialRequirements,
           quote.subtotal_paise, quote.discount_paise, quote.fee_paise, quote.tax_paise, quote.total_paise, quote.advance_paise,
           coupon?.id ?? null, holdUntil.toISOString(),
+          addressId, req.address.lat ?? null, req.address.lng ?? null, req.address.placeId ?? null,
         ],
       );
       await insertItems(q, id, quote);

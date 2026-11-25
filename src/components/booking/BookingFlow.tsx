@@ -4,13 +4,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { HandIllustration } from "@/components/hand/HandIllustration";
-import { HandViewer3D } from "@/components/hand/HandViewer3D";
+import { DesignMedia } from "@/components/studio/DesignMedia";
 import { previewArt, previewSide, StudioDesign } from "@/components/studio/types";
 import { formatPaise } from "@/lib/money";
 import { addDays, formatDuration, formatIstDateString, formatMinutes, istDateString, istWeekday } from "@/lib/time";
 import type { Quote } from "@/lib/pricing";
 import { allowedSides } from "@/lib/pricing";
 import { CustomerLite, IDENTITY_ENABLED, QuickProfile, SignInCard } from "./CheckoutAccount";
+import { AddressBook } from "@/components/address/AddressBook";
+import { addressText, type PickedAddress } from "@/components/address/AddressPicker";
 import { payForBooking } from "@/lib/one-eighty/pay-booking";
 
 interface RuleLite {
@@ -75,7 +77,9 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
   // Customer account is only needed at checkout (180 Identity sign-in + quick profile).
   const [customer, setCustomer] = useState<CustomerLite | null>(null);
   const [guest, setGuest] = useState(!IDENTITY_ENABLED);
-  const [localityId, setLocalityId] = useState<number | "">("");
+  // Where the artist comes: a saved address or a new one picked on Google Maps.
+  const [addr, setAddr] = useState<PickedAddress | null>(null);
+  const localityId: number | "" = addr?.locality_id ?? "";
   const [instructions, setInstructions] = useState("");
 
   const today = useMemo(() => istDateString(), []);
@@ -102,10 +106,7 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
     fetch("/api/account")
       .then((r) => r.json())
       .then((j) => {
-        if (j.customer) {
-          setCustomer(j.customer);
-          if (j.customer.locality_id) setLocalityId((cur) => cur || j.customer.locality_id);
-        }
+        if (j.customer) setCustomer(j.customer);
       })
       .catch(() => {});
   }, []);
@@ -176,7 +177,7 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
   function validate(s: number): boolean {
     const e: Errors = {};
     if (s === 2) {
-      if (!localityId) e.locality = "Choose your locality";
+      if (!addr) e.locality = "Add or choose the address where the artist should come";
       else if (!date) e.date = "Choose a date";
       else if (startMinute == null) e.slot = "Choose a time";
     }
@@ -208,13 +209,23 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
           options,
           couponCode: appliedCoupon || undefined,
           specialRequirements: special,
-          address: {
-            line: customer.address_line,
-            localityId,
-            city: "Hyderabad",
-            landmark: customer.landmark ?? "",
-            instructions,
-          },
+          address: addr?.id
+            ? { id: addr.id, line: addressText(addr), localityId, city: "Hyderabad", landmark: addr.landmark, instructions }
+            : {
+                line: addr ? addressText(addr) : "",
+                localityId,
+                city: "Hyderabad",
+                landmark: addr?.landmark ?? "",
+                instructions,
+                house: addr?.house,
+                building: addr?.building,
+                formatted: addr?.formatted_address,
+                placeId: addr?.place_id ?? undefined,
+                lat: addr?.lat,
+                lng: addr?.lng,
+                label: addr?.label,
+                save: true,
+              },
           date,
           startMinute,
           acceptPolicy: accept,
@@ -249,8 +260,13 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
   const Summary = (
     <aside className="card p-5" aria-label="Price summary">
       <div className="flex gap-3">
-        <div className="w-16 flex-none rounded-[6px] bg-blush/70">
-          <HandIllustration side={previewSide(design)} art={art} />
+        <div className="w-16 flex-none overflow-hidden rounded-[6px] bg-blush/70">
+          {design.photos?.length ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={design.photos[0]} alt="" className="aspect-square w-full object-cover" />
+          ) : (
+            <HandIllustration side={previewSide(design)} art={art} />
+          )}
         </div>
         <div className="min-w-0">
           <p className="text-xs font-semibold text-rose-deep">{design.category_name}</p>
@@ -350,17 +366,9 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
             <section aria-labelledby="s0">
               <h2 id="s0" className="text-3xl">Your design</h2>
               <div className="arch relative mt-4 h-[52svh] max-h-[520px] overflow-hidden bg-plum">
-                <HandViewer3D
-                  palmArt={isFeet ? design.assets.feet ?? null : design.assets.palm ?? null}
-                  backArt={isFeet ? null : design.assets.back ?? null}
-                  region={design.region}
-                  designName={design.name}
-                  designSlug={design.slug}
-                  palmPhoto={design.assets.palm_photo ?? null}
-                  backPhoto={design.assets.back_photo ?? null}
-                  className="absolute inset-0 pt-6"
-                />
+                <DesignMedia name={design.name} slug={design.slug} region={design.region} photos={design.photos} videoUrl={design.video_url} assets={design.assets} custom={!!design.artist_name} className="absolute inset-0" />
               </div>
+              {design.artist_name && <p className="mt-3 text-sm">With <strong>{design.artist_name}</strong> — only times when they are free are shown.</p>}
               <p className="mt-4 text-muted">{design.description}</p>
               <p className="mt-2 text-sm text-muted">
                 Base package: one {isFeet ? "pair of feet" : "hand"}, as shown — {formatPaise(design.base_price_paise)}, about {formatDuration(design.duration_minutes)}.
@@ -429,25 +437,21 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
           {step === 2 && (
             <section aria-labelledby="s3">
               <h2 id="s3" className="text-3xl">When and where</h2>
-              <div className="field mt-4 max-w-sm">
-                <label htmlFor="locality">Your locality in Hyderabad</label>
-                <select
-                  id="locality"
-                  className="input"
-                  value={localityId}
-                  onChange={(e) => {
-                    setLocalityId(e.target.value ? Number(e.target.value) : "");
-                    setChosen(null);
-                    setSlotState(null);
+              <div className="mt-4 max-w-xl">
+                <AddressBook
+                  signedIn={!!customer}
+                  selected={addr}
+                  invalid={!!errors.locality}
+                  onSelect={(a) => {
+                    if (a?.locality_id !== addr?.locality_id) {
+                      setChosen(null);
+                      setSlotState(null);
+                    }
+                    setAddr(a);
+                    if (a?.instructions) setInstructions(a.instructions);
                   }}
-                  aria-invalid={!!errors.locality}
-                >
-                  <option value="">Choose locality</option>
-                  {localities.map((l) => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
-                  ))}
-                </select>
-                {errors.locality ? <p className="field-error">{errors.locality}</p> : <p className="field-hint">Don’t see yours? <Link href="/contact" className="link">Ask us</Link>.</p>}
+                />
+                {errors.locality && <p className="field-error mt-2">{errors.locality}</p>}
               </div>
               <p className="mt-1 text-sm text-muted">
                 All times are India Standard Time. {quote && <>Your session takes about {formatDuration(quote.duration_minutes)}.</>} {locName && <>Showing artists who serve {locName}.</>}
@@ -477,7 +481,7 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
 
               <div className="mt-6" aria-live="polite">
                 {!localityId ? (
-                  <p className="text-muted">Choose your locality to see artists near you.</p>
+                  <p className="text-muted">Add your address to see the times artists near you are free.</p>
                 ) : !date ? (
                   <p className="text-muted">Pick a date to see available times.</p>
                 ) : slotsLoading ? (
@@ -525,8 +529,6 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
                 <QuickProfile
                   guest
                   customer={{ id: "", name: "", phone: null, email: null, gender: null, address_line: null, locality_id: null, landmark: null, profile_complete: false }}
-                  localities={localities}
-                  defaultLocalityId={localityId}
                   onSaved={(c) => setCustomer(c)}
                 />
               ) : (
@@ -537,7 +539,7 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
           {step === 3 && quote && customer && !customer.profile_complete && (
             <section aria-labelledby="s4b" className="space-y-4">
               <h2 id="s4b" className="text-3xl">Checkout</h2>
-              <QuickProfile customer={customer} localities={localities} defaultLocalityId={localityId} onSaved={(c) => setCustomer(c)} />
+              <QuickProfile customer={customer} onSaved={(c) => setCustomer(c)} />
             </section>
           )}
           {step === 3 && quote && customer?.profile_complete && (
@@ -549,7 +551,7 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
                   ["Package", quote.lines[0].label.split(" — ")[1] + (quote.options.people > 1 ? `, ${quote.options.people} people` : "")],
                   ["Artist", "Assigned from artists available in your area. You’ll see their name once they confirm."],
                   ["Date and time", `${formatIstDateString(date, true)}, ${slotLabel} IST`],
-                  ["Address", `${customer.address_line}, ${locName}, Hyderabad${customer.landmark ? ` (near ${customer.landmark})` : ""}`],
+                  ["Address", addr ? `${addressText(addr)}${addr.landmark ? ` (near ${addr.landmark})` : ""}` : "—"],
                   ["Contact", `${customer.name}, ${customer.phone ?? ""}`],
                 ].map(([k, v]) => (
                   <div key={k} className="grid gap-1 p-4 sm:grid-cols-[140px_1fr]">
@@ -559,13 +561,9 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
                 ))}
               </dl>
 
-              {customer.locality_id !== localityId && (
-                <p className="rounded-[var(--radius-sm)] bg-gold/15 p-3 text-sm">
-                  Your saved address is in {localities.find((l) => l.id === customer.locality_id)?.name ?? "another locality"}, but you picked times for {locName}.{" "}
-                  <button type="button" className="link" onClick={() => setCustomer({ ...customer, profile_complete: false })}>Update address</button> or{" "}
-                  <button type="button" className="link" onClick={() => goto(2)}>change locality</button>.
-                </p>
-              )}
+              <p className="-mt-2 text-sm">
+                <button type="button" className="link" onClick={() => goto(2)}>Change address or time</button>
+              </p>
               <div className="field">
                 <label htmlFor="instructions">Instructions for the artist (optional)</label>
                 <input id="instructions" className="input" value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Gate number, parking, floor" />
@@ -625,7 +623,7 @@ export function BookingFlow({ design, rules, localities, policy }: Props) {
                   Continue
                 </button>
               ) : (
-                <button type="button" className="btn btn-primary" onClick={submit} disabled={submitting || !quote || !customer?.profile_complete || customer.locality_id !== localityId}>
+                <button type="button" className="btn btn-primary" onClick={submit} disabled={submitting || !quote || !customer?.profile_complete || !addr}>
                   {submitting ? "Opening secure payment…" : `Pay ${quote ? formatPaise(quote.advance_paise) : ""} advance`}
                 </button>
               )}

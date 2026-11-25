@@ -11,6 +11,8 @@ export interface BusinessSettings extends PricingSettings {
   service_start_minute: number; // earliest start offered to customers (IST)
   service_end_minute: number; // latest end (IST)
   allow_demo_artists: boolean;
+  platform_margin_bp: number; // central platform margin on each booking total, in basis points (2000 = 20%)
+  payout_min_paise: number; // smallest payout an artist can request
   cancellation: { full_refund_hours: number; partial_refund_hours: number; partial_refund_percent: number };
   support: { phone: string; whatsapp: string; email: string; hours: string };
 }
@@ -28,6 +30,8 @@ export const DEFAULT_SETTINGS: BusinessSettings = {
   service_start_minute: 8 * 60,
   service_end_minute: 21 * 60,
   allow_demo_artists: process.env.NODE_ENV !== "production",
+  platform_margin_bp: 2000,
+  payout_min_paise: 50_000,
   cancellation: { full_refund_hours: 48, partial_refund_hours: 12, partial_refund_percent: 50 },
   support: { phone: "", whatsapp: "", email: "", hours: "10 AM – 8 PM IST" },
 };

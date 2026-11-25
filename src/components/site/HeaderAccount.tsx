@@ -1,57 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { signInWith180 } from "@/lib/one-eighty/client";
+import { useState } from "react";
+import { siteSignIn, useSiteAccount } from "./site-account";
 
-interface CustomerData {
-  id: string;
-  name: string;
-  phone: string;
-  email: string | null;
-}
-
+/** Header account button: "Log in" (180 Identity sheet), the customer's first name, or "Artist portal". */
 export function HeaderAccount({ mobile = false }: { mobile?: boolean }) {
   const router = useRouter();
-  const [customer, setCustomer] = useState<CustomerData | null>(null);
+  const account = useSiteAccount();
   const [busy, setBusy] = useState(false);
+  const customer = account?.customer ?? null;
+  const artist = account?.artist ?? null;
 
-  useEffect(() => {
-    fetch("/api/account")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.customer) setCustomer(data.customer);
-      })
-      .catch(() => {});
-  }, []);
-
-  async function handleLogin(e: React.MouseEvent) {
-    if (customer) {
-      router.push("/account");
-      return;
-    }
-    e.preventDefault();
+  async function handleLogin() {
+    if (artist) return router.push("/artist-portal");
+    if (customer) return router.push("/account");
     setBusy(true);
     try {
-      const result = await signInWith180();
-      if (!result) {
-        setBusy(false);
-        router.push("/account");
-        return;
-      }
-      const res = await fetch("/api/auth/180", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(result),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (res.ok && json.customer) {
-        setCustomer(json.customer);
-        router.push("/account");
-        router.refresh();
-      } else {
-        router.push("/account");
-      }
+      const done = await siteSignIn();
+      if (!done) router.push("/account");
+      else router.refresh();
     } catch {
       router.push("/account");
     } finally {
@@ -59,23 +27,15 @@ export function HeaderAccount({ mobile = false }: { mobile?: boolean }) {
     }
   }
 
-  const label = customer
-    ? customer.name ? customer.name.split(" ")[0] : "Account"
-    : busy
-    ? "Signing in…"
-    : "Log in";
+  const first = customer?.name?.trim().split(/\s+/)[0];
+  const label = artist ? "Artist portal" : customer ? first || "Account" : busy ? "Signing in…" : "Log in";
 
   if (mobile) {
     return (
-      <button
-        type="button"
-        onClick={handleLogin}
-        disabled={busy}
-        className="flex min-h-14 items-center justify-between border-b hairline font-display text-[1.65rem] text-plum w-full text-left"
-      >
-        <span>{customer ? "My Account" : "Sign in / Account"}</span>
-        <span className="text-xs font-sans tracking-wide uppercase px-2.5 py-1 rounded bg-blush text-plum-ink font-semibold">
-          {customer ? (customer.name ? customer.name.split(" ")[0] : "Signed in") : "180 Auth"}
+      <button type="button" onClick={handleLogin} disabled={busy} className="flex min-h-14 w-full items-center justify-between border-b hairline text-left font-display text-[1.65rem] text-plum">
+        <span>{artist ? "Artist portal" : customer ? "My account" : "Sign in / Account"}</span>
+        <span className="rounded bg-blush px-2.5 py-1 font-sans text-xs font-semibold tracking-wide text-plum-ink uppercase">
+          {artist ? artist.name.split(" ")[0] : customer ? first || "Signed in" : "180 Auth"}
         </span>
       </button>
     );
@@ -86,14 +46,14 @@ export function HeaderAccount({ mobile = false }: { mobile?: boolean }) {
       type="button"
       onClick={handleLogin}
       disabled={busy}
-      className="btn btn-ghost btn-sm px-3 text-sm inline-flex items-center gap-1.5 text-plum"
-      title={customer ? `Signed in as ${customer.name || customer.phone}` : "Sign in to your Vaishora account"}
+      className="btn btn-ghost btn-sm inline-flex items-center gap-1.5 px-3 text-sm text-plum"
+      title={customer ? `Signed in as ${customer.name || customer.email || customer.phone}` : "Sign in to your VAISHORA account"}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
         <circle cx="12" cy="7" r="4" />
       </svg>
-      <span>{label}</span>
+      <span className="max-w-28 truncate">{label}</span>
     </button>
   );
 }

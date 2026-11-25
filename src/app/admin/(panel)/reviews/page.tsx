@@ -5,6 +5,7 @@ import { currentUser } from "@/server/auth";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { addExternalReviewAction, moderateReviewAction } from "../../actions";
 import { formatIstDate } from "@/lib/time";
+import { AdaptiveSkeleton } from "@/components/admin/AdaptiveSkeleton";
 
 export const metadata = { title: "Reviews" };
 
@@ -90,7 +91,7 @@ export default function ReviewsAdminPage() {
   return (
     <>
       <h1 className="text-4xl">Reviews</h1>
-      <Suspense fallback={<p className="mt-4 text-muted">Loading…</p>}>
+      <Suspense fallback={<AdaptiveSkeleton />}>
         <Content />
       </Suspense>
     </>

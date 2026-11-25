@@ -28,9 +28,16 @@ export async function login(email: string, password: string): Promise<SessionUse
   // Always run a hash comparison to keep timing similar for unknown emails.
   const ok = verifyPassword(password, u?.password_hash ?? "scrypt$16384$8$1$AAAAAAAAAAAAAAAAAAAAAA==$" + "A".repeat(86) + "==");
   if (!u || !u.active || !ok) return null;
+  await startSession(u.id);
+  return { id: u.id, email: u.email, name: u.name, role: u.role, artist_id: u.artist_id };
+}
+
+/** Starts a staff/artist session for a user whose identity was already verified (password or 180 Identity). */
+export async function startSession(userId: string) {
+  const db = await getDb();
   const token = randomToken();
   const expires = new Date(Date.now() + SESSION_DAYS * 86400_000);
-  await db.query(`INSERT INTO sessions(id, user_id, expires_at) VALUES ($1, $2, $3)`, [sha256(token), u.id, expires.toISOString()]);
+  await db.query(`INSERT INTO sessions(id, user_id, expires_at) VALUES ($1, $2, $3)`, [sha256(token), userId, expires.toISOString()]);
   await db.query(`DELETE FROM sessions WHERE expires_at < now()`);
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
@@ -39,7 +46,6 @@ export async function login(email: string, password: string): Promise<SessionUse
     path: "/",
     expires,
   });
-  return { id: u.id, email: u.email, name: u.name, role: u.role, artist_id: u.artist_id };
 }
 
 export async function logout() {
@@ -68,7 +74,7 @@ export async function currentUser(): Promise<SessionUser | null> {
 /** Use in server components/actions. Redirects to login when unauthenticated or unauthorised. */
 export async function requireRole(roles: Role[], loginPath = "/admin/login"): Promise<SessionUser> {
   const user = await currentUser();
-  if (!user) redirect(loginPath);
+  if (!user) redirect(roles.length === 1 && roles[0] === "artist" && loginPath === "/admin/login" ? "/account?artist=1" : loginPath);
   if (!roles.includes(user.role)) redirect(user.role === "artist" ? "/artist-portal" : "/admin");
   return user;
 }

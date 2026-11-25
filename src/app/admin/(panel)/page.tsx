@@ -6,12 +6,24 @@ import { expireStaleHolds } from "@/server/availability";
 import { formatPaise } from "@/lib/money";
 import { STATUS_LABEL, BookingStatus } from "@/lib/booking-status";
 import { formatIstDate, formatIstTime, istDateString } from "@/lib/time";
+import { AdaptiveSkeleton } from "@/components/admin/AdaptiveSkeleton";
 
 async function Dashboard() {
   await connection();
   const db = await getDb();
   await expireStaleHolds(db);
   const today = istDateString();
+  const [platform] = await db.query<{ artists: number; pending_artists: number; pending_designs: number; margin_month: number; margin_all: number; payouts: number; tickets: number; customers: number }>(
+    `SELECT (SELECT count(*)::int FROM artists WHERE status = 'active' AND NOT is_demo) AS artists,
+            (SELECT count(*)::int FROM artists WHERE status = 'pending') AS pending_artists,
+            (SELECT count(*)::int FROM designs WHERE review_status = 'pending') AS pending_designs,
+            COALESCE((SELECT sum(margin_paise) FROM artist_ledger WHERE kind = 'booking'
+               AND created_at >= (date_trunc('month', (now() AT TIME ZONE 'UTC') + interval '330 minutes') - interval '330 minutes') AT TIME ZONE 'UTC'), 0)::int AS margin_month,
+            COALESCE((SELECT sum(margin_paise) FROM artist_ledger WHERE kind = 'booking'), 0)::int AS margin_all,
+            (SELECT count(*)::int FROM payout_requests WHERE status IN ('requested','approved')) AS payouts,
+            (SELECT count(*)::int FROM support_tickets WHERE status = 'open') AS tickets,
+            (SELECT count(*)::int FROM customers) AS customers`,
+  );
   const [counts, todayRows, money, upcoming, needs] = await Promise.all([
     db.query<{ status: BookingStatus; n: number }>(`SELECT status, count(*)::int AS n FROM bookings GROUP BY status`),
     db.query<{ n: number }>(`SELECT count(*)::int AS n FROM bookings WHERE ((starts_at AT TIME ZONE 'UTC') + interval '330 minutes')::date = $1::date AND status NOT IN ('expired','cancelled','refunded')`, [today]),
@@ -34,7 +46,16 @@ async function Dashboard() {
   const m = money[0];
   const cancelled = c(["cancelled", "refund_pending", "refunded"]);
   const realised = total - c(["expired"]);
+  const alerts: [string, string][] = [
+    ...(platform.pending_artists ? [[`/admin/verification?tab=artists`, `${platform.pending_artists} artist application${platform.pending_artists > 1 ? "s" : ""} to verify`] as [string, string]] : []),
+    ...(platform.pending_designs ? [[`/admin/verification?tab=designs`, `${platform.pending_designs} design${platform.pending_designs > 1 ? "s" : ""} waiting for review`] as [string, string]] : []),
+    ...(platform.payouts ? [[`/admin/payouts`, `${platform.payouts} payout request${platform.payouts > 1 ? "s" : ""} to process`] as [string, string]] : []),
+    ...(platform.tickets ? [[`/admin/support`, `${platform.tickets} support ticket${platform.tickets > 1 ? "s" : ""} need a reply`] as [string, string]] : []),
+  ];
   const tiles: [string, string, string?][] = [
+    ["Active artists", String(platform.artists), `${platform.pending_artists} awaiting verification`],
+    ["Platform margin", formatPaise(platform.margin_month), `this month · ${formatPaise(platform.margin_all)} all time`],
+    ["Customers", String(platform.customers), "accounts and guest bookers"],
     ["Total bookings", String(total), "all statuses"],
     ["Today", String(todayRows[0].n), "active bookings today (IST)"],
     ["Pending", String(c(["pending_payment", "awaiting_artist_assignment", "awaiting_artist_confirmation"])), "awaiting payment or artist"],
@@ -46,6 +67,17 @@ async function Dashboard() {
   ];
   return (
     <>
+      {alerts.length > 0 && (
+        <ul className="mb-4 grid gap-2 sm:grid-cols-2">
+          {alerts.map(([href, text]) => (
+            <li key={href}>
+              <Link href={href} className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-gold bg-gold/15 px-4 py-3 text-sm font-semibold">
+                {text} <span aria-hidden>→</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {tiles.map(([label, value, hint]) => (
           <div key={label} className="card p-3.5 sm:p-4">
@@ -130,7 +162,7 @@ export default function AdminHome() {
     <>
       <h1 className="text-[2.25rem] sm:text-4xl">Dashboard</h1>
       <div className="mt-5">
-        <Suspense fallback={<p className="text-muted">Loading figures…</p>}>
+        <Suspense fallback={<AdaptiveSkeleton />}>
           <Dashboard />
         </Suspense>
       </div>

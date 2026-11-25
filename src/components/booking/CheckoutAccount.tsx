@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signInWith180 } from "@/lib/one-eighty/client";
+import { refreshSiteAccount } from "@/components/site/site-account";
 
 export interface CustomerLite {
   id: string;
@@ -37,10 +38,11 @@ export function SignInCard({ onSignedIn, onGuest }: { onSignedIn: (c: CustomerLi
         setBusy(false);
         return; // closed the sheet
       }
-      const res = await fetch("/api/auth/180", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(result) });
+      const res = await fetch("/api/auth/180", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...result, as: "customer" }) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? "Sign-in could not be completed");
       onSignedIn(json.customer);
+      void refreshSiteAccount();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -62,28 +64,27 @@ export function SignInCard({ onSignedIn, onGuest }: { onSignedIn: (c: CustomerLi
   );
 }
 
-/** Step 2 of checkout: quick profile — only name, phone, email, gender and address. */
+/** Step 2 of checkout: quick profile — name, phone, email and gender (the address is chosen per booking). */
 export function QuickProfile({
   customer,
-  localities,
-  defaultLocalityId,
   onSaved,
   guest = false,
+  title = "A few details for your artist",
+  subtitle = "Asked once. Next time you book on this device, we fill these in for you.",
+  submitLabel = "Save and continue",
 }: {
   guest?: boolean;
   customer: CustomerLite;
-  localities: { id: number; name: string }[];
-  defaultLocalityId: number | "";
   onSaved: (c: CustomerLite) => void;
+  title?: string;
+  subtitle?: string;
+  submitLabel?: string;
 }) {
   const [f, setF] = useState({
     name: customer.name || "",
     phone: (customer.phone ?? "").replace(/^\+91/, ""),
     email: customer.email ?? "",
     gender: customer.gender ?? "",
-    address_line: customer.address_line ?? "",
-    locality_id: (customer.locality_id ?? defaultLocalityId) as number | "",
-    landmark: customer.landmark ?? "",
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ field?: string; message: string } | null>(null);
@@ -102,14 +103,15 @@ export function QuickProfile({
     setBusy(false);
     if (!res.ok) return setError({ field: json.field, message: json.error ?? "Could not save" });
     onSaved(json.customer);
+    void refreshSiteAccount(); // guest checkout signs the customer in
   }
 
   const err = (k: string) => (error?.field === k ? error.message : "");
   return (
     <form onSubmit={save} className="card space-y-4 p-5" noValidate>
       <div>
-        <h3 className="font-sans text-lg font-semibold text-plum-ink">A few details for your artist</h3>
-        <p className="text-sm text-muted">Asked once. Next time you book on this device, we fill these in for you.</p>
+        <h3 className="font-sans text-lg font-semibold text-plum-ink">{title}</h3>
+        <p className="text-sm text-muted">{subtitle}</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="field">
@@ -141,26 +143,9 @@ export function QuickProfile({
           </div>
           {err("gender") && <p className="field-error">{err("gender")}</p>}
         </fieldset>
-        <div className="field sm:col-span-2">
-          <label htmlFor="cp-address">Address where the artist should come</label>
-          <textarea id="cp-address" className="input min-h-20" autoComplete="street-address" value={f.address_line} onChange={set("address_line")} aria-invalid={!!err("address_line")} placeholder="Flat / house number, building, street" required />
-          {err("address_line") && <p className="field-error">{err("address_line")}</p>}
-        </div>
-        <div className="field">
-          <label htmlFor="cp-locality">Locality (Hyderabad)</label>
-          <select id="cp-locality" className="input" value={f.locality_id} onChange={(e) => setF((p) => ({ ...p, locality_id: e.target.value ? Number(e.target.value) : "" }))} aria-invalid={!!err("locality_id")} required>
-            <option value="">Choose locality</option>
-            {localities.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
-          {err("locality_id") && <p className="field-error">{err("locality_id")}</p>}
-        </div>
-        <div className="field">
-          <label htmlFor="cp-landmark">Landmark (optional)</label>
-          <input id="cp-landmark" className="input" value={f.landmark} onChange={set("landmark")} />
-        </div>
       </div>
       {error && !error.field && <p className="field-error" role="alert">{error.message}</p>}
-      <button className="btn btn-primary w-full sm:w-auto" disabled={busy}>{busy ? "Saving…" : "Save and continue"}</button>
+      <button className="btn btn-primary w-full sm:w-auto" disabled={busy}>{busy ? "Saving…" : submitLabel}</button>
     </form>
   );
 }

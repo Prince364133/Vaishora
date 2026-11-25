@@ -4,24 +4,25 @@ import { HeaderAccount } from "./HeaderAccount";
 
 export const NAV = [
   { href: "/designs", label: "Designs" },
-  { href: "/#services", label: "Services" },
   { href: "/artists", label: "Artists" },
   { href: "/#how-it-works", label: "How it works" },
 ];
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <Link href="/" className={`flex min-h-11 items-center gap-2.5 ${className}`} aria-label="VAISHORA home">
+    <Link href="/" className={`flex min-h-11 flex-none items-center gap-2.5 overflow-visible py-1 ${className}`} aria-label="VAISHORA home">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/emblem.png" alt="" width={38} height={28} className="h-7 w-auto" />
-      <span className="wordmark h-[14px] w-[124px] min-[360px]:h-[15px] min-[360px]:w-[136px]" aria-hidden />
+      <img src="/brand/emblem.png" alt="" width={38} height={28} className="h-7 w-auto flex-none" />
+      <span className="wordmark h-[16px] w-[132px] flex-none min-[360px]:h-[17px] min-[360px]:w-[146px]" aria-hidden />
     </Link>
   );
 }
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b hairline" style={{ height: "var(--header-h)" }}>
+    // On notched phones the page extends under the status bar (viewport-fit=cover): reserve that strip so
+    // the logo is never cut off at the top.
+    <header className="sticky top-0 z-40 border-b hairline" style={{ height: "calc(var(--header-h) + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
       {/* The blur lives on its own layer: backdrop-filter on the header itself would become the
           containing block for the fixed mobile menu and collapse it to the header's height. */}
       <div aria-hidden className="absolute inset-0 -z-10 bg-ivory/92 backdrop-blur-md" />

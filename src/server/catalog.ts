@@ -26,22 +26,38 @@ export interface Design {
   featured: boolean;
   sort: number;
   assets: { palm?: string; back?: string; feet?: string; palm_photo?: string; back_photo?: string };
+  /** Owner when this is an artist's own design (booked with that artist); null for platform designs. */
+  artist_id: string | null;
+  artist_name: string | null;
+  artist_slug: string | null;
+  review_status: "pending" | "approved" | "rejected";
+  includes: string;
+  video_url: string | null;
+  /** Real photos of the artist's work (first = cover). */
+  photos: string[];
 }
 
 const DESIGN_SELECT = `
   SELECT d.id, d.slug, d.name, d.category_slug, c.name AS category_name, d.description, d.region,
          d.complexity, d.duration_minutes, d.base_price_paise, d.artist_eligibility, d.status,
          d.featured, d.sort,
-         COALESCE((SELECT jsonb_object_agg(a.kind, a.url) FROM design_assets a WHERE a.design_id = d.id), '{}'::jsonb) AS assets
-  FROM designs d JOIN design_categories c ON c.slug = d.category_slug`;
+         COALESCE((SELECT jsonb_object_agg(a.kind, a.url) FROM design_assets a WHERE a.design_id = d.id), '{}'::jsonb) AS assets,
+         d.artist_id, ar.name AS artist_name, ar.slug AS artist_slug, d.review_status, d.includes, d.video_url,
+         COALESCE((SELECT array_agg(p.url ORDER BY p.sort, p.created_at) FROM design_photos p WHERE p.design_id = d.id), '{}') AS photos
+  FROM designs d JOIN design_categories c ON c.slug = d.category_slug LEFT JOIN artists ar ON ar.id = d.artist_id`;
+
+/** Publicly listed: not draft, approved, category active, and (if an artist's) the artist is active. */
+// An artist's own design is listed only while they keep it live (status 'active').
+const PUBLIC_WHERE = `d.status <> 'draft' AND c.active AND d.review_status = 'approved' AND (d.artist_id IS NULL OR (ar.status = 'active' AND d.status = 'active'))`;
 
 export async function listDesigns(opts: { includeInactive?: boolean } = {}, q?: Queryable): Promise<Design[]> {
   const db = q ?? (await getDb());
-  const where = opts.includeInactive ? "" : "WHERE d.status <> 'draft' AND c.active";
+  const where = opts.includeInactive ? "" : `WHERE ${PUBLIC_WHERE}`;
   return db.query<Design>(`${DESIGN_SELECT} ${where} ORDER BY d.featured DESC, d.sort, d.name`);
 }
 
 export async function getDesignBySlug(slug: string, q?: Queryable): Promise<Design | null> {
+  // Note: returns unpublished designs too; booking code checks status/review/owner (see bookings.ts).
   const db = q ?? (await getDb());
   const rows = await db.query<Design>(`${DESIGN_SELECT} WHERE d.slug = $1`, [slug]);
   return rows[0] ?? null;

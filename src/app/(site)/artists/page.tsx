@@ -4,7 +4,12 @@ import type { Metadata } from "next";
 import { cachedArtists } from "@/server/cached";
 import { ArtistCard } from "@/components/artists/ArtistCard";
 
-export const metadata: Metadata = { title: "Mehndi artists in Hyderabad" };
+export const metadata: Metadata = {
+  title: "Mehndi artists in Hyderabad — verified, book at home",
+  description: "Meet verified mehndi artists across Hyderabad. See their designs and portfolios, check live availability in your area and book at home.",
+  alternates: { canonical: "/artists" },
+  openGraph: { title: "Mehndi artists in Hyderabad", url: "/artists" },
+};
 
 async function List() {
   const artists = await cachedArtists();

@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { requireRole } from "@/server/auth";
 import { getDb } from "@/server/db";
 import { ReprojectTool, type ReprojectItem } from "@/components/admin/ReprojectTool";
+import { AdaptiveSkeleton } from "@/components/admin/AdaptiveSkeleton";
 
 export const metadata = { title: "Rebuild photo designs" };
 
@@ -32,7 +33,7 @@ export default function ReprojectPage() {
         uploaded again.
       </p>
       <div className="mt-6">
-        <Suspense fallback={<p className="text-muted">Loading…</p>}>
+        <Suspense fallback={<AdaptiveSkeleton />}>
           <Content />
         </Suspense>
       </div>

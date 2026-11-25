@@ -36,11 +36,23 @@ export const bookingRequestSchema = z.object({
   couponCode: z.string().trim().toUpperCase().max(30).optional().or(z.literal("").transform(() => undefined)),
   specialRequirements: z.string().trim().max(500).default(""),
   address: z.object({
+    /** A saved address of the signed-in customer (takes precedence over the fields below). */
+    id: z.string().uuid().optional(),
     line: z.string().trim().min(8, "Enter the full address — house/flat number and street").max(240),
     localityId: z.coerce.number().int().positive("Choose your locality"),
     city: z.literal("Hyderabad"),
     landmark: z.string().trim().max(120).default(""),
     instructions: z.string().trim().max(300).default(""),
+    // A new address picked on Google Maps:
+    house: z.string().trim().max(80).optional(),
+    building: z.string().trim().max(120).optional(),
+    formatted: z.string().trim().max(300).optional(),
+    placeId: z.string().trim().max(300).optional(),
+    lat: z.coerce.number().min(-90).max(90).optional(),
+    lng: z.coerce.number().min(-180).max(180).optional(),
+    label: z.string().trim().max(30).optional(),
+    /** Save this new address to the customer's address book. */
+    save: z.boolean().optional(),
   }),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   startMinute: z.coerce.number().int().min(0).max(1440),

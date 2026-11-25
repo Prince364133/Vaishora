@@ -5,6 +5,7 @@ import { getDb } from "@/server/db";
 import { BOOKING_STATUSES, STATUS_LABEL, BookingStatus } from "@/lib/booking-status";
 import { formatPaise } from "@/lib/money";
 import { formatIstDate, formatIstTime } from "@/lib/time";
+import { AdaptiveSkeleton } from "@/components/admin/AdaptiveSkeleton";
 
 export const metadata = { title: "Bookings" };
 
@@ -125,7 +126,7 @@ export default function BookingsPage(props: { searchParams: Promise<{ status?: s
         </select>
         <button className="btn btn-secondary">Filter</button>
       </form>
-      <Suspense fallback={<p className="mt-4 text-muted">Loading bookings…</p>}>
+      <Suspense fallback={<AdaptiveSkeleton />}>
         <List {...props} />
       </Suspense>
     </>

@@ -71,6 +71,10 @@ export interface VerifiedIdentity {
   email: string | null;
   name: string | null;
   phone: string | null;
+  /** false only when 180 explicitly says the email is unverified */
+  emailVerified: boolean;
+  /** false only when 180 explicitly says the phone is unverified */
+  phoneVerified: boolean;
 }
 
 function pick(c: Record<string, unknown>): VerifiedIdentity {
@@ -80,6 +84,8 @@ function pick(c: Record<string, unknown>): VerifiedIdentity {
     email: str(c.email)?.toLowerCase() ?? null,
     name: str(c.name) ?? ([str(c.given_name), str(c.family_name)].filter(Boolean).join(" ") || null),
     phone: str(c.phone_number) ?? str(c.phone),
+    emailVerified: c.email_verified !== false && c.isEmailVerified !== false,
+    phoneVerified: c.phone_number_verified !== false && c.isPhoneVerified !== false,
   };
 }
 

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { LegalPage } from "@/components/site/LegalPage";
 import { cachedSettings } from "@/server/cached";
+import { AdaptiveSkeleton } from "@/components/site/AdaptiveSkeleton";
 
 export const metadata = { title: "Cancellation and refund policy" };
 
@@ -32,7 +33,7 @@ async function Policy() {
 export default function RefundPolicyPage() {
   return (
     <LegalPage title="Cancellation and refund policy">
-      <Suspense fallback={<p>Loading policy…</p>}>
+      <Suspense fallback={<AdaptiveSkeleton />}>
         <Policy />
       </Suspense>
     </LegalPage>

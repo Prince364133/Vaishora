@@ -20,6 +20,7 @@ export async function POST(req: Request) {
         localityId: body.localityId,
         categorySlug: design.category_slug,
         eligibility: design.artist_eligibility,
+        artistId: design.artist_id,
       },
       settings,
     );

@@ -58,6 +58,7 @@ export async function getCustomer(id: string, q?: Queryable): Promise<Customer |
   return (await db.query<Customer>(`${SELECT} WHERE id = $1`, [id]))[0] ?? null;
 }
 
+/** Contact details needed to book. The address is chosen per booking from the saved addresses. */
 export function isProfileComplete(c: Customer) {
-  return !!(c.name && c.phone && c.email && c.gender && c.address_line && c.locality_id);
+  return !!(c.name && c.phone && c.email && c.gender);
 }

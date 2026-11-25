@@ -12,9 +12,6 @@ const schema = z.object({
   phone: phoneSchema,
   email: z.string().trim().email("Enter a valid email").max(120),
   gender: z.enum(["female", "male", "non_binary", "prefer_not_to_say"], { error: "Choose an option" }),
-  address_line: z.string().trim().min(8, "Enter the full address — house/flat number and street").max(240),
-  locality_id: z.coerce.number().int().positive("Choose your locality"),
-  landmark: z.string().trim().max(120).default(""),
   website: z.string().max(0).optional(),
 });
 
@@ -24,21 +21,21 @@ export async function POST(req: Request) {
   try {
     const p = schema.parse(await readJson(req));
     const db = await getDb();
-    const loc = await db.query(`SELECT 1 FROM localities WHERE id = $1 AND active`, [p.locality_id]);
-    if (!loc.length) return fail("We do not serve this locality yet.", 422, { field: "locality_id" });
     const id = await db.tx(async (q) => {
       const existing = (await q.query<{ id: string; identity_sub: string | null }>(`SELECT id, identity_sub FROM customers WHERE phone = $1`, [p.phone]))[0];
       if (existing?.identity_sub) return null;
-      const vals = [p.name, p.phone, p.email, p.gender, p.address_line, p.locality_id, p.landmark];
+      // A guest session never sees earlier saved addresses of this phone number: they are cleared.
+      const vals = [p.name, p.phone, p.email, p.gender];
       if (existing) {
         await q.query(
-          `UPDATE customers SET name=$2, phone=$3, email=$4, gender=$5, address_line=$6, locality_id=$7, landmark=$8, profile_completed_at=now(), updated_at=now() WHERE id=$1`,
+          `UPDATE customers SET name=$2, phone=$3, email=$4, gender=$5, address_line=NULL, locality_id=NULL, landmark=NULL, profile_completed_at=now(), updated_at=now() WHERE id=$1`,
           [existing.id, ...vals],
         );
+        await q.query(`DELETE FROM customer_addresses WHERE customer_id = $1`, [existing.id]);
         return existing.id;
       }
       const r = await q.query<{ id: string }>(
-        `INSERT INTO customers(name, phone, email, gender, address_line, locality_id, landmark, profile_completed_at) VALUES ($1,$2,$3,$4,$5,$6,$7,now()) RETURNING id`,
+        `INSERT INTO customers(name, phone, email, gender, profile_completed_at) VALUES ($1,$2,$3,$4,now()) RETURNING id`,
         vals,
       );
       return r[0].id;

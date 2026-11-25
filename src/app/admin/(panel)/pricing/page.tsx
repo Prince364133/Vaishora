@@ -5,8 +5,9 @@ import { getDb } from "@/server/db";
 import { listPricingRules } from "@/server/catalog";
 import { getSettings } from "@/server/settings";
 import { ActionForm } from "@/components/admin/ActionForm";
-import { saveCouponAction, saveRuleAction, saveSettingsAction } from "../../actions";
+import { saveCouponAction, saveRuleAction, saveSettingsAction, syncLocalitiesAction } from "../../actions";
 import { formatPaise } from "@/lib/money";
+import { AdaptiveSkeleton } from "@/components/admin/AdaptiveSkeleton";
 
 export const metadata = { title: "Pricing & settings" };
 
@@ -106,9 +107,31 @@ export default function PricingPage() {
   return (
     <>
       <h1 className="text-[2.25rem] sm:text-4xl">Pricing &amp; settings</h1>
-      <Suspense fallback={<p className="mt-4 text-muted">Loading…</p>}>
+      <Suspense fallback={<AdaptiveSkeleton />}>
         <Content />
+        <Localities />
       </Suspense>
     </>
+  );
+}
+
+/** Service localities and their Google Maps coordinates (used to match customer addresses). */
+async function Localities() {
+  await connection();
+  const db = await getDb();
+  const [c] = await db.query<{ total: number; located: number; google: number }>(
+    `SELECT count(*)::int AS total, count(lat)::int AS located, count(*) FILTER (WHERE source = 'google')::int AS google FROM localities WHERE active`,
+  );
+  return (
+    <section className="card mt-10 p-4 sm:p-5">
+      <h2 className="text-2xl">Localities</h2>
+      <p className="mt-1 text-sm text-muted">
+        {c.total} active localities · {c.located} located on Google Maps · {c.google} added from real Google Maps areas (by artists or customer addresses). Customer addresses are matched to the
+        nearest locality artists serve.
+      </p>
+      <ActionForm action={syncLocalitiesAction} submitLabel="Sync with Google Maps" pendingLabel="Locating…">
+        <></>
+      </ActionForm>
+    </section>
   );
 }

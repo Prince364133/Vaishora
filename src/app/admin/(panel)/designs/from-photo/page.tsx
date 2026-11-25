@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { requireRole } from "@/server/auth";
 import { listCategories } from "@/server/catalog";
 import { PhotoDesignImporter } from "@/components/admin/PhotoDesignImporter";
+import { AdaptiveSkeleton } from "@/components/admin/AdaptiveSkeleton";
 
 export const metadata = { title: "Add design from photo" };
 
@@ -24,7 +25,7 @@ export default function FromPhotoPage() {
         hand and in the catalogue.
       </p>
       <div className="mt-6">
-        <Suspense fallback={<p className="text-muted">Loading…</p>}>
+        <Suspense fallback={<AdaptiveSkeleton />}>
           <Content />
         </Suspense>
       </div>

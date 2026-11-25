@@ -7,6 +7,7 @@ import { requireRole } from "@/server/auth";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { HandIllustration } from "@/components/hand/HandIllustration";
 import { saveDesignAction } from "../../../actions";
+import { AdaptiveSkeleton } from "@/components/admin/AdaptiveSkeleton";
 
 async function Editor({ params }: { params: Promise<{ id: string }> }) {
   await connection();
@@ -82,7 +83,7 @@ async function Editor({ params }: { params: Promise<{ id: string }> }) {
 
 export default function DesignEditor(props: { params: Promise<{ id: string }> }) {
   return (
-    <Suspense fallback={<p className="text-muted">Loading…</p>}>
+    <Suspense fallback={<AdaptiveSkeleton />}>
       <Editor {...props} />
     </Suspense>
   );

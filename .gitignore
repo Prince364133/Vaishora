@@ -50,6 +50,10 @@ research/
 marketing/ad/render/
 marketing/ad/captures/
 marketing/ad/audio/
+# Python
+__pycache__/
+*.py[cod]
+
 # Local uploads in development
 public/uploads/
 marketing/ad/.cache/

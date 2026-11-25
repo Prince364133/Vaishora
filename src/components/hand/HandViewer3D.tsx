@@ -43,6 +43,8 @@ interface Props {
   /** Photo albedo assets ("palm_photo" / "back_photo"); built-in catalogue photos are used when absent. */
   palmPhoto?: string | null;
   backPhoto?: string | null;
+  /** The design's own uploaded artwork only (artist designs): no catalogue-look viewers or switch. */
+  customOnly?: boolean;
 }
 
 /**
@@ -52,6 +54,7 @@ interface Props {
  */
 export function HandViewer3D(props: Props) {
   const mode = useSyncExternalStore<ViewerMode>(subscribeViewerMode, getViewerMode, () => "photo");
+  if (props.customOnly) return <SculptedHandViewer {...props} className={props.className || "relative"} />;
   const onStage = (props.tone ?? "stage") === "stage";
   const feet = props.region === "feet";
   return (

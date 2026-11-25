@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { cachedDesigns, cachedLocalities, cachedPricingRules, cachedSettings } from "@/server/cached";
 import type { StudioDesign } from "@/components/studio/types";
+import { AdaptiveSkeleton } from "@/components/site/AdaptiveSkeleton";
 
 export const metadata: Metadata = { title: "Book a mehndi artist", robots: { index: false } };
 
@@ -31,7 +32,7 @@ async function Flow({ params }: { params: Promise<{ slug: string }> }) {
 
 export default function BookPage({ params }: { params: Promise<{ slug: string }> }) {
   return (
-    <Suspense fallback={<div className="container-v py-16 text-muted">Loading booking…</div>}>
+    <Suspense fallback={<AdaptiveSkeleton />}>
       <Flow params={params} />
     </Suspense>
   );

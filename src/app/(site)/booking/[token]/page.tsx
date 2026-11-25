@@ -14,6 +14,8 @@ import { HandIllustration } from "@/components/hand/HandIllustration";
 import { PaymentPanel } from "@/components/booking/PaymentPanel";
 import { CancelBooking } from "@/components/booking/CancelBooking";
 import { ReviewForm } from "@/components/booking/ReviewForm";
+import { reviewState } from "@/server/reviews";
+import { AdaptiveSkeleton } from "@/components/site/AdaptiveSkeleton";
 
 export const metadata: Metadata = { title: "Your booking", robots: { index: false, follow: false } };
 
@@ -32,6 +34,7 @@ async function BookingDetails({ params, searchParams }: { params: Promise<{ toke
   const art = b.design_region === "feet" ? b.design_assets.feet : b.design_assets.palm ?? b.design_assets.back;
   const side = b.design_region === "feet" ? "feet" : b.design_assets.palm ? "palm" : "back";
   const support = settings.support;
+  const review = await reviewState(await getDb(), b.id);
 
   return (
     <div className="container-v max-w-3xl py-8 md:py-12">
@@ -116,9 +119,9 @@ async function BookingDetails({ params, searchParams }: { params: Promise<{ toke
         )}
       </section>
 
-      {b.status === "completed" && !b.has_review && (
+      {review === "allowed" && (
         <div className="mt-8">
-          <ReviewForm token={token} />
+          <ReviewForm token={token} artistName={b.artist_name} />
         </div>
       )}
 
@@ -152,7 +155,7 @@ async function BookingDetails({ params, searchParams }: { params: Promise<{ toke
 
 export default function BookingPage(props: { params: Promise<{ token: string }>; searchParams: Promise<{ new?: string }> }) {
   return (
-    <Suspense fallback={<div className="container-v py-16 text-muted">Loading your booking…</div>}>
+    <Suspense fallback={<AdaptiveSkeleton />}>
       <BookingDetails {...props} />
     </Suspense>
   );

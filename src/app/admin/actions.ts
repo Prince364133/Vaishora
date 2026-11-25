@@ -14,6 +14,11 @@ import { hashPassword } from "@/server/crypto";
 import { BOOKING_STATUSES, BookingStatus, InvalidTransitionError } from "@/lib/booking-status";
 import { rateLimit } from "@/server/rate-limit";
 import { clientIp } from "@/server/auth";
+import { queueEmail } from "@/server/email";
+import { LedgerError, processPayout } from "@/server/ledger";
+import { replyToTicket, TICKET_PRIORITIES, TICKET_STATUSES } from "@/server/support";
+import { formatPaise } from "@/lib/money";
+import { applySnapshot, DesignSnapshot } from "@/server/design-revisions";
 
 export type ActionState = { ok?: string; error?: string; email?: string } | null;
 
@@ -242,11 +247,13 @@ export async function saveArtistAction(_: ActionState, form: FormData): Promise<
         experience_years: z.union([z.literal(""), z.coerce.number().int().min(0).max(60)]),
         experience_verified: z.boolean(),
         skill_level: z.enum(["standard", "senior", "bridal_specialist"]),
-        status: z.enum(["pending", "active", "suspended"]),
+        status: z.enum(["pending", "active", "suspended", "rejected"]),
         verified: z.boolean(),
         verification_notes: z.string().max(500),
+        email: z.union([z.literal(""), z.string().toLowerCase().email("Enter a valid sign-in email")]),
       })
       .parse({
+        email: s(form.get("email")),
         slug: s(form.get("slug")),
         name: s(form.get("name")),
         phone: s(form.get("phone")),
@@ -265,17 +272,26 @@ export async function saveArtistAction(_: ActionState, form: FormData): Promise<
     await db.tx(async (q) => {
       const exp = data.experience_years === "" ? null : data.experience_years;
       const vals = [data.slug, data.name, data.phone, data.bio, data.instagram || null, exp, data.experience_verified, data.skill_level, data.status, data.verification_notes];
+      const email = data.email || null;
+      if (email) {
+        const staff = await q.query(`SELECT 1 FROM users WHERE email = $1 AND role <> 'artist'`, [email]);
+        if (staff.length) throw new BookingError("That email belongs to a staff account. Use the artist's own email.");
+      }
       if (id) {
+        // Changing the sign-in email unbinds the old 180 account so only the new email can sign in.
         await q.query(
           `UPDATE artists SET slug=$2, name=$3, phone=$4, bio=$5, instagram=$6, experience_years=$7, experience_verified=$8, skill_level=$9, status=$10,
-             verification_notes=$11, verified_at = CASE WHEN $12 THEN COALESCE(verified_at, now()) ELSE NULL END, updated_at=now() WHERE id=$1`,
-          [id, ...vals, data.verified],
+             verification_notes=$11, verified_at = CASE WHEN $12 THEN COALESCE(verified_at, now()) ELSE NULL END,
+             identity_sub = CASE WHEN email IS DISTINCT FROM $13 THEN NULL ELSE identity_sub END, email = $13, updated_at=now() WHERE id=$1`,
+          [id, ...vals, data.verified, email],
         );
+        const linked = (await q.query<{ user_id: string | null }>(`SELECT user_id FROM artists WHERE id = $1`, [id]))[0];
+        if (linked?.user_id && email) await q.query(`UPDATE users SET email = $2 WHERE id = $1 AND role = 'artist'`, [linked.user_id, email]);
       } else {
         const r = await q.query<{ id: string }>(
-          `INSERT INTO artists(slug, name, phone, bio, instagram, experience_years, experience_verified, skill_level, status, verification_notes, verified_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, CASE WHEN $11 THEN now() END) RETURNING id`,
-          [...vals, data.verified],
+          `INSERT INTO artists(slug, name, phone, bio, instagram, experience_years, experience_verified, skill_level, status, verification_notes, verified_at, email)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, CASE WHEN $11 THEN now() END, $12) RETURNING id`,
+          [...vals, data.verified, email],
         );
         id = r[0].id;
       }
@@ -283,9 +299,10 @@ export async function saveArtistAction(_: ActionState, form: FormData): Promise<
       for (const l of localities) await q.query(`INSERT INTO artist_service_areas VALUES ($1,$2) ON CONFLICT DO NOTHING`, [id, l]);
       await q.query(`DELETE FROM artist_services WHERE artist_id = $1`, [id]);
       for (const c of services) await q.query(`INSERT INTO artist_services VALUES ($1,$2) ON CONFLICT DO NOTHING`, [id, c]);
-      // Weekly availability: one row per weekday with start/end (HH:MM, IST)
-      await q.query(`DELETE FROM artist_availability WHERE artist_id = $1`, [id]);
-      for (let wd = 0; wd < 7; wd++) {
+      // Weekly availability: one row per weekday with start/end (HH:MM, IST). Only when the form
+      // offers it — artists with a portal account manage their own (possibly split) hours.
+      if (form.has("manage_hours")) await q.query(`DELETE FROM artist_availability WHERE artist_id = $1`, [id]);
+      for (let wd = 0; wd < 7 && form.has("manage_hours"); wd++) {
         if (form.get(`day_${wd}_on`) !== "on") continue;
         const toMin = (t: string) => {
           const m = /^(\d{1,2}):(\d{2})$/.exec(t);
@@ -331,28 +348,6 @@ export async function addTimeOffAction(_: ActionState, form: FormData): Promise<
     await audit(user.id, "artist_time_off", "artist", id, { from, to });
     revalidatePath(`/admin/artists/${id}`);
     return { ok: "Time off added." };
-  } catch (e) {
-    return fail(e);
-  }
-}
-
-export async function createArtistLoginAction(_: ActionState, form: FormData): Promise<ActionState> {
-  const user = await requireRole(["admin"]);
-  try {
-    const id = z.string().uuid().parse(s(form.get("artistId")));
-    const email = z.string().email("Enter a valid email").parse(s(form.get("email")).toLowerCase());
-    const password = z.string().min(10, "Temporary password must be at least 10 characters").parse(s(form.get("password")));
-    const db = await getDb();
-    await db.tx(async (q) => {
-      const a = await q.query<{ name: string; user_id: string | null }>(`SELECT name, user_id FROM artists WHERE id = $1`, [id]);
-      if (!a[0]) throw new BookingError("Artist not found");
-      if (a[0].user_id) throw new BookingError("This artist already has a login.");
-      const u = await q.query<{ id: string }>(`INSERT INTO users(email, name, password_hash, role) VALUES ($1,$2,$3,'artist') RETURNING id`, [email, a[0].name, hashPassword(password)]);
-      await q.query(`UPDATE artists SET user_id = $2 WHERE id = $1`, [id, u[0].id]);
-    });
-    await audit(user.id, "artist_login_created", "artist", id, { email });
-    revalidatePath(`/admin/artists/${id}`);
-    return { ok: "Login created. Share the temporary password with the artist securely." };
   } catch (e) {
     return fail(e);
   }
@@ -645,6 +640,284 @@ export async function createDesignFromPhotoAction(_: ActionState, form: FormData
   redirect(`/admin/designs/${id}?created=1`);
 }
 
+// ------------------------------------------------------------------ artist verification
+export async function reviewArtistAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin"]);
+  try {
+    const id = z.string().uuid().parse(s(form.get("artistId")));
+    const decision = z.enum(["approve", "reject", "suspend", "reactivate"]).parse(s(form.get("decision")));
+    const reason = s(form.get("reason")).slice(0, 500);
+    if ((decision === "reject" || decision === "suspend") && reason.length < 5) return { error: "Add a short reason — the artist will see it." };
+    const db = await getDb();
+    const a = (await db.query<{ status: string; email: string | null; name: string }>(`SELECT status, email, name FROM artists WHERE id = $1`, [id]))[0];
+    if (!a) return { error: "Artist not found." };
+    const allowed: Record<string, string[]> = { approve: ["pending", "rejected"], reject: ["pending"], suspend: ["active"], reactivate: ["suspended"] };
+    if (!allowed[decision].includes(a.status)) return { error: `This artist is already ${a.status}.` };
+    const next = { approve: "active", reject: "rejected", suspend: "suspended", reactivate: "active" }[decision];
+    await db.query(
+      `UPDATE artists SET status = $2, reviewed_by = $3, updated_at = now(),
+         verified_at = CASE WHEN $2 = 'active' THEN COALESCE(verified_at, now()) ELSE verified_at END,
+         rejection_reason = CASE WHEN $2 = 'rejected' THEN $4 ELSE NULL END,
+         verification_notes = CASE WHEN $4 <> '' THEN $4 ELSE verification_notes END
+       WHERE id = $1`,
+      [id, next, user.id, reason],
+    );
+    await audit(user.id, `artist_${decision}`, "artist", id, { reason });
+    const first = a.name.split(" ")[0];
+    const mail = {
+      approve: {
+        subject: "You’re now an official VAISHORA artist",
+        heading: `Welcome aboard, ${first}!`,
+        paragraphs: [
+          "Your artist account has been verified — you are now an official VAISHORA artist with full access to your artist portal.",
+          "You can now list your mehndi designs and services with your own prices and timings, set your working days and hours, and start receiving bookings from customers.",
+          "Every design you list is reviewed by our team before it goes live in the store, and you’ll get an email as soon as it’s published.",
+          "Sign in on the VAISHORA website with this email address (secure 180 sign-in) and you’ll be taken straight to your portal.",
+        ],
+        cta: { label: "Open my artist portal", path: "/account?artist=1" },
+      },
+      reject: {
+        subject: "Update on your VAISHORA artist application",
+        heading: "About your application",
+        paragraphs: ["Thank you for applying to VAISHORA. We are unable to approve your artist account right now.", `Reason: ${reason}`, "If you have questions or your details have changed, contact us from the artist portal."],
+        cta: { label: "Contact support", path: "/artist-portal/support" },
+      },
+      suspend: {
+        subject: "Your VAISHORA artist account is paused",
+        heading: "Account paused",
+        paragraphs: ["Your artist account has been paused and you will not receive new bookings for now.", `Reason: ${reason}`, "Please contact support to resolve this."],
+        cta: { label: "Contact support", path: "/artist-portal/support" },
+      },
+      reactivate: {
+        subject: "Your VAISHORA artist account is active again",
+        heading: "Welcome back",
+        paragraphs: ["Your artist account is active again and customers can book you."],
+        cta: { label: "Open artist portal", path: "/artist-portal" },
+      },
+    }[decision];
+    if (a.email) queueEmail({ to: a.email, template: `artist_${decision}`, artistId: id, ...mail });
+    updateTag("artists");
+    updateTag("catalog");
+    revalidatePath("/admin/verification");
+    revalidatePath(`/admin/artists/${id}`);
+    return { ok: { approve: "Artist approved and notified by email.", reject: "Application rejected; the artist was notified.", suspend: "Artist suspended.", reactivate: "Artist reactivated." }[decision] };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function reviewDesignAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin", "staff"]);
+  try {
+    const id = z.string().uuid().parse(s(form.get("designId")));
+    const decision = z.enum(["approve", "reject"]).parse(s(form.get("decision")));
+    const note = s(form.get("note")).slice(0, 500);
+    if (decision === "reject" && note.length < 5) return { error: "Tell the artist what to change." };
+    const db = await getDb();
+    const d = (
+      await db.query<{ name: string; artist_id: string | null; email: string | null; review_status: string; pending_changes: DesignSnapshot | null }>(
+        `SELECT d.name, d.artist_id, a.email, d.review_status, d.pending_changes FROM designs d LEFT JOIN artists a ON a.id = d.artist_id WHERE d.id = $1`,
+        [id],
+      )
+    )[0];
+    if (!d) return { error: "Design not found." };
+    const isEdit = !!d.pending_changes;
+    if (!isEdit && d.review_status !== "pending") return { error: `This design was already ${d.review_status}.` };
+    const name = d.pending_changes?.name ?? d.name;
+    await db.tx(async (q) => {
+      if (isEdit) {
+        if (decision === "approve") await applySnapshot(q, id, d.pending_changes!);
+        // review_note on a live design means "your last edit was not approved" (shown to the artist).
+        await q.query(`UPDATE designs SET pending_changes = NULL, pending_submitted_at = NULL, review_note = $2, reviewed_at = now(), reviewed_by = $3 WHERE id = $1`, [
+          id,
+          decision === "reject" ? note : null,
+          user.id,
+        ]);
+      } else {
+        await q.query(`UPDATE designs SET review_status = $2, review_note = $3, reviewed_at = now(), reviewed_by = $4, updated_at = now() WHERE id = $1`, [
+          id,
+          decision === "approve" ? "approved" : "rejected",
+          note || null,
+          user.id,
+        ]);
+      }
+    });
+    await audit(user.id, `design_${decision}`, "design", id, { note, edit: isEdit });
+    if (d.email && d.artist_id) {
+      const approved = decision === "approve";
+      queueEmail({
+        to: d.email,
+        template: `design_${isEdit ? "edit_" : ""}${decision}`,
+        artistId: d.artist_id,
+        subject: approved ? (isEdit ? `Your changes to “${name}” are live` : `“${name}” is now live on VAISHORA`) : `Changes needed for “${name}”`,
+        heading: approved ? (isEdit ? "Your changes are live" : "Your design is live") : "Please update your design",
+        paragraphs: approved
+          ? [isEdit ? `Your edit of “${name}” was approved and is now showing in the store.` : `“${name}” was approved and customers can now book it with you.`, ...(note ? [`Note from our team: ${note}`] : [])]
+          : [
+              isEdit
+                ? `Your latest changes to “${name}” were not approved, so the store still shows the previous version:`
+                : `Our team reviewed “${name}” and asked for a change before it can go live:`,
+              note,
+              "Edit the design in your portal and save — it comes back to us automatically.",
+            ],
+        cta: { label: approved ? "View my designs" : "Edit design", path: `/artist-portal/designs/${id}` },
+      });
+    }
+    updateTag("catalog");
+    revalidatePath("/admin/verification");
+    return { ok: decision === "approve" ? (isEdit ? "Changes approved and live." : "Design approved and live.") : "Sent back to the artist with your note." };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ------------------------------------------------------------------ margins & payouts
+export async function saveMarginSettingsAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin"]);
+  try {
+    const pct = z.coerce.number({ error: "Enter a margin %" }).min(0, "Margin cannot be negative").max(60, "Margin above 60% looks wrong").parse(s(form.get("margin_percent")));
+    const min = rupees(form.get("payout_min"));
+    if (min < 100 || min > 10_000_000) return { error: "Minimum payout must be between ₹1 and ₹1,00,000." };
+    const db = await getDb();
+    await db.tx(async (q) => {
+      await setSetting(q, "platform_margin_bp", Math.round(pct * 100));
+      await setSetting(q, "payout_min_paise", min);
+    });
+    await audit(user.id, "margin_settings_save", "settings", null, { margin_bp: Math.round(pct * 100), payout_min_paise: min });
+    updateTag("catalog");
+    revalidatePath("/admin/payouts");
+    return { ok: `Platform margin set to ${pct}%. It applies to bookings completed from now on.` };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function setArtistMarginAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin"]);
+  try {
+    const id = z.string().uuid().parse(s(form.get("artistId")));
+    const raw = s(form.get("margin_percent"));
+    const bp = raw === "" ? null : Math.round(z.coerce.number().min(0).max(60, "Margin above 60% looks wrong").parse(raw) * 100);
+    await (await getDb()).query(`UPDATE artists SET margin_bp = $2, updated_at = now() WHERE id = $1`, [id, bp]);
+    await audit(user.id, "artist_margin_set", "artist", id, { margin_bp: bp });
+    revalidatePath(`/admin/artists/${id}`);
+    revalidatePath("/admin/payouts");
+    return { ok: bp == null ? "Uses the central platform margin." : `Margin override set to ${bp / 100}%.` };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function processPayoutAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin"]);
+  try {
+    const id = z.string().uuid().parse(s(form.get("payoutId")));
+    const action = z.enum(["approve", "paid", "reject"]).parse(s(form.get("action")));
+    const reference = s(form.get("reference")).slice(0, 80);
+    const note = s(form.get("note")).slice(0, 300);
+    if (action === "reject" && note.length < 5) return { error: "Add a reason for the artist." };
+    const db = await getDb();
+    const p = await db.tx((q) => processPayout(q, id, action, user.id, { reference, note }));
+    await audit(user.id, `payout_${action}`, "payout", id, { reference, note });
+    if (action !== "approve") {
+      const a = (await db.query<{ email: string | null }>(`SELECT email FROM artists WHERE id = $1`, [p.artist_id]))[0];
+      if (a?.email)
+        queueEmail({
+          to: a.email,
+          template: `payout_${action}`,
+          artistId: p.artist_id,
+          subject: action === "paid" ? `Payout of ${formatPaise(p.amount_paise)} sent to your bank` : "Your payout request was not processed",
+          heading: action === "paid" ? "Payout sent" : "Payout not processed",
+          paragraphs:
+            action === "paid"
+              ? [`We have transferred ${formatPaise(p.amount_paise)} to your bank account.`, `Bank reference (UTR): ${reference}`, "Banks usually credit it within a few hours."]
+              : [`Your payout request of ${formatPaise(p.amount_paise)} could not be processed and the amount is back in your balance.`, `Reason: ${note}`],
+          cta: { label: "View payouts", path: "/artist-portal/payouts" },
+        });
+    }
+    revalidatePath("/admin/payouts");
+    return { ok: { approve: "Payout approved.", paid: "Marked as paid; the artist was emailed.", reject: "Payout rejected; amount returned to the artist’s balance." }[action] };
+  } catch (e) {
+    if (e instanceof LedgerError) return { error: e.message };
+    return fail(e);
+  }
+}
+
+export async function verifyBankAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin"]);
+  try {
+    const id = z.string().uuid().parse(s(form.get("artistId")));
+    const r = await (await getDb()).query(`UPDATE artist_bank_accounts SET verified_at = now(), verified_by = $2 WHERE artist_id = $1 RETURNING artist_id`, [id, user.id]);
+    if (!r.length) return { error: "No bank account on file." };
+    await audit(user.id, "artist_bank_verified", "artist", id);
+    revalidatePath("/admin/payouts");
+    revalidatePath(`/admin/artists/${id}`);
+    return { ok: "Bank account marked verified." };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function ledgerAdjustmentAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin"]);
+  try {
+    const id = z.string().uuid().parse(s(form.get("artistId")));
+    const amount = Math.round(z.coerce.number({ error: "Enter an amount" }).refine((v) => v !== 0, "Enter a non-zero amount").parse(s(form.get("amount"))) * 100);
+    const note = z.string().min(5, "Explain the adjustment (the artist sees it)").max(200).parse(s(form.get("note")));
+    await (await getDb()).query(`INSERT INTO artist_ledger(artist_id, kind, amount_paise, note, created_by) VALUES ($1, 'adjustment', $2, $3, $4)`, [id, amount, note, user.id]);
+    await audit(user.id, "ledger_adjustment", "artist", id, { amount, note });
+    revalidatePath(`/admin/artists/${id}`);
+    revalidatePath("/admin/payouts");
+    return { ok: "Adjustment recorded." };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ------------------------------------------------------------------ support tickets
+export async function adminReplyTicketAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin", "staff"]);
+  try {
+    const id = z.string().uuid().parse(s(form.get("ticketId")));
+    const status = z.enum(TICKET_STATUSES).optional().parse(s(form.get("status")) || undefined);
+    const priority = z.enum(TICKET_PRIORITIES).optional().parse(s(form.get("priority")) || undefined);
+    const body = s(form.get("body"));
+    if (!body && !status && !priority) return { error: "Write a reply or change the status." };
+    if (body.length > 3000) return { error: "Reply is too long." };
+    const db = await getDb();
+    const t = (
+      await db.query<{ artist_id: string | null; customer_id: string | null; code: string; subject: string; email: string | null }>(
+        `SELECT t.artist_id, t.customer_id, t.code, t.subject, COALESCE(a.email, c.email) AS email
+         FROM support_tickets t LEFT JOIN artists a ON a.id = t.artist_id LEFT JOIN customers c ON c.id = t.customer_id WHERE t.id = $1`,
+        [id],
+      )
+    )[0];
+    if (!t) return { error: "Ticket not found." };
+    await db.tx(async (q) => {
+      if (body) await replyToTicket(q, id, { authorType: "admin", authorId: user.id, authorName: user.name, body, status });
+      else if (status)
+        await q.query(`UPDATE support_tickets SET status = $2, updated_at = now(), resolved_at = CASE WHEN $2 IN ('resolved','closed') THEN now() ELSE NULL END WHERE id = $1`, [id, status]);
+      if (priority) await q.query(`UPDATE support_tickets SET priority = $2 WHERE id = $1`, [id, priority]);
+    });
+    await audit(user.id, "ticket_update", "support_ticket", id, { status, priority, replied: !!body });
+    if (t.email && (t.artist_id || t.customer_id) && (body || status === "resolved"))
+      queueEmail({
+        to: t.email,
+        template: "ticket_reply",
+        artistId: t.artist_id,
+        subject: `[${t.code}] ${status === "resolved" ? "Resolved" : "New reply"}: ${t.subject}`,
+        heading: status === "resolved" ? "Your ticket was resolved" : "VAISHORA support replied",
+        paragraphs: body ? [body.slice(0, 1200)] : ["Our team marked your ticket as resolved. Reply in the portal if you still need help."],
+        cta: { label: "Open ticket", path: t.artist_id ? `/artist-portal/support/${id}` : `/account/support/${id}` },
+      });
+    revalidatePath(`/admin/support/${id}`);
+    revalidatePath("/admin/support");
+    return { ok: body ? "Reply sent." : "Ticket updated." };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 /**
  * Rebuilds a photo-imported design's assets for the current hand mesh. The browser re-warps the stored
  * original photo with the stored landmarks and brush layer (admin/designs/reproject) and uploads the
@@ -714,6 +987,29 @@ export async function reviewCaptureAction(_: ActionState, form: FormData): Promi
     await audit(user.id, "capture_review", "capture_run", runId, { status });
     revalidatePath("/admin/designs/captures");
     return { ok: status === "approved" ? "Approved as a training label." : status === "rejected" ? "Rejected." : "Back in the queue." };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ------------------------------------------------------------------ localities (Google Maps)
+export async function syncLocalitiesAction(): Promise<ActionState> {
+  const user = await requireRole(["admin"]);
+  try {
+    const { geocodeLocalities, mapsConfigured } = await import("@/server/maps");
+    if (!mapsConfigured()) return { error: "Set GOOGLE_MAPS_API_KEY first." };
+    const db = await getDb();
+    await db.query(`UPDATE localities SET geocoded_at = NULL WHERE lat IS NULL`);
+    let total = 0;
+    for (let i = 0; i < 10; i++) {
+      const n = await geocodeLocalities(db, 40);
+      total += n;
+      if (!n) break;
+    }
+    const left = (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM localities WHERE lat IS NULL`))[0].n;
+    await audit(user.id, "localities_sync", "locality", null, { located: total, left });
+    revalidatePath("/admin/pricing");
+    return { ok: `Located ${total} localities on Google Maps.${left ? ` ${left} could not be found — check their names.` : ""}` };
   } catch (e) {
     return fail(e);
   }

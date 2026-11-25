@@ -25,7 +25,7 @@ export function ArtistCard({ artist, className = "" }: { artist: PublicArtist; c
         <div className="flex items-center gap-3">
           {artist.photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={artist.photo_url} alt="" className="h-12 w-12 rounded-full object-cover" />
+            <img src={artist.photo_url} alt="" loading="lazy" decoding="async" className="h-12 w-12 rounded-full object-cover" />
           ) : (
             <span className="grid h-12 w-12 place-items-center rounded-full bg-plum font-display text-lg text-ivory" aria-hidden>
               {initials(artist.name)}

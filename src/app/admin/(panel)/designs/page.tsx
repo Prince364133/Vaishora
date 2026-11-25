@@ -8,6 +8,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { saveCategoryAction } from "../../actions";
 import { formatPaise } from "@/lib/money";
 import { formatDuration } from "@/lib/time";
+import { AdaptiveSkeleton } from "@/components/admin/AdaptiveSkeleton";
 
 export const metadata = { title: "Designs" };
 
@@ -85,7 +86,7 @@ export default function AdminDesigns(props: { searchParams: Promise<{ saved?: st
           <Link href="/admin/designs/new" className="btn btn-primary btn-sm">New design</Link>
         </div>
       </div>
-      <Suspense fallback={<p className="mt-4 text-muted">Loading…</p>}>
+      <Suspense fallback={<AdaptiveSkeleton />}>
         <Content {...props} />
       </Suspense>
     </>

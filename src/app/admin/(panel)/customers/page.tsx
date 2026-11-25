@@ -6,6 +6,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { updateInboxAction } from "../../actions";
 import { formatPaise } from "@/lib/money";
 import { formatIstDate } from "@/lib/time";
+import { AdaptiveSkeleton } from "@/components/admin/AdaptiveSkeleton";
 
 export const metadata = { title: "Customers & inbox" };
 
@@ -123,7 +124,7 @@ export default function CustomersPage(props: { searchParams: Promise<{ q?: strin
   return (
     <>
       <h1 className="text-[2.25rem] sm:text-4xl">Customers &amp; inbox</h1>
-      <Suspense fallback={<p className="mt-4 text-muted">Loading…</p>}>
+      <Suspense fallback={<AdaptiveSkeleton />}>
         <Content {...props} />
       </Suspense>
     </>

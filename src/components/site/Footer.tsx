@@ -20,7 +20,6 @@ const cols = [
     title: "Explore",
     links: [
       { href: "/designs", label: "Browse designs" },
-      { href: "/#services", label: "Services" },
       { href: "/artists", label: "Artists" },
       { href: "/booking/find", label: "Find my booking" },
     ],
@@ -46,7 +45,7 @@ export function Footer() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/emblem.png" alt="" width={60} height={44} className="h-11 w-auto" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/wordmark.png" alt="VAISHORA" width={160} height={18} className="h-[18px] w-auto" />
+            <img src="/brand/wordmark.png" alt="VAISHORA" loading="lazy" decoding="async" width={160} height={18} className="h-[18px] w-auto" />
           </div>
           <p className="mt-4 font-display text-xl italic text-rose">Beauty, made personal.</p>
           <p className="mt-3 text-sm text-blush/75">Mehndi artists for weddings, festivals and celebrations across Hyderabad.</p>

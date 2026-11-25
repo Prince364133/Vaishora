@@ -12,6 +12,12 @@ export interface StudioDesign {
   status: "active" | "draft" | "unavailable";
   featured: boolean;
   assets: { palm?: string; back?: string; feet?: string; palm_photo?: string; back_photo?: string };
+  /** Artist's own design: real photos (first = cover) and the artist it is booked with. */
+  photos?: string[];
+  artist_name?: string | null;
+  artist_slug?: string | null;
+  includes?: string;
+  video_url?: string | null;
 }
 
 export interface StudioCategory {

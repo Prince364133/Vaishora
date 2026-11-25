@@ -10,11 +10,19 @@ export function DesignCard({ design, priority = false }: { design: StudioDesign;
   const unavailable = design.status === "unavailable";
   return (
     <article className="group card relative flex flex-col overflow-hidden transition-[border-color] hover:border-rose has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-plum has-[a:focus-visible]:ring-offset-2">
-      <div className="bg-blush/60">
-        <HandIllustration side={previewSide(design)} art={previewArt(design)} className="mx-auto w-[86%] transition-transform duration-500 ease-[var(--ease-out-soft)] group-hover:scale-[1.03]" />
+      <div className="overflow-hidden bg-blush/60">
+        {design.photos?.length ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={design.photos[0]} alt={`${design.name} — ${design.category_name} mehndi design`} loading="lazy" decoding="async" className="aspect-[4/5] w-full object-cover transition-transform duration-500 ease-[var(--ease-out-soft)] group-hover:scale-[1.03]" />
+        ) : (
+          <HandIllustration side={previewSide(design)} art={previewArt(design)} className="mx-auto w-[86%] transition-transform duration-500 ease-[var(--ease-out-soft)] group-hover:scale-[1.03]" />
+        )}
       </div>
       <div className="flex flex-1 flex-col gap-0.5 p-3 sm:gap-1 sm:p-4">
-        <p className="text-xs font-semibold text-rose-deep">{design.category_name}</p>
+        <p className="text-xs font-semibold text-rose-deep">
+          {design.category_name}
+          {design.artist_name ? <span className="font-normal text-muted"> · by {design.artist_name}</span> : null}
+        </p>
         <h3 className="text-[1.2rem] leading-tight sm:text-[1.45rem]">
           <Link href={`/designs/${design.slug}`} className="stretched-link focus-visible:outline-none">
             {design.name}

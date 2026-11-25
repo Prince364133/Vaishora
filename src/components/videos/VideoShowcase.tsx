@@ -134,7 +134,7 @@ export function VideoShowcase({ videos }: { videos: ShowcaseVideo[] }) {
                 <div className="relative min-h-0 flex-1 overflow-hidden rounded-[var(--radius-lg)] bg-plum-deep ring-1 ring-gold/30">
                   {isActive && inView && thumb && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={thumb} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                    <img src={thumb} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                   )}
                   {isActive && inView ? (
                     <iframe

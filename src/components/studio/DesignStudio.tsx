@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { HandViewer3D } from "@/components/hand/HandViewer3D";
+import { LazyHandViewer3D as HandViewer3D } from "@/components/hand/LazyHandViewer3D";
 import { HandIllustration } from "@/components/hand/HandIllustration";
 import { formatPaise } from "@/lib/money";
 import { formatDuration } from "@/lib/time";
@@ -194,7 +194,7 @@ export function DesignStudio({ designs, categories, initialSlug }: Props) {
 
       {/* Mobile booking bar */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-30 border-t hairline bg-ivory/95 backdrop-blur-md transition-transform duration-300 sm:hidden ${
+        className={`fixed inset-x-0 bottom-[var(--tabbar-h)] z-30 border-t hairline bg-ivory/95 backdrop-blur-md transition-transform duration-300 sm:hidden ${
           studioInView && !heroCtaInView ? "translate-y-0" : "pointer-events-none translate-y-full"
         }`}
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}

@@ -17,6 +17,8 @@ export interface SlotQuery {
   localityId: number;
   categorySlug: string;
   eligibility: Skill;
+  /** Set for an artist's own design: only that artist can take it (their hours, areas and daily cap). */
+  artistId?: string | null;
 }
 
 export interface Slot {
@@ -52,18 +54,24 @@ export async function expireStaleHolds(q: Queryable) {
 
 async function candidates(q: Queryable, s: SlotQuery, settings: BusinessSettings): Promise<Candidate[]> {
   const weekday = istWeekday(s.date);
-  const rows = await q.query<{ id: string; start_minute: number; end_minute: number; skill_level: Skill }>(
-    `SELECT a.id, av.start_minute, av.end_minute, a.skill_level
+  const own = !!s.artistId;
+  // Platform designs: any active artist offering the category in the area. An artist's own design:
+  // that artist only (the category is theirs by definition).
+  const rows = await q.query<{ id: string; start_minute: number; end_minute: number; skill_level: Skill; max_per_day: number | null; day_count: number }>(
+    `SELECT a.id, av.start_minute, av.end_minute, a.skill_level, a.max_bookings_per_day AS max_per_day,
+            (SELECT count(*)::int FROM bookings b WHERE b.artist_id = a.id AND b.status = ANY($6::text[])
+               AND ((b.starts_at AT TIME ZONE 'UTC') + interval '330 minutes')::date = $7::date) AS day_count
      FROM artists a
      JOIN artist_availability av ON av.artist_id = a.id AND av.weekday = $1
      JOIN artist_service_areas sa ON sa.artist_id = a.id AND sa.locality_id = $2
-     JOIN artist_services sv ON sv.artist_id = a.id AND sv.category_slug = $3
-     WHERE a.status = 'active' AND (NOT a.is_demo OR $4)`,
-    [weekday, s.localityId, s.categorySlug, settings.allow_demo_artists],
+     WHERE a.status = 'active' AND (NOT a.is_demo OR $4)
+       AND ${own ? "a.id = $5::uuid AND $3::text IS NOT NULL" : "$5::uuid IS NULL AND EXISTS (SELECT 1 FROM artist_services sv WHERE sv.artist_id = a.id AND sv.category_slug = $3::text)"}`,
+    [weekday, s.localityId, s.categorySlug, settings.allow_demo_artists, s.artistId ?? null, ACTIVE_HOLD_STATUSES, s.date],
   );
   const map = new Map<string, Candidate>();
   for (const r of rows) {
-    if (SKILL_RANK[r.skill_level] < SKILL_RANK[s.eligibility]) continue;
+    if (!own && SKILL_RANK[r.skill_level] < SKILL_RANK[s.eligibility]) continue;
+    if (r.max_per_day != null && r.day_count >= r.max_per_day) continue; // fully booked that day
     const c = map.get(r.id) ?? { id: r.id, windows: [] };
     c.windows.push({ start: r.start_minute, end: r.end_minute });
     map.set(r.id, c);

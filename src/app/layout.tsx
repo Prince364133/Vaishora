@@ -21,7 +21,13 @@ export const metadata: Metadata = {
   title: { default: "VAISHORA — Mehndi artists in Hyderabad, booked online", template: "%s · VAISHORA" },
   description:
     "Explore mehndi designs on an interactive 3D hand, see transparent prices and book a mehndi artist at home in Hyderabad.",
+  applicationName: "VAISHORA",
+  keywords: ["mehndi artist Hyderabad", "mehndi designs", "bridal mehndi", "henna artist at home", "Arabic mehndi", "mehndi booking"],
+  category: "beauty",
   openGraph: { siteName: "VAISHORA", locale: "en_IN", type: "website" },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
