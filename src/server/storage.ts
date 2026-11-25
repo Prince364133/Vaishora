@@ -30,21 +30,37 @@ export async function storeImage(file: File, folder: "designs" | "portfolio" | "
   if (!kind) throw new UploadError("Upload a PNG, WebP or JPEG image.");
   if (opts.requireAlpha && kind.ext === "jpg") throw new UploadError("Mehndi artwork must be a transparent PNG or WebP.");
   const name = `${folder}/${Date.now()}-${crypto.randomBytes(6).toString("hex")}.${kind.ext}`;
+  return putFile(name, buf, kind.type);
+}
 
+/**
+ * Writes a validated file to storage: Vercel Blob (BLOB_READ_WRITE_TOKEN, production), Supabase Storage, or — in
+ * local development only — public/uploads. Returns its public URL.
+ */
+export async function putFile(name: string, buf: Buffer, contentType: string): Promise<string> {
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const { put } = await import("@vercel/blob");
+    try {
+      const r = await put(`vaishora/${name}`, buf, { access: "public", contentType, addRandomSuffix: false, token: process.env.BLOB_READ_WRITE_TOKEN });
+      return r.url;
+    } catch (e) {
+      throw new UploadError(`Upload failed (${e instanceof Error ? e.message : "storage error"}).`);
+    }
+  }
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "public-assets";
   if (url && key) {
     const res = await fetch(`${url}/storage/v1/object/${bucket}/${name}`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": kind.type, "x-upsert": "false" },
-      body: buf,
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": contentType, "x-upsert": "false" },
+      body: new Uint8Array(buf),
     });
     if (!res.ok) throw new UploadError(`Upload failed (${res.status}).`);
     return `${url}/storage/v1/object/public/${bucket}/${name}`;
   }
   if (process.env.NODE_ENV === "production" && !process.env.ALLOW_LOCAL_UPLOADS) {
-    throw new UploadError("File storage is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
+    throw new UploadError("File storage is not configured. Connect a Vercel Blob store (BLOB_READ_WRITE_TOKEN) or set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
   }
   const dest = path.join(process.cwd(), "public", "uploads", name);
   await fs.mkdir(path.dirname(dest), { recursive: true });

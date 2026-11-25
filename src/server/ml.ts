@@ -71,11 +71,15 @@ export function promotionDecision(m: CandidateMetrics, minGold = 5): { promote: 
   return { promote: true, reason: `Better on ${primary}: F1 ${m.candidate[primary].f1!.toFixed(3)} vs live ${m.live[primary].f1!.toFixed(3)}, no regressions.` };
 }
 
-/** Stores an ONNX model file (Supabase Storage when configured, else public/uploads in development). */
+/** Stores an ONNX model file (Vercel Blob or Supabase Storage when configured, else public/uploads in development). */
 export async function storeModelFile(file: File, version: number): Promise<string> {
   if (!file.size || file.size > 25 * 1024 * 1024) throw new Error("Model file must be 1 byte to 25 MB.");
   const buf = Buffer.from(await file.arrayBuffer());
   const name = `models/henna-unet-v${version}-${crypto.randomBytes(4).toString("hex")}.onnx`;
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const { put } = await import("@vercel/blob");
+    return (await put(`vaishora/${name}`, buf, { access: "public", contentType: "application/octet-stream", addRandomSuffix: false, token: process.env.BLOB_READ_WRITE_TOKEN })).url;
+  }
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "public-assets";

@@ -91,7 +91,7 @@ async function createPglite(): Promise<Db> {
   } catch (e) {
     // A local database left damaged (e.g. two servers wrote to it, or a process was killed
     // mid-write) aborts on open. In development, keep it as a backup and start fresh; the
-    // auto-seed below refills the catalogue, admin and demo data.
+    // auto-seed below refills the admin user and reference data (categories, pricing rules, localities).
     if (dir === "memory://" || process.env.NODE_ENV === "production") throw e;
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
     try {
@@ -197,7 +197,7 @@ export function getDb(): Promise<Db> {
           if (Number(counts[0]?.count ?? 0) === 0) {
             const { seedDatabase } = await import("./seed");
             await seedDatabase(db, { demo: true, adminPassword: process.env.ADMIN_PASSWORD || "admin123" });
-            console.info("[db] auto-seeded initial catalogue, admin user and demo artists");
+            console.info("[db] auto-seeded admin user, categories, pricing rules and localities (no designs or artists)");
           }
         } catch (err) {
           console.warn("[db] auto-seed check skipped:", err);

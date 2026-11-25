@@ -3,31 +3,28 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import ModelHandScene, { type ModelSceneHandle } from "./ModelHandScene";
 import { PhotoBackdrop } from "./PhotoBackdrop";
-import { getSkinTone, PHOTO_MATCH, PHOTO_PRESETS, PHOTO_TONES, PhotoPresetId, PhotoTone, setSkinTone, subscribeSkinTone, TONE_ORDER } from "@/lib/photo-tryon";
+import { getSkinTone, PHOTO_TONES, PhotoTone, setSkinTone, subscribeSkinTone, TONE_ORDER } from "@/lib/photo-tryon";
 
 /** Height kept clear for the floating toolbar (px); the 3D view centres the hands above it. */
 const TOOLBAR_SPACE = 64;
 
 /**
- * "3D model" viewer: both hands as a closed 3D model built from the photograph (scripts/model3d). Catalogue designs
- * use the matching photographed look (dried stain); artist / uploaded designs use their own textures. Drag to turn.
+ * "3D model" viewer: both hands as a closed 3D model built from the photograph (scripts/model3d), showing the
+ * design's own textures (built from the artist's / admin's uploaded hand photo). Bare hands until it has them.
  * Controls: skin tone, zoom, reset.
  */
 export function ModelHandViewer({
-  designSlug,
   onStage = true,
   custom,
   designName,
 }: {
-  designSlug?: string;
+  designSlug?: string; // kept for callers; every design brings its own textures
   onStage?: boolean;
   /** An artist / uploaded design: its own textures on the model (never a catalogue look). */
   custom?: { front: string | null; back: string | null };
   designName?: string;
 }) {
-  const match = designSlug && !custom ? PHOTO_MATCH[designSlug] : undefined;
   const hasCustom = !!(custom && (custom.front || custom.back));
-  const preset: PhotoPresetId = custom ? "bare" : match?.id ?? "royal";
   const tone = useSyncExternalStore<PhotoTone>(subscribeSkinTone, getSkinTone, () => "natural");
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -42,8 +39,8 @@ export function ModelHandViewer({
     return () => clearTimeout(timer);
   }, []);
 
-  const name = custom ? designName ?? "This design" : PHOTO_PRESETS.find((p) => p.id === preset)?.name ?? "";
-  const thumb = custom ? "/tryon/thumb-bare.jpg" : `/tryon/thumb-${preset === "bare" ? "bare" : `${preset}_stain`}.jpg`;
+  const name = designName ?? "This design";
+  const thumb = "/tryon/thumb-bare.jpg";
   const btn = `inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] px-2 text-sm font-semibold transition-colors ${
     onStage ? "bg-white/10 text-ivory hover:bg-white/18 border border-white/15" : "bg-white text-plum border hairline hover:bg-blush"
   }`;
@@ -58,7 +55,7 @@ export function ModelHandViewer({
         )}
         {!failed && (
           <div className={`absolute inset-0 transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-            <ModelHandScene ref={model} insetBottom={TOOLBAR_SPACE} preset={preset} look="stain" custom={custom} tone={tone} showcase={false} onShowcaseEnd={noop} onReady={onReady} onError={onError} />
+            <ModelHandScene ref={model} insetBottom={TOOLBAR_SPACE} preset="bare" look="stain" custom={custom ?? { front: null, back: null }} tone={tone} showcase={false} onShowcaseEnd={noop} onReady={onReady} onError={onError} />
           </div>
         )}
         {!ready && !failed && (
@@ -69,7 +66,7 @@ export function ModelHandViewer({
             </span>
           </div>
         )}
-        {custom && !hasCustom && (
+        {!hasCustom && (
           <p className="pointer-events-none absolute inset-x-0 bottom-[4.25rem] flex justify-center px-4">
             <span className="rounded-full bg-plum-deep/80 px-3 py-1 text-center text-[0.72rem] text-ivory backdrop-blur-sm">3D preview of this design is being prepared</span>
           </p>

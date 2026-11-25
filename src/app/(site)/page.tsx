@@ -4,7 +4,7 @@ import { DesignStudio } from "@/components/studio/DesignStudio";
 import { ArtistShowcase, FinalCta, HowItWorks, PopularDesigns, Services, WhyVaishora } from "@/components/home/Sections";
 import { VideoShowcase } from "@/components/videos/VideoShowcase";
 import { ReviewsSection } from "@/components/reviews/ReviewsSection";
-import { SHOWCASE_VIDEOS, type ShowcaseVideo } from "@/lib/showcase-videos";
+import type { ShowcaseVideo } from "@/lib/showcase-videos";
 import { youTubeId } from "@/lib/youtube";
 import { listPublishedReviews, reviewSummary } from "@/server/reviews";
 import { cachedArtists, cachedCategories, cachedDesigns } from "@/server/cached";
@@ -68,7 +68,7 @@ async function CatalogueSections() {
   );
 }
 
-/** Real VAISHORA work first: videos artists attached to their approved designs; curated videos only until those exist. */
+/** Videos artists attached to their approved designs; the row is hidden until there are any. */
 async function Videos() {
   const designs = (await cachedDesigns()) as StudioDesign[];
   const own: ShowcaseVideo[] = designs.flatMap((d) => {
@@ -77,7 +77,7 @@ async function Videos() {
       ? [{ platform: "youtube" as const, ref: id, url: `https://www.youtube.com/watch?v=${id}`, title: d.name, creator: d.artist_name, creatorUrl: d.artist_slug ? `/artists/${d.artist_slug}` : undefined, ownWork: true }]
       : [];
   });
-  return <VideoShowcase videos={own.length ? own.slice(0, 12) : SHOWCASE_VIDEOS} />;
+  return own.length ? <VideoShowcase videos={own.slice(0, 12)} /> : null;
 }
 
 async function Artists() {
@@ -117,7 +117,7 @@ export default function HomePage() {
       <Suspense fallback={<div className="h-96" />}>
         <CatalogueSections />
       </Suspense>
-      <Suspense fallback={<VideoShowcase videos={SHOWCASE_VIDEOS} />}>
+      <Suspense fallback={null}>
         <Videos />
       </Suspense>
       <HowItWorks />

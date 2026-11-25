@@ -6,7 +6,7 @@
 # copyrighted photos. A share of samples are "silver" real pairs: the owner's photo palms minus the matching
 # bare palm (same frame), labelled by colour difference.
 #
-# Sources (all owned by the project): public/designs/photo/bare-palm.webp, assets/tryon-source/atlas-bare.jpg, public/tryon/model/back-bare.jpg,
+# Sources (all owned by the project): assets/ml-source/photo/bare-palm.webp, assets/tryon-source/atlas-bare.jpg, public/tryon/model/back-bare.jpg,
 # scripts/out/ml/masks/*.png (rasterised procedural designs, scripts/ml/render_svgs.py).
 import math
 import pathlib
@@ -16,7 +16,7 @@ import numpy as np
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MASKS = ROOT / "scripts" / "out" / "ml" / "masks"
-PHOTO = ROOT / "public" / "designs" / "photo"
+PHOTO = ROOT / "assets" / "ml-source" / "photo"  # training photo pairs (not served)
 FRAME = 1024
 HOLDOUT_DESIGNS = ("trail",)  # real pairs kept out of training, used for the real-photo check
 PAIR_DESIGNS = ("arabic", "bridal", "floral", "minimal", "royal", "trail")

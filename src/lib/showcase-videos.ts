@@ -1,8 +1,4 @@
-// Mehndi videos shown in the "Real mehndi, real hands" row on the homepage.
-// These are embedded with each platform's official player and remain the property of their
-// creators; they are credited on every card and must NOT be presented as VAISHORA customer work
-// or VAISHORA reviews unless that is true. Replace with VAISHORA's own customer videos (with
-// consent) as soon as they exist — set `ownWork: true` for those.
+// Videos in the homepage video row: only videos artists attach to their own approved designs (no hard-coded list).
 
 export type VideoPlatform = "youtube" | "instagram" | "facebook";
 
@@ -16,53 +12,6 @@ export interface ShowcaseVideo {
   creatorUrl?: string;
   ownWork: boolean;
 }
-
-export const SHOWCASE_VIDEOS: ShowcaseVideo[] = [
-  {
-    platform: "youtube",
-    ref: "z96hSI23fGg",
-    url: "https://www.youtube.com/shorts/z96hSI23fGg",
-    title: "Mehndi glow reveal — bridal henna",
-    creator: "Lashes Beauty Parlour",
-    creatorUrl: "https://www.youtube.com/@Lashebeautyparlour",
-    ownWork: false,
-  },
-  {
-    platform: "youtube",
-    ref: "SYkX1ZKU-lE",
-    url: "https://www.youtube.com/shorts/SYkX1ZKU-lE",
-    title: "Client mehndi feedback",
-    creator: "Naina Goyal Mehandi",
-    creatorUrl: "https://www.youtube.com/@Nainagoyalmehandinchoreo",
-    ownWork: false,
-  },
-  {
-    platform: "youtube",
-    ref: "Rdu7PKl7V9I",
-    url: "https://www.youtube.com/shorts/Rdu7PKl7V9I",
-    title: "Mehndi colour reveal",
-    creator: "Rukaiya Mehendi House",
-    creatorUrl: "https://www.youtube.com/@RukaiyaMehendiHouse",
-    ownWork: false,
-  },
-  {
-    platform: "instagram",
-    ref: "DMwxOHQzaFs",
-    url: "https://www.instagram.com/reel/DMwxOHQzaFs/",
-    title: "Mehndi reel",
-    creator: "Original reel",
-    ownWork: false,
-  },
-  {
-    platform: "facebook",
-    ref: "https://www.facebook.com/mehndidesignscollection/videos/mehndi-designs-for-hands/1421121699809593/",
-    url: "https://www.facebook.com/mehndidesignscollection/videos/mehndi-designs-for-hands/1421121699809593/",
-    title: "Mehndi designs for hands",
-    creator: "Mehndi Designs Collection",
-    creatorUrl: "https://www.facebook.com/mehndidesignscollection",
-    ownWork: false,
-  },
-];
 
 export function embedUrl(v: ShowcaseVideo, opts: { autoplay: boolean }): string {
   const ap = opts.autoplay ? 1 : 0;

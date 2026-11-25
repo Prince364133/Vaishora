@@ -35,7 +35,6 @@ export interface ModelSceneHandle {
 
 type Part = { hand: number; side: "front" | "back"; count: number; tris: number; pos: number; nor: number; uv: number; idx: number; idx32: boolean };
 
-const STAINABLE = new Set(["royal", "bridal", "arabic", "trail", "floral", "minimal"]);
 const PIVOT_Z = 0.3; // between the front relief and the back
 const TARGET_Z = 0.45; // Photo 3D's camera target height
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -129,7 +128,7 @@ const ModelHandScene = forwardRef<ModelSceneHandle, Props>(function ModelHandSce
         );
       return texCache.get(url)!;
     };
-    const keyOf = (id: PhotoPresetId, look: PhotoLook) => (id === "bare" ? "bare" : look === "stain" && STAINABLE.has(id) ? `${id}_stain` : id);
+    const keyOf = (id: PhotoPresetId, look: PhotoLook) => (void look, id);
     const frontUrl = (k: string) => `/tryon/model/front-${k}.jpg`; // the design photo, edge-filled
     const backUrl = (k: string) => `/tryon/model/back-${k}.jpg`;
 

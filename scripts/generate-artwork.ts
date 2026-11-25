@@ -1,14 +1,14 @@
-// Generates the built-in mehndi artwork SVGs into public/designs/.
+// Generates the built-in mehndi artwork SVGs into assets/ml-source/designs/.
 // Run: npx tsx scripts/generate-artwork.ts [--preview]
 import fs from "node:fs";
 import { artworkSvg, STYLE_SIDES, ArtStyle } from "../src/lib/mehndi/artwork";
 
-fs.mkdirSync("public/designs", { recursive: true });
+fs.mkdirSync("assets/ml-source/designs", { recursive: true });
 const preview: string[] = [];
 for (const [style, sides] of Object.entries(STYLE_SIDES) as [ArtStyle, string[]][]) {
   for (const side of sides) {
     const svg = artworkSvg(style, side as "palm");
-    fs.writeFileSync(`public/designs/${style}-${side}.svg`, svg);
+    fs.writeFileSync(`assets/ml-source/designs/${style}-${side}.svg`, svg);
     if (process.argv.includes("--preview")) {
       const sil = side === "feet" ? "" : fs.readFileSync(`scripts/out/silhouette-${side}.path.txt`, "utf8");
       const art = artworkSvg(style, side as "palm", { color: "#5b1f0f" }).replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "");

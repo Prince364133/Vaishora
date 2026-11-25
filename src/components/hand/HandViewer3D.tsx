@@ -7,7 +7,6 @@ import { ModelHandViewer } from "./ModelHandViewer";
 import { useFeature } from "@/lib/features";
 import { PhotoBackdrop } from "./PhotoBackdrop";
 import { getSkinTone, getViewerMode, PHOTO_TONES, PhotoTone, setSkinTone, setViewerMode, subscribeSkinTone, subscribeViewerMode, TONE_ORDER, ViewerMode } from "@/lib/photo-tryon";
-import { catalogHasStain, catalogPhotoBack, catalogPhotoPalm, PhotoPalmLook } from "@/lib/mehndi/photo-palm";
 
 type Mode = "checking" | "3d" | "fallback";
 
@@ -64,7 +63,8 @@ export function HandViewer3D(props: Props) {
   const mode: ViewerMode = realisticOn ? storedMode : "sculpted";
   const onStage = (props.tone ?? "stage") === "stage";
   const feet = props.region === "feet";
-  const custom = props.customOnly ? { front: props.modelFront ?? null, back: props.modelBack ?? null } : undefined;
+  // every design shows only its own uploaded artwork on the 3D model (no built-in catalogue looks)
+  const custom = { front: props.modelFront ?? null, back: props.modelBack ?? null };
   return (
     <div className={`flex flex-col ${props.className || "relative"}`}>
       {!feet && realisticOn && (
@@ -108,8 +108,7 @@ export function HandViewer3D(props: Props) {
   );
 }
 
-function SculptedHandViewer({ palmArt, backArt, region, designName, className = "", tone = "stage", designSlug, palmPhoto, backPhoto }: Props) {
-  const [look, setLook] = useState<PhotoPalmLook>("stain");
+function SculptedHandViewer({ palmArt, backArt, region, designName, className = "", tone = "stage", palmPhoto, backPhoto }: Props) {
   const skinTone = useSyncExternalStore<PhotoTone>(subscribeSkinTone, getSkinTone, () => "natural");
   const [mode, setMode] = useState<Mode>("checking");
   const [quality, setQuality] = useState<"high" | "low">("low");
@@ -149,11 +148,9 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
   const fallbackArt = region === "feet" ? palmArt : fallbackSide === "back" ? backArt : palmArt;
   const showFeetNote = region === "feet";
   const onStage = tone === "stage";
-  // Real photographed palm (skin + henna) for designs that have one; the procedural mask otherwise.
-  const builtInPhoto = palmPhoto ? null : catalogPhotoPalm(designSlug, look, quality);
-  const photoPalm = region === "feet" ? null : palmPhoto ?? builtInPhoto;
-  const photoBack = region === "feet" ? null : backPhoto ?? (palmPhoto ? null : catalogPhotoBack(designSlug, look));
-  const showLook = mode === "3d" && !!builtInPhoto && catalogHasStain(designSlug) && region !== "feet";
+  // The design's own photographed palm / back (skin + henna) when uploaded; the henna mask otherwise.
+  const photoPalm = region === "feet" ? null : palmPhoto ?? null;
+  const photoBack = region === "feet" ? null : backPhoto ?? null;
 
   // Compact 44px icon buttons so the whole bar stays on one row down to 320px wide screens.
   const btn = `inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
@@ -184,28 +181,6 @@ function SculptedHandViewer({ palmArt, backArt, region, designName, className = 
           <p className="absolute bottom-3 inset-x-0 text-center text-xs text-plum/70" role="status">
             Loading 3D hand…
           </p>
-        )}
-        {showLook && (
-          <div
-            className={`absolute right-3 top-14 z-10 inline-flex rounded-full p-0.5 text-xs font-semibold ${onStage ? "bg-plum-deep/70 ring-1 ring-white/15" : "bg-blush ring-1 ring-[var(--color-line)]"}`}
-            role="radiogroup"
-            aria-label="Mehndi look"
-          >
-            {(["stain", "paste"] as const).map((l) => (
-              <button
-                key={l}
-                type="button"
-                role="radio"
-                aria-checked={look === l}
-                onClick={() => setLook(l)}
-                className={`min-h-9 rounded-full px-3 transition-colors ${
-                  look === l ? (onStage ? "bg-ivory text-plum" : "bg-plum text-ivory") : onStage ? "text-blush" : "text-plum"
-                }`}
-              >
-                {l === "stain" ? "Stain" : "Paste"}
-              </button>
-            ))}
-          </div>
         )}
       </div>
 
