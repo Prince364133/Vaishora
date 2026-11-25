@@ -81,6 +81,7 @@ export default function AdminDesigns(props: { searchParams: Promise<{ saved?: st
           <Link href="/admin/designs/from-photo" className="btn btn-secondary btn-sm">Add from photo</Link>
           <Link href="/admin/designs/reproject" className="btn btn-ghost btn-sm">Rebuild photo designs</Link>
           <Link href="/admin/designs/captures" className="btn btn-ghost btn-sm">Photo review queue</Link>
+          <Link href="/admin/designs/models" className="btn btn-ghost btn-sm">Detector versions</Link>
           <Link href="/admin/designs/new" className="btn btn-primary btn-sm">New design</Link>
         </div>
       </div>

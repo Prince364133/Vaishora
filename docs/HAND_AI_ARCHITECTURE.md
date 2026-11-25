@@ -41,17 +41,40 @@ Built in Phase 2 (learned extraction):
   - Rebuilds keep the review decision.
 - **Training export** `GET /api/admin/training-export` (admin only, no-store) returns only captures whose latest run is approved **and** whose owner consented to training.
 
+**Self-improving loop** (migration `009_ml_models.sql`, `src/server/ml.ts`, `scripts/ml/autolearn.py`):
+1. Admins approve photos in the review queue. Only photos whose owner consented are ever used.
+2. The **training worker** runs on a schedule on any machine with Python and PyTorch; the website host never trains. It:
+   - downloads the approved photos (`GET /api/admin/training-export`, worker token);
+   - permanently sets aside about 1 in 5 as **gold test photos** (hash of the photo id), which are never trained on;
+   - once at least `--min-new` (default 20) new training photos exist, fine-tunes the live model on synthetic data plus the real photos. Real photos are 35 % of samples. A run takes about 15 minutes on a CPU.
+3. It measures the candidate **and** the live model on the same test sets with ONNX Runtime, the same engine the browser uses: synthetic, the held-out studio pair, and the gold photos once there are at least 5.
+4. It uploads the candidate (`POST /api/admin/ml/models`). The site applies `promotionDecision()`: the candidate goes live only if it gains at least 0.005 F1 on the primary set and drops no more than 0.01 on any set. Otherwise it is kept as "Not better".
+5. The importer always loads the live version (`GET /api/ml/henna-model`).
+6. `/admin/designs/models` lists every version with its scores and the decision. Any version can be made live by hand (promote or roll back).
+
+Settings and scheduling:
+- **Server:** `ML_WORKER_TOKEN` (32+ random characters, server-only, the same value on the worker). Set `ML_AUTO_PROMOTE=off` if better versions should wait for an admin.
+- **Worker:** `python scripts/ml/autolearn.py --base https://<site>`. The token comes from the `ML_WORKER_TOKEN` env var or `.env.local`. Use `--dry-run` to train and evaluate without uploading.
+- **Schedule it daily:**
+  - Windows: `schtasks /Create /SC DAILY /ST 03:00 /TN VaishoraAutolearn /TR "python C:\path\to\Vaishora\scripts\ml\autolearn.py --base https://<site>"`
+  - Linux cron: `0 3 * * * cd /srv/vaishora && python scripts/ml/autolearn.py --base https://<site>`
+- **Tested locally:**
+  - A candidate trained on a junk label was correctly rejected ("Worse on synthetic: F1 0.783 vs live 0.830").
+  - A second run with no new photos did nothing.
+  - Manual promote and roll back switched the importer's model.
+  - The promotion rule has unit tests (`tests/unit/ml-promotion.test.ts`).
+
 **Later** (not possible yet, or waiting on a decision):
-1. **Train on real approved photos.** This needs consented, approved captures to exist, and a decision on training compute. The export endpoint is ready. Still to do: a `--manifest` input for `train.py` that downloads the photos and uses the stored frame photo with the final mask as labelled pairs.
+1. **Artists' uploads feeding the loop.** The artist portal (another workstream) still has to create capture records, with the training opt-in, when artists upload photos. Today only the admin importer does.
 2. **Bigger model and longer training on a GPU** (larger crops, more steps). v0 is deliberately small so it trains on this CPU in about 1–1.5 hours.
-3. **Model registry:** an `ml_models` table, a "promote candidate" button, and side-by-side comparison of model versions. Today the live model is whichever version `henna.json` points to.
-4. **Scheduled retraining** when N new approved labels arrive.
+3. **Choosing where the worker runs** (this PC with Task Scheduler, or a small server) and setting `ML_WORKER_TOKEN` in production. That is an owner decision.
+4. **Gold photos as an absolute quality floor** (alerts when the live model falls below X on gold photos). This needs enough gold photos first.
 5. **Batch import** (a folder of hundreds of photos into the review queue).
 6. **SAM 2.1 hand mask** to exclude sleeves and bangles. The model is about 150 MB, so it should run on a worker or be admin-only.
 7. **Speed:** a WebGPU backend and an fp16/int8 model (2 MB to under 1 MB).
 8. **Re-open an existing capture** from the queue to correct it later. Today corrections happen at import time.
 9. **Artist portal:** photo upload with the training opt-in, once the owner settles the consent wording. Storage for originals should move to a private bucket first.
-10. **Phase 3** (vectorise, symmetry, periodicity and repetition fill, motif library, predicted layer) and **Phase 4** (continuous learning) as in §6.
+10. **Phase 3** (vectorise, symmetry, periodicity and repetition fill, motif library, predicted layer). The core of **Phase 4** (continuous learning) is now built: see "Self-improving loop" above.
 11. **Owner purchases:** the hand scan (§3 A) and 4K photo palms, for pore-level close-ups.
 
 Scope: (1) what makes a woman's hand read as beautiful and how to get there technically, (2) how the

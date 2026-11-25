@@ -59,13 +59,13 @@ class UNet(nn.Module):
 
 # ------------------------------------------------------------------ data
 class SynthSet(torch.utils.data.IterableDataset):
-    def __init__(self, seed: int, size: int):
-        self.seed, self.size = seed, size
+    def __init__(self, seed: int, size: int, real_dir: str | None = None):
+        self.seed, self.size, self.real_dir = seed, size, real_dir
 
     def __iter__(self):
         info = torch.utils.data.get_worker_info()
         wid = info.id if info else 0
-        res = synth.Resources()
+        res = synth.Resources(self.real_dir)
         rng = np.random.default_rng(self.seed + 1000 * wid + int(time.time()) % 1000)
         while True:
             img, lab = synth.sample(res, rng, self.size)
@@ -144,10 +144,16 @@ def train(args):
     torch.set_num_threads(args.threads)
     OUT.mkdir(parents=True, exist_ok=True)
     model = UNet()
+    if getattr(args, "init", None):  # fine-tune from an earlier version
+        model.load_state_dict(torch.load(args.init, map_location="cpu"))
+        print("starting from", args.init, flush=True)
     print("params", sum(p.numel() for p in model.parameters()))
-    dl = torch.utils.data.DataLoader(SynthSet(7, args.size), batch_size=args.batch, num_workers=args.workers, persistent_workers=args.workers > 0)
-    opt = torch.optim.AdamW(model.parameters(), lr=2e-3, weight_decay=1e-4)
-    sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=2e-3, total_steps=args.steps, pct_start=0.1)
+    real_dir = getattr(args, "real_dir", None)
+    dl = torch.utils.data.DataLoader(SynthSet(7, args.size, real_dir), batch_size=args.batch, num_workers=args.workers, persistent_workers=args.workers > 0)
+    lr = getattr(args, "lr", None) or 2e-3
+    opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+    sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=lr, total_steps=args.steps, pct_start=0.1)
+    ckpt = pathlib.Path(getattr(args, "out", None) or CKPT)
     start = 1
     if args.resume and STATE.exists():
         st = torch.load(STATE, map_location="cpu")
@@ -173,9 +179,10 @@ def train(args):
         if step % 100 == 0 or step == 1:
             print(f"step {step}/{args.steps} loss {loss.item():.4f} bce {bce.item():.4f} dice {dice.item():.4f} {time.time() - t0:.0f}s", flush=True)
         if step % 250 == 0 or step == args.steps:
-            torch.save(model.state_dict(), CKPT)
+            torch.save(model.state_dict(), ckpt)
             torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "sched": sched.state_dict(), "step": step}, STATE)
-    print("saved", CKPT)
+    print("saved", ckpt)
+    return ckpt
 
 
 def load():

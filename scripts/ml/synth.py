@@ -64,7 +64,7 @@ def silver_label(bare: np.ndarray, target: np.ndarray) -> np.ndarray:
 
 
 class Resources:
-    def __init__(self):
+    def __init__(self, real_dir: str | None = None):
         self.skins: list[np.ndarray] = []
         bare = _read_rgba(PHOTO / "bare-palm.webp", FRAME)
         self.skins.append(bare)
@@ -81,6 +81,13 @@ class Resources:
                     t = _read_rgba(p, FRAME)
                     self.pairs.append((t, silver_label(bare, t), d))
         self.train_pairs = [p for p in self.pairs if p[2] not in HOLDOUT_DESIGNS]
+        # admin-approved real photos (scripts/ml/autolearn.py): <id>_photo.png (RGBA, hand frame) + <id>_label.png
+        self.real: list[tuple[np.ndarray, np.ndarray]] = []
+        if real_dir:
+            for ph in sorted(pathlib.Path(real_dir).glob("*_photo.png")):
+                lb = ph.with_name(ph.name.replace("_photo.png", "_label.png"))
+                if lb.exists():
+                    self.real.append((_read_rgba(ph, FRAME), (cv2.imread(str(lb), cv2.IMREAD_GRAYSCALE) > 127).astype(np.float32)))
 
 
 # ------------------------------------------------------------------ procedural henna patterns
@@ -293,6 +300,9 @@ def _crop(rng, img: np.ndarray, cs: int, r: int, y=None, x=None):
 def sample(res: Resources, rng: np.random.Generator, r: int = 256) -> tuple[np.ndarray, np.ndarray]:
     """One (image uint8 r×r×3, label float r×r) training pair."""
     cs = int(rng.uniform(0.55, 2.2) * r)  # crop scale → line widths vary like different photo resolutions
+    if res.real and rng.random() < 0.35:  # admin-approved real photo with its corrected henna
+        photo, lab = res.real[rng.integers(len(res.real))]
+        return _real_crop(rng, photo, lab, cs, r, exposure=0.15)
     if res.train_pairs and rng.random() < 0.15:  # silver real pair
         photo, lab, _ = res.train_pairs[rng.integers(len(res.train_pairs))]
         for _ in range(10):
@@ -341,6 +351,21 @@ def sample(res: Resources, rng: np.random.Generator, r: int = 256) -> tuple[np.n
             out[edge == 0] = 0
             lab[edge == 0] = 0
     return _aug_geo(rng, out, lab)
+
+
+def _real_crop(rng, photo, lab, cs, r, exposure=0.0):
+    for _ in range(10):
+        img, y, x = _crop(rng, photo, cs, r)
+        if (img[..., 3] > 128).mean() > 0.5:
+            break
+    lab_c, _, _ = _crop(rng, lab, cs, r, y, x)
+    rgb = img[..., :3].astype(np.float32)
+    if exposure:
+        rgb = rgb * rng.uniform(1 - exposure, 1 + exposure)
+    out = camera(rng, rgb)
+    lab_c = (lab_c > 0.5).astype(np.float32) * (img[..., 3] > 128)
+    out[img[..., 3] < 128] = 0
+    return _aug_geo(rng, out, lab_c)
 
 
 def _aug_geo(rng, img, lab):

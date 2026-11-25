@@ -7,6 +7,7 @@
 const ORT_VERSION = "1.27.0";
 const ORT_BASE = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/`;
 const MANIFEST = "/models/ml/henna.json";
+const LIVE = "/api/ml/henna-model";
 
 export interface HennaModelInfo {
   version: number;
@@ -56,7 +57,10 @@ export function loadHennaModel() {
   if (!sessionPromise) {
     sessionPromise = (async () => {
       try {
-        const res = await fetch(MANIFEST, { cache: "no-cache" });
+        // the live version from the model registry (it changes as the detector retrains itself); the bundled
+        // manifest is the fallback when the registry is unreachable
+        let res = await fetch(LIVE, { cache: "no-store" }).catch(() => null);
+        if (!res?.ok) res = await fetch(MANIFEST, { cache: "no-cache" });
         if (!res.ok) return null;
         const info = (await res.json()) as HennaModelInfo;
         const ort = await loadOrt();
