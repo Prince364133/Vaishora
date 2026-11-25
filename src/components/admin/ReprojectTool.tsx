@@ -13,7 +13,7 @@ export interface ReprojectItem {
   photo_url: string;
   edits_url: string | null;
   landmarks: Pt[];
-  params: { sensitivity?: number };
+  params: { sensitivity?: number; method?: string };
   frame_version: number;
 }
 
@@ -37,10 +37,13 @@ export function ReprojectTool({ items }: { items: ReprojectItem[] }) {
         const e = await loadImageUrl(item.edits_url);
         edits = imageData(e, src.width, src.height);
       }
-      const r = await warpSource(src, item.landmarks, item.side, item.params.sensitivity ?? 0.5, edits);
+      // same kind of detector as the original import (the current version of the model, if it was the model)
+      const r = await warpSource(src, item.landmarks, item.side, item.params.sensitivity ?? 0.5, edits, item.params.method?.startsWith("unet") ? "model" : "rules");
       const fd = new FormData();
       fd.set("run_id", item.run_id);
       fd.set("frame_version", String(FRAME_VERSION));
+      fd.set("method", r.method);
+      if (r.uncertainty != null) fd.set("uncertainty", String(r.uncertainty));
       fd.set("mask", new File([await dataBlob(r.mask)], "mask.webp", { type: "image/webp" }));
       fd.set("photo", new File([await dataBlob(r.photo)], "photo.webp", { type: "image/webp" }));
       const res = await reprojectDesignAction(null, fd);

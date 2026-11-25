@@ -1,0 +1,46 @@
+{
+  "version": 0,
+  "method": "unet-v0",
+  "url": "/models/ml/henna-unet-v0.onnx",
+  "input": "RGB 0..1, NCHW, H and W multiples of 16; pixels outside the hand set to 0",
+  "workingSize": 1024,
+  "threshold": 0.3,
+  "trainedOn": "synthetic henna on the project's own bare-skin photos + silver pairs from its own photo palms (no third-party images or weights)",
+  "metrics": {
+    "synthetic": {
+      "model": {
+        "iou": 0.709,
+        "f1": 0.8297,
+        "precision": 0.7542,
+        "recall": 0.9221
+      },
+      "rule_based": {
+        "iou": 0.3867,
+        "f1": 0.5578,
+        "precision": 0.7092,
+        "recall": 0.4596
+      },
+      "samples": 300
+    },
+    "real_holdout": {
+      "model": {
+        "iou": 0.642,
+        "f1": 0.782,
+        "precision": 0.8656,
+        "recall": 0.7131
+      },
+      "rule_based": {
+        "iou": 0.5579,
+        "f1": 0.7162,
+        "precision": 0.7906,
+        "recall": 0.6547
+      },
+      "designs": [
+        "trail"
+      ],
+      "images": 2,
+      "labels": "silver (difference to the bare palm)"
+    }
+  },
+  "created": "2026-11-25"
+}

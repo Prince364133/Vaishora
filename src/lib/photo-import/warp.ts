@@ -148,10 +148,10 @@ export function paintEdit(edits: ImageData, cx: number, cy: number, r: number, m
 }
 
 /**
- * Warps `src` (photo pixels) so its landmarks `srcPts` (pixels) land on our hand's joints.
- * `coverage` is our hand silhouette in the same frame (alpha channel used), `sensitivity` 0..1.
+ * Warps `src` (photo pixels) so its landmarks `srcPts` (pixels) land on our hand's joints. `coverage` is our hand
+ * silhouette in the same frame (alpha channel used); `edits` is the photo-space brush layer.
  */
-export function warpToHand(src: ImageData, srcPts: Pt[], side: Side, size: number, coverage: ImageData, sensitivity = 0.5, edits: ImageData | null = null): WarpResult {
+export function warpPhoto(src: ImageData, srcPts: Pt[], side: Side, size: number, coverage: ImageData, edits: ImageData | null = null): WarpedPhoto {
   let pts = srcPts;
   let image = src;
   let flipped = false;
@@ -218,22 +218,45 @@ export function warpToHand(src: ImageData, srcPts: Pt[], side: Side, size: numbe
       }
     }
   }
-  const mask = extractHenna(photo, sensitivity);
-  if (add && erase) {
-    const m = mask.data;
-    for (let i = 0; i < size * size; i++) {
-      if (!add[i] && !erase[i]) continue;
-      const o = i << 2;
-      const a = Math.max(m[o + 3], add[i]) * (1 - erase[i] / 255);
-      m[o] = m[o + 1] = m[o + 2] = 255;
-      m[o + 3] = Math.round(a * (out[o + 3] / 255));
-    }
-  }
   const toSource = (x: number, y: number): Pt => {
     const [sx, sy] = inv(x, y);
     return [flipped ? W - 1 - sx : sx, sy];
   };
-  return { photo, mask, size, toSource };
+  return { photo, size, toSource, add, erase };
+}
+
+/** The photo warped into the hand frame, before henna extraction (lets any extractor run on it). */
+export interface WarpedPhoto {
+  photo: ImageData;
+  size: number;
+  toSource: (x: number, y: number) => Pt;
+  /** Brush edits sampled into the frame (null when there are none). */
+  add: Uint8Array | null;
+  erase: Uint8Array | null;
+}
+
+/** Applies the brush edits to a henna mask in the frame (mutates and returns `mask`). */
+export function applyEdits(mask: ImageData, w: WarpedPhoto): ImageData {
+  if (!w.add || !w.erase) return mask;
+  const m = mask.data;
+  const out = w.photo.data;
+  for (let i = 0; i < w.size * w.size; i++) {
+    if (!w.add[i] && !w.erase[i]) continue;
+    const o = i << 2;
+    const a = Math.max(m[o + 3], w.add[i]) * (1 - w.erase[i] / 255);
+    m[o] = m[o + 1] = m[o + 2] = 255;
+    m[o + 3] = Math.round(a * (out[o + 3] / 255));
+  }
+  return mask;
+}
+
+/**
+ * Warps `src` (photo pixels) so its landmarks `srcPts` (pixels) land on our hand's joints and extracts the henna
+ * with the rule-based extractor. `coverage` is our hand silhouette in the same frame (alpha), `sensitivity` 0..1.
+ */
+export function warpToHand(src: ImageData, srcPts: Pt[], side: Side, size: number, coverage: ImageData, sensitivity = 0.5, edits: ImageData | null = null): WarpResult {
+  const w = warpPhoto(src, srcPts, side, size, coverage, edits);
+  return { photo: w.photo, mask: applyEdits(extractHenna(w.photo, sensitivity), w), size, toSource: w.toSource };
 }
 
 function flipX(img: ImageData) {

@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createDesignFromPhotoAction, type ActionState } from "@/app/admin/actions";
-import { emptyEdits, FRAME_VERSION, paintEdit, Pt, Side, WarpResult } from "@/lib/photo-import/warp";
-import { canvasBlob, dataBlob, imageData, normaliseSource, OUT, templatePoints, warpSource } from "@/lib/photo-import/browser";
+import { emptyEdits, FRAME_VERSION, paintEdit, Pt, Side } from "@/lib/photo-import/warp";
+import { canvasBlob, dataBlob, Extractor, imageData, normaliseSource, OUT, SourceResult, templatePoints, warpSource } from "@/lib/photo-import/browser";
+import { loadHennaModel } from "@/lib/photo-import/henna-model";
 
 const MP_VERSION = "1.2.3";
 const WASM = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}/wasm`;
@@ -63,10 +64,14 @@ export function PhotoDesignImporter({ categories }: { categories: { slug: string
   const [side, setSide] = useState<Side>("palm");
   const [sensitivity, setSensitivity] = useState(0.5);
   const [status, setStatus] = useState("");
-  const [result, setResult] = useState<WarpResult | null>(null);
+  const [extractor, setExtractor] = useState<Extractor>("model");
+  const [modelState, setModelState] = useState<"idle" | "loading" | "ready" | "unavailable">("idle");
   const [brush, setBrush] = useState<Brush>("off");
   const [brushSize, setBrushSize] = useState(18);
   const [editsVersion, setEditsVersion] = useState(0);
+  // identity of the inputs a result was computed from (lets the UI show "Detecting…" without extra state)
+  const inputs = useMemo(() => ({ editsVersion }), [source, pts, side, sensitivity, editsVersion, extractor]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [result, setResult] = useState<(SourceResult & { inputs: object }) | null>(null);
   const edits = useRef<ImageData | null>(null);
   const editsTouched = useRef(false);
   const dragging = useRef<number | null>(null);
@@ -102,6 +107,14 @@ export function PhotoDesignImporter({ categories }: { categories: { slug: string
       const H = canvas.height;
       setSource({ canvas, data: imageData(canvas, W, H) });
       resetEdits(W, H);
+      if (modelState === "idle") {
+        // load the learned henna detector in the background while the hand is being found
+        setModelState("loading");
+        loadHennaModel().then((m) => {
+          setModelState(m ? "ready" : "unavailable");
+          if (!m) setExtractor("rules");
+        });
+      }
       const { FilesetResolver, HandLandmarker } = await import("@mediapipe/tasks-vision");
       const vision = await FilesetResolver.forVisionTasks(WASM);
       const hl = await HandLandmarker.createFromOptions(vision, {
@@ -159,13 +172,14 @@ export function PhotoDesignImporter({ categories }: { categories: { slug: string
   useEffect(() => {
     if (!source || !pts) return;
     let cancelled = false;
-    warpSource(source.data, pts, side, sensitivity, edits.current)
-      .then((r) => !cancelled && setResult(r))
+    warpSource(source.data, pts, side, sensitivity, edits.current, extractor)
+      .then((r) => !cancelled && setResult({ ...r, inputs }))
       .catch((e) => setStatus(`Could not process the photo: ${(e as Error).message}`));
     return () => {
       cancelled = true;
     };
-  }, [source, pts, side, sensitivity, editsVersion]);
+  }, [source, pts, side, sensitivity, extractor, inputs]);
+  const working = !!source && !!pts && result?.inputs !== inputs;
 
   // source preview with draggable points
   const drawSource = useCallback(
@@ -305,7 +319,7 @@ export function PhotoDesignImporter({ categories }: { categories: { slug: string
     fd.set("landmarks", JSON.stringify(pts.map(([x, y]) => [+x.toFixed(2), +y.toFixed(2)])));
     fd.set("auto_landmarks", manual || !hands[handIdx] ? "null" : JSON.stringify(hands[handIdx].pts.map(([x, y]) => [+x.toFixed(2), +y.toFixed(2)])));
     fd.set("landmarks_edited", ptsEdited ? "1" : "0");
-    fd.set("params", JSON.stringify({ sensitivity, handIdx, rotated, manual, method: "heuristic-v1" }));
+    fd.set("params", JSON.stringify({ sensitivity, handIdx, rotated, manual, method: result.method, uncertainty: result.uncertainty }));
     fd.set("frame_version", String(FRAME_VERSION));
     fd.set("region", side);
     action(fd);
@@ -409,10 +423,25 @@ export function PhotoDesignImporter({ categories }: { categories: { slug: string
                     ))}
                   </div>
                 </fieldset>
-                <label className="field min-w-56">
-                  <span className="label">Henna detection sensitivity</span>
-                  <input type="range" min={0} max={1} step={0.05} value={sensitivity} onChange={(e) => setSensitivity(Number(e.target.value))} />
-                </label>
+                <fieldset className="field">
+                  <legend className="label">Henna detector</legend>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button type="button" aria-pressed={extractor === "model"} className={chip(extractor === "model")} disabled={modelState === "unavailable"} onClick={() => setExtractor("model")}>
+                      AI model{modelState === "loading" ? " (loading…)" : modelState === "unavailable" ? " (unavailable)" : ""}
+                    </button>
+                    <button type="button" aria-pressed={extractor === "rules"} className={chip(extractor === "rules")} onClick={() => setExtractor("rules")}>
+                      Classic rules
+                    </button>
+                    {working && <span className="text-xs text-muted" role="status">Detecting henna…</span>}
+                    {!working && result?.uncertainty != null && <span className="text-xs text-muted">Unsure on {result.uncertainty}% of the hand</span>}
+                  </div>
+                </fieldset>
+                {extractor === "rules" && (
+                  <label className="field min-w-56">
+                    <span className="label">Henna detection sensitivity</span>
+                    <input type="range" min={0} max={1} step={0.05} value={sensitivity} onChange={(e) => setSensitivity(Number(e.target.value))} />
+                  </label>
+                )}
                 <fieldset className="field">
                   <legend className="label">Correct the henna</legend>
                   <div className="flex flex-wrap items-center gap-2">

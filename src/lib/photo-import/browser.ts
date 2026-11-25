@@ -1,7 +1,8 @@
 "use client";
 
 // Browser helpers shared by the photo importer and the re-projection tool.
-import { Pt, Side, targetPoints, warpToHand, WarpResult } from "./warp";
+import { applyEdits, extractHenna, Pt, Side, targetPoints, warpPhoto, WarpResult } from "./warp";
+import { modelHenna } from "./henna-model";
 
 /** Long edge of the stored original photo (keeps uploads under the 6 MB limit while staying sharp). */
 export const SOURCE_MAX = 3072;
@@ -57,8 +58,36 @@ export function coverage(side: Side): Promise<ImageData> {
   return p;
 }
 
-export async function warpSource(src: ImageData, pts: Pt[], side: Side, sensitivity: number, edits: ImageData | null): Promise<WarpResult> {
-  return warpToHand(src, pts, side, OUT, await coverage(side), sensitivity, edits);
+export type Extractor = "model" | "rules";
+
+export interface SourceResult extends WarpResult {
+  /** Method that produced the mask: "unet-v<N>" or "heuristic-v1". */
+  method: string;
+  /** Model uncertainty 0..100 (null for the rule-based extractor). */
+  uncertainty: number | null;
+}
+
+/**
+ * Warps a source photo into the hand frame and extracts the henna with the learned model (falling back to the
+ * rule-based extractor when the model is unavailable or `extractor` is "rules"), then applies brush edits.
+ */
+// The model's mask depends only on the photo, the points and the side, so brush strokes and slider moves reuse it.
+let modelCache: { src: ImageData; key: string; m: Awaited<ReturnType<typeof modelHenna>> } | null = null;
+
+export async function warpSource(src: ImageData, pts: Pt[], side: Side, sensitivity: number, edits: ImageData | null, extractor: Extractor = "rules"): Promise<SourceResult> {
+  const w = warpPhoto(src, pts, side, OUT, await coverage(side), edits);
+  let m: Awaited<ReturnType<typeof modelHenna>> = null;
+  if (extractor === "model") {
+    const key = `${side}|${pts.map((p) => p.join(",")).join(";")}`;
+    if (modelCache && modelCache.src === src && modelCache.key === key) m = modelCache.m;
+    else {
+      m = await modelHenna(w.photo);
+      modelCache = { src, key, m };
+    }
+  }
+  // copy: applyEdits mutates the mask and the cached one must stay clean
+  const mask = m ? new ImageData(new Uint8ClampedArray(m.mask.data), m.mask.width, m.mask.height) : extractHenna(w.photo, sensitivity);
+  return { photo: w.photo, mask: applyEdits(mask, w), size: OUT, toSource: w.toSource, method: m ? m.method : "heuristic-v1", uncertainty: m ? m.uncertainty : null };
 }
 
 /** Starting points for manual placement: our hand's joints, centred in the photo. */

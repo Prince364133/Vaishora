@@ -1,8 +1,10 @@
 # Beautiful realistic hand + self-improving mehndi capture — research and proposed architecture
 
-Status: **Phase 1 in progress.** Written 2026-11-25.
+Status: **Phase 1 done. Phase 2 done as far as possible without real labelled photos (see "Later" below).** Written 2026-11-25.
 
-Built so far (Phase 1, capture side):
+Built in Phase 1 (hand): the Realistic 3D hand has the §2 proportions (fingers 46.2 % of hand length, petite 16.7 cm, taper, slimmer wrist) and projection frame v2, with KTX2 skin maps. See `docs/HAND_REALISM.md` §9.
+
+Built in Phase 1 (capture):
 - **Migration `006_capture_sources.sql`.**
   - `capture_sources` holds the original photo, its hash and size, the uploader, the rights confirmation and a separate training-consent flag.
   - `capture_runs` holds the method, the parameters, the auto-detected and final landmarks, the photo-space brush layer and the frame version.
@@ -17,6 +19,41 @@ Built so far (Phase 1, capture side):
   - unit: `tests/unit/photo-warp.test.ts` (inverse mapping, brush add/erase through the warp);
   - end to end: `scripts/out/capture-e2e.py`. It covers both the detected and the placed-by-hand paths, through save and rebuild.
 - **Production note:** originals are stored with `storeImage(…, "captures")`. Before collecting real customer or artist photos, point captures at a **private** storage bucket.
+
+Built in Phase 2 (learned extraction):
+- **Synthetic data** (`scripts/ml/synth.py`, masks from `scripts/ml/render_svgs.py`). Each sample is endless and exactly labelled:
+  - real bare-skin crops from our own photos, shifted across Indian skin tones from light to much darker;
+  - henna masks from the 15 procedural designs plus a random motif generator (mandalas, vines, lattices, bands, paisleys, dots, fills, hatching);
+  - a dye-stain model with colours from fresh orange to maroon, bleed, pooled outlines and blotchy take-up, plus a wet/dry paste model;
+  - hard negatives labelled "not henna": creases, shadows, veins, moles, flushed skin, hand-silhouette edges;
+  - camera effects: lighting, white balance, blur, noise, JPEG.
+  - About 15 % of samples are "silver" real pairs: the owner's photo palms minus the aligned bare palm. Design `trail` is held out for testing.
+- **Model** (`scripts/ml/train.py`): a small U-Net (0.53 M weights), trained from scratch on the CPU. No pretrained or third-party weights.
+  - It is exported to ONNX at `public/models/ml/henna-unet-v0.onnx`, with a manifest at `public/models/ml/henna.json` that holds the version, threshold and metrics.
+  - `python scripts/ml/train.py eval` compares it with the rule-based extractor. `python scripts/ml/visual_check.py` writes a side-by-side sheet.
+- **In the browser** (`src/lib/photo-import/henna-model.ts`): ONNX Runtime Web 1.27.0 (MIT), loaded on demand from jsDelivr on the admin importer only. It is single-threaded WASM, runs at 1024 px and is upscaled to the 2048 frame.
+  - Any failure falls back to the rules.
+  - The importer has an "AI model / Classic rules" switch and shows how unsure the model is.
+  - The method (`unet-v0` / `heuristic-v1`) and the uncertainty are recorded on the capture run. The rebuild tool re-runs the same kind of detector.
+- **Review queue** at `/admin/designs/captures` (migration `008_capture_review.sql`):
+  - It shows the latest run of every capture: original next to extracted henna, method, uncertainty, whether points or brush were corrected, and consent.
+  - It is sorted undecided first, then most uncertain. An admin can Approve, Reject or Undo.
+  - Rebuilds keep the review decision.
+- **Training export** `GET /api/admin/training-export` (admin only, no-store) returns only captures whose latest run is approved **and** whose owner consented to training.
+
+**Later** (not possible yet, or waiting on a decision):
+1. **Train on real approved photos.** This needs consented, approved captures to exist, and a decision on training compute. The export endpoint is ready. Still to do: a `--manifest` input for `train.py` that downloads the photos and uses the stored frame photo with the final mask as labelled pairs.
+2. **Bigger model and longer training on a GPU** (larger crops, more steps). v0 is deliberately small so it trains on this CPU in about 1–1.5 hours.
+3. **Model registry:** an `ml_models` table, a "promote candidate" button, and side-by-side comparison of model versions. Today the live model is whichever version `henna.json` points to.
+4. **Scheduled retraining** when N new approved labels arrive.
+5. **Batch import** (a folder of hundreds of photos into the review queue).
+6. **SAM 2.1 hand mask** to exclude sleeves and bangles. The model is about 150 MB, so it should run on a worker or be admin-only.
+7. **Speed:** a WebGPU backend and an fp16/int8 model (2 MB to under 1 MB).
+8. **Re-open an existing capture** from the queue to correct it later. Today corrections happen at import time.
+9. **Artist portal:** photo upload with the training opt-in, once the owner settles the consent wording. Storage for originals should move to a private bucket first.
+10. **Phase 3** (vectorise, symmetry, periodicity and repetition fill, motif library, predicted layer) and **Phase 4** (continuous learning) as in §6.
+11. **Owner purchases:** the hand scan (§3 A) and 4K photo palms, for pore-level close-ups.
+
 Scope: (1) what makes a woman's hand read as beautiful and how to get there technically, (2) how the
 photo → design → 3D engine stays compatible, (3) how to add ML that repairs, completes and learns from
 mehndi photos over time.

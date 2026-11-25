@@ -557,6 +557,8 @@ const captureSchema = z.object({
   params: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])),
   frame_version: z.coerce.number().int().min(1).max(1000),
 });
+/** Extraction methods we record: the rule-based extractor or a version of the learned model. */
+const methodSchema = z.string().regex(/^(heuristic-v1|unet-v\d{1,4})$/);
 function jsonField(v: FormDataEntryValue | null): unknown {
   try {
     return JSON.parse(s(v) || "null");
@@ -622,13 +624,14 @@ export async function createDesignFromPhotoAction(_: ActionState, form: FormData
          VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8) RETURNING id`,
         [id, region, sourceUrl, sha256, cap.source_w, cap.source_h, user.id, form.get("consent_training") === "on"],
       );
-      const run = await q.query<{ id: string }>(
-        `INSERT INTO capture_runs(source_id, method, params, auto_landmarks, landmarks, landmarks_edited, edits_url, frame_version, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-        [src[0].id, "heuristic-v1", JSON.stringify(cap.params), cap.auto_landmarks ? JSON.stringify(cap.auto_landmarks) : null, JSON.stringify(cap.landmarks), cap.landmarks_edited, editsUrl, cap.frame_version, user.id],
-      );
       const maskUrl = await storeImage(mask, "designs", { requireAlpha: true });
       const photoUrl = await storeImage(photo, "designs", { requireAlpha: true });
+      const unc = typeof cap.params.uncertainty === "number" ? Math.min(100, Math.max(0, cap.params.uncertainty)) : null;
+      const run = await q.query<{ id: string }>(
+        `INSERT INTO capture_runs(source_id, method, params, auto_landmarks, landmarks, landmarks_edited, edits_url, frame_version, created_by, uncertainty, mask_url)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+        [src[0].id, methodSchema.catch("heuristic-v1").parse(cap.params.method), JSON.stringify(cap.params), cap.auto_landmarks ? JSON.stringify(cap.auto_landmarks) : null, JSON.stringify(cap.landmarks), cap.landmarks_edited, editsUrl, cap.frame_version, user.id, unc, maskUrl],
+      );
       await q.query(
         `INSERT INTO design_assets(design_id, kind, url, source, frame_version, capture_run_id) VALUES ($1,$2,$3,'upload',$6,$7), ($1,$4,$5,'upload',$6,$7)`,
         [id, region, maskUrl, `${region}_photo`, photoUrl, cap.frame_version, run[0].id],
@@ -652,27 +655,29 @@ export async function reprojectDesignAction(_: ActionState, form: FormData): Pro
   try {
     const runId = z.string().uuid().parse(s(form.get("run_id")));
     const frameVersion = z.coerce.number().int().min(1).max(1000).parse(s(form.get("frame_version")));
+    const method = methodSchema.parse(s(form.get("method")) || "heuristic-v1");
     const mask = form.get("mask");
     const photo = form.get("photo");
     if (!(mask instanceof File) || !mask.size || !(photo instanceof File) || !photo.size) return { error: "Missing re-projected images." };
     const db = await getDb();
     let designId = "";
     await db.tx(async (q) => {
-      const rows = await q.query<{ source_id: string; method: string; params: unknown; auto_landmarks: unknown; landmarks: unknown; landmarks_edited: boolean; edits_url: string | null; design_id: string | null; side: string }>(
-        `SELECT r.source_id, r.method, r.params, r.auto_landmarks, r.landmarks, r.landmarks_edited, r.edits_url, s.design_id, s.side
+      const rows = await q.query<{ source_id: string; method: string; params: unknown; auto_landmarks: unknown; landmarks: unknown; landmarks_edited: boolean; edits_url: string | null; design_id: string | null; side: string; review_status: string; reviewed_by: string | null; reviewed_at: string | null }>(
+        `SELECT r.source_id, r.method, r.params, r.auto_landmarks, r.landmarks, r.landmarks_edited, r.edits_url, s.design_id, s.side, r.review_status, r.reviewed_by, r.reviewed_at
            FROM capture_runs r JOIN capture_sources s ON s.id = r.source_id WHERE r.id = $1`,
         [runId],
       );
       const r = rows[0];
       if (!r || !r.design_id) throw new UploadError("This capture is no longer linked to a design.");
       designId = r.design_id;
-      const run = await q.query<{ id: string }>(
-        `INSERT INTO capture_runs(source_id, method, params, auto_landmarks, landmarks, landmarks_edited, edits_url, frame_version, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-        [r.source_id, r.method, JSON.stringify(r.params), r.auto_landmarks ? JSON.stringify(r.auto_landmarks) : null, JSON.stringify(r.landmarks), r.landmarks_edited, r.edits_url, frameVersion, user.id],
-      );
       const maskUrl = await storeImage(mask, "designs", { requireAlpha: true });
       const photoUrl = await storeImage(photo, "designs", { requireAlpha: true });
+      const unc = z.coerce.number().min(0).max(100).nullable().catch(null).parse(s(form.get("uncertainty")) || null);
+      const run = await q.query<{ id: string }>(
+        `INSERT INTO capture_runs(source_id, method, params, auto_landmarks, landmarks, landmarks_edited, edits_url, frame_version, created_by, uncertainty, mask_url, review_status, reviewed_by, reviewed_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`,
+        [r.source_id, method, JSON.stringify({ ...(r.params as object), method }), r.auto_landmarks ? JSON.stringify(r.auto_landmarks) : null, JSON.stringify(r.landmarks), r.landmarks_edited, r.edits_url, frameVersion, user.id, unc, maskUrl, r.review_status, r.reviewed_by, r.reviewed_at],
+      );
       for (const [kind, url] of [[r.side, maskUrl], [`${r.side}_photo`, photoUrl]]) {
         await q.query(
           `INSERT INTO design_assets(design_id, kind, url, source, frame_version, capture_run_id) VALUES ($1,$2,$3,'upload',$4,$5)
@@ -684,6 +689,31 @@ export async function reprojectDesignAction(_: ActionState, form: FormData): Pro
     await audit(user.id, "design_reproject", "design", designId, { run: runId, frame_version: frameVersion });
     updateTag("catalog");
     return { ok: "Re-projected." };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/**
+ * Review queue decision on a capture's latest run: "approved" makes its final henna a training label
+ * (exported only when the photo owner consented), "rejected" keeps it out, "pending" undoes the decision.
+ */
+export async function reviewCaptureAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(["admin"]);
+  try {
+    const runId = z.string().uuid().parse(s(form.get("run_id")));
+    const status = z.enum(["approved", "rejected", "pending"]).parse(s(form.get("status")));
+    const db = await getDb();
+    const rows = await db.query<{ id: string }>(
+      `UPDATE capture_runs SET review_status = $2, reviewed_by = CASE WHEN $2 = 'pending' THEN NULL ELSE $3::uuid END,
+              reviewed_at = CASE WHEN $2 = 'pending' THEN NULL ELSE now() END
+        WHERE id = $1 RETURNING id`,
+      [runId, status, user.id],
+    );
+    if (!rows.length) return { error: "Capture not found." };
+    await audit(user.id, "capture_review", "capture_run", runId, { status });
+    revalidatePath("/admin/designs/captures");
+    return { ok: status === "approved" ? "Approved as a training label." : status === "rejected" ? "Rejected." : "Back in the queue." };
   } catch (e) {
     return fail(e);
   }
