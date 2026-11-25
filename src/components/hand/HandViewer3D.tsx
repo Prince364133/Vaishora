@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import HandScene, { type HandSceneHandle, type HandView } from "./HandScene";
 import { HandIllustration } from "./HandIllustration";
-import { PhotoHandViewer } from "./PhotoHandViewer";
+import { ModelHandViewer } from "./ModelHandViewer";
 import { PhotoBackdrop } from "./PhotoBackdrop";
 import { getSkinTone, getViewerMode, PHOTO_TONES, PhotoTone, setSkinTone, setViewerMode, subscribeSkinTone, subscribeViewerMode, TONE_ORDER, ViewerMode } from "@/lib/photo-tryon";
 import { catalogHasStain, catalogPhotoBack, catalogPhotoPalm, PhotoPalmLook } from "@/lib/mehndi/photo-palm";
@@ -38,7 +38,7 @@ interface Props {
   className?: string;
   /** Visual variant: "stage" sits on plum, "light" on ivory. */
   tone?: "stage" | "light";
-  /** Catalogue slug, used to pick the closest look in the Photo 3D viewer. */
+  /** Catalogue slug, used to pick the closest photographed look in the 3D model viewer. */
   designSlug?: string;
   /** Photo albedo assets ("palm_photo" / "back_photo"); built-in catalogue photos are used when absent. */
   palmPhoto?: string | null;
@@ -53,7 +53,7 @@ interface Props {
  * remembered on the device, so the two can be compared before deciding which to keep.
  */
 export function HandViewer3D(props: Props) {
-  const mode = useSyncExternalStore<ViewerMode>(subscribeViewerMode, getViewerMode, () => "photo");
+  const mode = useSyncExternalStore<ViewerMode>(subscribeViewerMode, getViewerMode, () => "sculpted");
   if (props.customOnly) return <SculptedHandViewer {...props} className={props.className || "relative"} />;
   const onStage = (props.tone ?? "stage") === "stage";
   const feet = props.region === "feet";
@@ -66,7 +66,7 @@ export function HandViewer3D(props: Props) {
             role="radiogroup"
             aria-label="3D viewer"
           >
-            {(["sculpted", "photo", "realistic"] as const).map((m) => (
+            {(["sculpted", "realistic"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
@@ -77,7 +77,7 @@ export function HandViewer3D(props: Props) {
                   mode === m ? (onStage ? "bg-ivory text-plum" : "bg-plum text-ivory") : onStage ? "text-blush" : "text-plum"
                 }`}
               >
-                {m === "sculpted" ? "3D model" : m === "photo" ? "Photo 3D" : "Realistic 3D"}
+                {m === "sculpted" ? "3D model" : "Realistic 3D"}
               </button>
             ))}
           </div>
@@ -90,10 +90,10 @@ export function HandViewer3D(props: Props) {
         // Both tabs show the hands rebuilt in 3D from the photograph (same skin, henna and smoothness), full
         // frame over the fixed silk backdrop; "3D model" swaps showcase/download for zoom controls.
         <div className="absolute inset-0 z-[1]">
-          <PhotoHandViewer key={mode} designSlug={props.designSlug} onStage={onStage} variant={mode === "sculpted" ? "model" : "photo"} />
+          <ModelHandViewer designSlug={props.designSlug} onStage={onStage} />
         </div>
       ) : (
-        // same full frame as Photo 3D: fixed silk backdrop over the whole arch, controls floating on top
+        // full frame: fixed silk backdrop over the whole arch, controls floating on top
         <SculptedHandViewer {...props} className="absolute inset-0 z-[1]" />
       )}
     </div>

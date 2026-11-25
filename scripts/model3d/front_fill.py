@@ -1,4 +1,4 @@
-# Front textures for the 3D model: the Photo 3D design photos (public/tryon/atlas-*.jpg) with everything outside the
+# Front textures for the 3D model: the design photos (assets/tryon-source/atlas-*.jpg) with everything outside the
 # hand outline replaced by the neighbouring skin, so the rim and the blurred side-wall samples never pick up the
 # photo's silk background. Inside the outline the pixels are untouched.
 #   python scripts/model3d/front_fill.py
@@ -6,7 +6,7 @@ import glob, pathlib
 import cv2
 import numpy as np
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-TRY = ROOT / "public/tryon"
+TRY = ROOT / "assets/tryon-source"  # Photo 3D source photos (mask, height map, design atlases, manifest); not served
 m = cv2.imread(str(TRY / "mask.png"), 0).astype(np.float32) / 255
 # a 2px skin margin inside the outline is rebuilt too: the photo's own edge pixels carry dark specks / silk colour
 trusted = cv2.erode((m > 0.6).astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
@@ -27,6 +27,6 @@ for f in sorted(glob.glob(str(TRY / "atlas-*.jpg"))):
     filled[~band] = skin
     a = cv2.GaussianBlur(trusted.astype(np.float32), (0, 0), 1.2)[..., None]
     out = (img * a + filled * (1 - a)).astype(np.uint8)
-    dst = TRY / "model" / pathlib.Path(f).name.replace("atlas-", "front-")
+    dst = ROOT / "public/tryon/model" / pathlib.Path(f).name.replace("atlas-", "front-")
     cv2.imwrite(str(dst), out, [cv2.IMWRITE_JPEG_QUALITY, 90])
     print(dst.name)

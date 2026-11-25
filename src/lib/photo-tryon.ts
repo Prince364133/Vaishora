@@ -1,8 +1,9 @@
-// "Photo 3D" try-on: the mehndi-3d-tryon viewer — both hands as one 3D mesh shaped from the bare-hands photo itself
-// (height map), with each design photo (fresh paste / dried stain) and the photo's own backdrop. Assets in
-// public/tryon/ (same files as mehndi-3d-tryon/data). The default viewer; the sculpted hand stays as "3D model".
+// Photographed-hands looks for the "3D model" viewer (both hands as a closed mesh built from the photo,
+// scripts/model3d -> public/tryon/model) and the skin tones shared by every 3D stage. The source photos the
+// model is built from live in assets/tryon-source/ (not served). Viewer modes: "sculpted" = 3D model (default),
+// "realistic" = the CC0 hand. The old "Photo 3D" viewer was removed.
 
-export type ViewerMode = "sculpted" | "photo" | "realistic";
+export type ViewerMode = "sculpted" | "realistic";
 export type PhotoLook = "paste" | "stain";
 export type PhotoTone = "natural" | "fair" | "tan" | "deep";
 
@@ -78,9 +79,9 @@ const EVT = "vaishora:viewer";
 export function getViewerMode(): ViewerMode {
   try {
     const v = localStorage.getItem(KEY);
-    return v === "sculpted" || v === "realistic" ? v : "photo";
+    return v === "realistic" ? "realistic" : "sculpted";
   } catch {
-    return "photo";
+    return "sculpted";
   }
 }
 

@@ -10,7 +10,7 @@ hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype(np.float32)
 lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB).astype(np.float32)
 # skin: light, moderately saturated; henna: darker and/or much more saturated red-brown. Nails (pink, light) stay.
 L, Sat = lab[..., 0], hsv[..., 1]
-mask = cv2.flip(cv2.imread(str(ROOT / "public/tryon/mask.png"), 0), 1) > 127
+mask = cv2.flip(cv2.imread(str(ROOT / "assets/tryon-source/mask.png"), 0), 1) > 127
 inner = cv2.erode(mask.astype(np.uint8), np.ones((15, 15), np.uint8)) > 0
 skinL = np.median(L[inner & (Sat < 175)])
 # henna: clearly darker than skin or strongly saturated red-brown; pale pink nails are kept

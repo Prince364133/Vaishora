@@ -1,6 +1,6 @@
 # Closed 3D mesh of the two photographed hands, built from the Photo 3D photograph itself.
 #
-#   outline  = the photo's exact hand outline (public/tryon/mask.png), split into the two hands
+#   outline  = the photo's exact hand outline (assets/tryon-source/mask.png), split into the two hands
 #   depth    = real-hand anatomy (see anatomy()): round fingers, a thin palm with thumb mound, heel pad and hollow, a
 #              flatter back of the hand with a knuckle ridge, an oval wrist and forearm. Front and back meet exactly on
 #              the outline. (The photo's hmap.png relief is an inflated outline, which made the model look like a balloon.)
@@ -53,8 +53,8 @@ def delaunay(p, w, h):
     return np.array(out, int)
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-TRY = ROOT / "public/tryon"
-DST = TRY / "model"
+TRY = ROOT / "assets/tryon-source"  # Photo 3D source photos (mask, height map, design atlases, manifest); not served
+DST = ROOT / "public/tryon/model"
 DST.mkdir(exist_ok=True)
 
 ap = argparse.ArgumentParser()

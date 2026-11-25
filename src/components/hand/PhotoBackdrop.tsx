@@ -2,7 +2,7 @@
 
 // The Photo 3D backdrop (pink silk and rose petals, public/tryon/background.jpg) as a fixed, full-frame image.
 // The file is padded far beyond the original photo, so only the photo's own area (reference canvas 0..1536 ×
-// 0..1920 inside the padded frame) is shown, cover-fitted and centred — the same placement PhotoHandScene uses.
+// 0..1920 inside the padded frame) is shown, cover-fitted and centred — the same placement the 3D model scene uses.
 
 import { useEffect, useRef } from "react";
 

@@ -11,7 +11,6 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { PHOTO_TONES, PhotoLook, PhotoPresetId, PhotoTone } from "@/lib/photo-tryon";
 import { backdropRect, BACKDROP_URL } from "./PhotoBackdrop";
-import type { PhotoSceneHandle } from "./PhotoHandScene";
 
 type Props = {
   preset: PhotoPresetId;
@@ -24,7 +23,13 @@ type Props = {
   onError?: (e: Error) => void;
 };
 
-export type ModelSceneHandle = PhotoSceneHandle & { turn: (side: "palm" | "back") => void };
+export interface ModelSceneHandle {
+  reset: () => void;
+  zoom: (factor: number) => void;
+  showcase: (on: boolean) => void;
+  download: (name: string) => void;
+  turn: (side: "palm" | "back") => void;
+}
 
 type Part = { hand: number; side: "front" | "back"; count: number; tris: number; pos: number; nor: number; uv: number; idx: number; idx32: boolean };
 

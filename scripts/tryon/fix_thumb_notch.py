@@ -17,7 +17,7 @@ import cv2
 import numpy as np
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-TRY = ROOT / "public/tryon"
+TRY = ROOT / "assets/tryon-source"  # Photo 3D source photos (mask, height map, design atlases, manifest); not served
 BAK = ROOT / "scripts/out/tryon-orig"
 BAK.mkdir(parents=True, exist_ok=True)
 

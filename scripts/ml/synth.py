@@ -6,7 +6,7 @@
 # copyrighted photos. A share of samples are "silver" real pairs: the owner's photo palms minus the matching
 # bare palm (same frame), labelled by colour difference.
 #
-# Sources (all owned by the project): public/designs/photo/bare-palm.webp, public/tryon/{atlas-bare,model/back-bare}.jpg,
+# Sources (all owned by the project): public/designs/photo/bare-palm.webp, assets/tryon-source/atlas-bare.jpg, public/tryon/model/back-bare.jpg,
 # scripts/out/ml/masks/*.png (rasterised procedural designs, scripts/ml/render_svgs.py).
 import math
 import pathlib
@@ -68,8 +68,8 @@ class Resources:
         self.skins: list[np.ndarray] = []
         bare = _read_rgba(PHOTO / "bare-palm.webp", FRAME)
         self.skins.append(bare)
-        for f in ("tryon/atlas-bare.jpg", "tryon/model/back-bare.jpg"):
-            self.skins.append(_read_rgba(ROOT / "public" / f))
+        for f in ("assets/tryon-source/atlas-bare.jpg", "public/tryon/model/back-bare.jpg"):
+            self.skins.append(_read_rgba(ROOT / f))
         self.masks = [_read_rgba(p)[..., 3] for p in sorted(MASKS.glob("*.png"))]
         if not self.masks:
             raise SystemExit("No masks: run python scripts/ml/render_svgs.py first")

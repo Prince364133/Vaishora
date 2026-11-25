@@ -1,6 +1,6 @@
 # Back-of-hand views for the 3D model built from the Photo 3D photograph.
 #
-# The 3D model's front IS the photo (public/tryon/atlas-*.jpg). Seen from behind, the same pair of hands appears
+# The 3D model's front IS the photo (assets/tryon-source/atlas-*.jpg). Seen from behind, the same pair of hands appears
 # mirrored left-right, so the back texture must fit the MIRRORED photo outline exactly. Codex repaints the mirrored
 # bare hands as the backs of the same hands (nails, knuckles) with a back-of-hand mehndi matching the front design;
 # the result is aligned onto the mirrored mask (ECC affine on the silhouette) and saved as
@@ -22,7 +22,7 @@ import cv2
 import numpy as np
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-TRY = ROOT / "public/tryon"
+TRY = ROOT / "assets/tryon-source"  # Photo 3D source photos (mask, height map, design atlases, manifest); not served
 OUT = ROOT / "scripts/out/model3d"
 OUT.mkdir(parents=True, exist_ok=True)
 
